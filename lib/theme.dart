@@ -71,7 +71,7 @@ class AppTheme {
         trackColor: WidgetStateProperty.resolveWith((states) =>
           states.contains(WidgetState.selected) ? kReefBlue : kMidnightTide),
       ),
-      dialogTheme: DialogThemeData(
+      dialogTheme: DialogTheme(
         backgroundColor: kMidnightTide,
         titleTextStyle: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
         contentTextStyle: const TextStyle(color: kSeaFoam, fontSize: 14),

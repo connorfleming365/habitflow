@@ -35,8 +35,8 @@ class _StatsScreenState extends State<StatsScreen> {
     final toNext      = ProgressionService.daysToNext(activeDays);
     final stageProgress = ProgressionService.progressToNext(activeDays);
     final weekStats   = StorageService.weekStats(_habits, _completions);
-    final weekPct     = weekStats.isEmpty ? 0.0
-        : weekStats.values.fold(0.0, (a, b) => a + b) / weekStats.length;
+    final weekPct     = weekStats.total == 0 ? 0.0
+        : weekStats.done / weekStats.total;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Progress')),
