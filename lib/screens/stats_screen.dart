@@ -159,7 +159,7 @@ class _CalendarGrid extends StatelessWidget {
         final day = idx - firstDay + 1;
         final ds = '$year-${(month+1).toString().padLeft(2,'0')}-${day.toString().padLeft(2,'0')}';
         final date = DateTime(year, month + 1, day);
-        final isFuture = ds > todayStr;
+        final isFuture = ds.compareTo(todayStr) > 0;
         final isToday = ds == todayStr;
         final scheduled = habits.where((h) => h.isScheduledOn(date)).toList();
         final done = scheduled.where((h) =>

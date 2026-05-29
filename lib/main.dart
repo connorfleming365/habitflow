@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
+import 'models/habit.dart';
 import 'screens/today_screen.dart';
 import 'screens/manage_screen.dart';
 import 'screens/stats_screen.dart';
@@ -15,30 +17,27 @@ void main() async {
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await NotificationService.init();
   await WidgetService.init();
-  // Seed demo habits on first launch
   await _seedIfEmpty();
   runApp(const HabitFlowApp());
 }
 
-Future<void> _seedIfEmpty() async {
-  final habits = await StorageService.loadHabits();
-  if (habits.isNotEmpty) return;
-  final demos = [
-    _preset('Drink Water',  '💧', '#4FC3F7', 'daily',   '08:00'),
-    _preset('Exercise',     '🏋️', '#EF5350', 'daily',   '07:00'),
-    _preset('Read',         '📖', '#FF8A65', 'daily',   '21:00'),
-  ];
-  await StorageService.saveHabits(demos);
-}
-
-import 'package:uuid/uuid.dart';
-import 'models/habit.dart';
 Habit _preset(String name, String icon, String color, String freq, String time) =>
     Habit(
       id: const Uuid().v4(), name: name, icon: icon, color: color,
       freq: freq, days: [1,2,3,4,5], reminderTime: time,
       createdAt: DateTime.now().millisecondsSinceEpoch,
     );
+
+Future<void> _seedIfEmpty() async {
+  final habits = await StorageService.loadHabits();
+  if (habits.isNotEmpty) return;
+  final demos = [
+    _preset('Drink Water', '💧', '#4FC3F7', 'daily', '08:00'),
+    _preset('Exercise',    '🏋️', '#EF5350', 'daily', '07:00'),
+    _preset('Read',        '📖', '#FF8A65', 'daily', '21:00'),
+  ];
+  await StorageService.saveHabits(demos);
+}
 
 // ── App root ──────────────────────────────────────────────
 class HabitFlowApp extends StatefulWidget {

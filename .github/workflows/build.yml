@@ -28,6 +28,10 @@ jobs:
         run: |
           flutter create --org com.habitflow --project-name habitflow /tmp/build_app
 
+      - name: Fix Kotlin version
+        run: |
+          sed -i "s/ext.kotlin_version = .*/ext.kotlin_version = '1.9.10'/" /tmp/build_app/android/build.gradle
+
       - name: Copy Dart source & pubspec
         run: |
           rm -rf /tmp/build_app/lib/*
