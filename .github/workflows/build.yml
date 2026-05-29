@@ -24,22 +24,49 @@ jobs:
           flutter-version: '3.22.0'
           channel: 'stable'
 
+      - name: Scaffold clean Flutter project
+        run: |
+          flutter create --org com.habitflow --project-name habitflow /tmp/build_app
+
+      - name: Copy Dart source & pubspec
+        run: |
+          rm -rf /tmp/build_app/lib/*
+          cp -r lib/. /tmp/build_app/lib/
+          cp pubspec.yaml /tmp/build_app/pubspec.yaml
+
+      - name: Copy Android widget files
+        run: |
+          cp android/app/src/main/kotlin/com/habitflow/app/HabitWidget.kt \
+             /tmp/build_app/android/app/src/main/kotlin/com/habitflow/app/
+          mkdir -p /tmp/build_app/android/app/src/main/res/layout
+          mkdir -p /tmp/build_app/android/app/src/main/res/xml
+          cp android/app/src/main/res/layout/habit_widget.xml \
+             /tmp/build_app/android/app/src/main/res/layout/
+          cp android/app/src/main/res/xml/habit_widget_info.xml \
+             /tmp/build_app/android/app/src/main/res/xml/
+          cp android/app/src/main/res/drawable/widget_background.xml \
+             /tmp/build_app/android/app/src/main/res/drawable/
+          cp android/app/src/main/res/drawable/widget_progress_drawable.xml \
+             /tmp/build_app/android/app/src/main/res/drawable/
+          cp android/app/src/main/res/values/strings.xml \
+             /tmp/build_app/android/app/src/main/res/values/strings.xml
+
+      - name: Add widget receiver to AndroidManifest
+        run: |
+          sed -i 's|</application>|    <receiver android:name=".HabitWidget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/habit_widget_info"/></receiver>\n    </application>|' \
+            /tmp/build_app/android/app/src/main/AndroidManifest.xml
+
       - name: Get dependencies
+        working-directory: /tmp/build_app
         run: flutter pub get
 
-      - name: Generate Gradle wrapper
-        run: |
-          flutter create --org com.habitflow --project-name temp /tmp/temp_proj
-          cp /tmp/temp_proj/android/gradlew android/gradlew
-          chmod +x android/gradlew
-          cp -r /tmp/temp_proj/android/gradle android/gradle
-
       - name: Build release APK
+        working-directory: /tmp/build_app
         run: flutter build apk --release --no-shrink
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: habitflow-release
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: /tmp/build_app/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
