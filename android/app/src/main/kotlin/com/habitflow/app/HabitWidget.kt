@@ -1,4 +1,4 @@
-package com.habitflow.app
+package com.habitflow.habitflow
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
