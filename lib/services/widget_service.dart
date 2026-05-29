@@ -1,17 +1,14 @@
-import 'dart:convert';
-import 'package:home_widget/home_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/habit.dart';
 import 'storage_service.dart';
 
+/// Writes today's progress into Flutter's standard SharedPreferences so the
+/// native Android AppWidget can read it without needing the home_widget package.
 class WidgetService {
-  static const _appGroupId = 'com.habitflow.app';
-  static const _widgetName = 'HabitWidget';
-
   static Future<void> init() async {
-    await HomeWidget.setAppGroupId(_appGroupId);
+    // Nothing to initialise – we piggyback on shared_preferences.
   }
 
-  /// Call this after any habit completion toggle or data change
   static Future<void> update(List<Habit> habits, Set<String> completions) async {
     final today = DateTime.now();
     final scheduled = habits.where((h) => h.isScheduledOn(today)).toList();
@@ -20,26 +17,14 @@ class WidgetService {
         .length;
     final total = scheduled.length;
 
-    // Build a compact summary for the widget
-    final items = scheduled.take(5).map((h) {
-      final isDone =
-          completions.contains(StorageService.completionKey(h.id, today));
-      return {'icon': h.icon, 'name': h.name, 'done': isDone};
-    }).toList();
-
-    await HomeWidget.saveWidgetData('hf_done', done.toString());
-    await HomeWidget.saveWidgetData('hf_total', total.toString());
-    await HomeWidget.saveWidgetData('hf_items', jsonEncode(items));
-    await HomeWidget.saveWidgetData(
-        'hf_date', _dayLabel(today));
-    await HomeWidget.updateWidget(
-      name: _widgetName,
-      androidName: _widgetName,
-    );
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('hf_done',  done.toString());
+    await prefs.setString('hf_total', total.toString());
+    await prefs.setString('hf_date',  _dayLabel(today));
   }
 
   static String _dayLabel(DateTime d) {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const days   = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return '${days[d.weekday % 7]} ${months[d.month - 1]} ${d.day}';
   }

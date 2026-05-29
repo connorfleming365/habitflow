@@ -3,12 +3,8 @@ package com.habitflow.app
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
-import android.content.SharedPreferences
-import android.view.View
 import android.widget.RemoteViews
 import android.app.PendingIntent
-import android.content.Intent
-import es.antonborri.home_widget.HomeWidgetPlugin
 
 class HabitWidget : AppWidgetProvider() {
 
@@ -28,12 +24,15 @@ class HabitWidget : AppWidgetProvider() {
             appWidgetManager: AppWidgetManager,
             widgetId: Int
         ) {
-            val prefs: SharedPreferences =
-                HomeWidgetPlugin.getData(context)
+            // Flutter's shared_preferences stores values in "FlutterSharedPreferences"
+            // with every key prefixed by "flutter."
+            val prefs = context.getSharedPreferences(
+                "FlutterSharedPreferences", Context.MODE_PRIVATE
+            )
 
-            val done  = prefs.getString("hf_done",  "0") ?: "0"
-            val total = prefs.getString("hf_total", "0") ?: "0"
-            val date  = prefs.getString("hf_date",  "Today") ?: "Today"
+            val done  = prefs.getString("flutter.hf_done",  "0") ?: "0"
+            val total = prefs.getString("flutter.hf_total", "0") ?: "0"
+            val date  = prefs.getString("flutter.hf_date",  "Today") ?: "Today"
 
             val views = RemoteViews(context.packageName, R.layout.habit_widget)
 
@@ -42,7 +41,7 @@ class HabitWidget : AppWidgetProvider() {
             views.setTextViewText(R.id.widget_date, date)
 
             // Progress bar (0–100)
-            val pct = if (total.toIntOrNull() ?: 0 > 0)
+            val pct = if ((total.toIntOrNull() ?: 0) > 0)
                 ((done.toFloat() / total.toFloat()) * 100).toInt() else 0
             views.setProgressBar(R.id.widget_progress, 100, pct, false)
 
