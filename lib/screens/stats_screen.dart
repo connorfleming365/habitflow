@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/habit.dart';
 import '../services/storage_service.dart';
+import '../services/progression_service.dart';
 import '../theme.dart';
 
 class StatsScreen extends StatefulWidget {
@@ -20,221 +21,367 @@ class _StatsScreenState extends State<StatsScreen> {
 
   Future<void> _load() async {
     final habits = await StorageService.loadHabits();
-    final comp = await StorageService.loadCompletions();
+    final comp   = await StorageService.loadCompletions();
     if (mounted) setState(() { _habits = habits; _completions = comp; });
   }
 
+  int _streakFor(Habit h) => StorageService.getStreak(h, _completions);
+
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final todayHabits = _habits.where((h) => h.isScheduledOn(now)).toList();
-    final todayDone = todayHabits.where((h) =>
-        _completions.contains(StorageService.completionKey(h.id, now))).length;
-    final week = StorageService.weekStats(_habits, _completions);
-    final streaks = _habits.map((h) => StorageService.getStreak(h, _completions));
-    final maxStreak = streaks.isEmpty ? 0 : streaks.reduce((a,b) => a > b ? a : b);
+    final now         = DateTime.now();
+    final activeDays  = ProgressionService.countActiveDays(_completions);
+    final stage       = ProgressionService.stageForDays(activeDays);
+    final toNext      = ProgressionService.daysToNext(activeDays);
+    final stageProgress = ProgressionService.progressToNext(activeDays);
+    final weekStats   = StorageService.weekStats(_habits, _completions);
+    final weekPct     = weekStats.isEmpty ? 0.0
+        : weekStats.values.fold(0.0, (a, b) => a + b) / weekStats.length;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Progress')),
       body: RefreshIndicator(
+        color: kSeaFoam,
+        backgroundColor: kMidnightTide,
         onRefresh: _load,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
           children: [
-            // ── Stats row ────────────────────────────
+
+            // ── Stage card ────────────────────────────
+            _StageCard(
+              stage: stage,
+              activeDays: activeDays,
+              toNext: toNext,
+              stageProgress: stageProgress,
+            ),
+            const SizedBox(height: 16),
+
+            // ── Quick stats row ───────────────────────
             Row(children: [
-              _StatCard(val: '$todayDone/${todayHabits.length}', label: 'Today'),
+              Expanded(child: _StatChip(
+                label: 'Active days',
+                value: '$activeDays',
+                icon: '💧',
+              )),
               const SizedBox(width: 10),
-              _StatCard(val: '${week.done}', label: 'This Week'),
+              Expanded(child: _StatChip(
+                label: 'This week',
+                value: '${(weekPct * 100).round()}%',
+                icon: '📅',
+              )),
               const SizedBox(width: 10),
-              _StatCard(val: '$maxStreak 🔥', label: 'Best Streak'),
+              Expanded(child: _StatChip(
+                label: 'Habits tracked',
+                value: '${_habits.length}',
+                icon: '🌊',
+              )),
             ]),
             const SizedBox(height: 20),
 
-            // ── Calendar ─────────────────────────────
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: cardDecoration(context),
-              child: Column(children: [
-                Row(children: [
-                  IconButton(icon: const Icon(Icons.chevron_left), onPressed: () {
-                    setState(() { _calMonth--; if(_calMonth<0){_calMonth=11;_calYear--;} });
-                  }),
-                  Expanded(child: Text(_monthLabel, textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800))),
-                  IconButton(icon: const Icon(Icons.chevron_right), onPressed: () {
-                    setState(() { _calMonth++; if(_calMonth>11){_calMonth=0;_calYear++;} });
-                  }),
-                ]),
-                const SizedBox(height: 8),
-                _CalendarGrid(
-                  year: _calYear, month: _calMonth,
-                  habits: _habits, completions: _completions,
-                ),
-              ]),
+            // ── Calendar heatmap ──────────────────────
+            _CalendarSection(
+              habits: _habits,
+              completions: _completions,
+              year: _calYear,
+              month: _calMonth,
+              onPrev: () => setState(() {
+                if (_calMonth == 0) { _calYear--; _calMonth = 11; }
+                else _calMonth--;
+              }),
+              onNext: () => setState(() {
+                if (_calMonth == 11) { _calYear++; _calMonth = 0; }
+                else _calMonth++;
+              }),
             ),
             const SizedBox(height: 20),
 
-            // ── Streaks ───────────────────────────────
+            // ── Per-habit streaks ─────────────────────
             if (_habits.isNotEmpty) ...[
               const Padding(
-                padding: EdgeInsets.only(bottom: 10),
-                child: Text('🔥 STREAKS', style: TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+                padding: EdgeInsets.only(bottom: 12),
+                child: Text('HABIT STREAKS',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+                      letterSpacing: 1.0, color: kSeaFoam)),
               ),
-              Container(
-                decoration: cardDecoration(context),
-                child: Column(
-                  children: _habits
-                      .map((h) => StorageService.getStreak(h, _completions))
-                      .toList()
-                      .asMap()
-                      .entries
-                      .map((e) => _StreakRow(
-                        habit: _habits[e.key],
-                        streak: e.value,
-                        best: StorageService.getLongestStreak(_habits[e.key], _completions),
-                        maxStreak: maxStreak == 0 ? 1 : maxStreak,
-                      ))
-                      .toList()
-                      ..sort((a, b) => b.streak.compareTo(a.streak)),
-                ),
-              ),
+              ..._habits.map((h) => _StreakRow(
+                habit: h,
+                streak: _streakFor(h),
+                maxStreak: _habits.map(_streakFor).fold(1, (a, b) => a > b ? a : b),
+              )),
             ],
           ],
         ),
       ),
     );
   }
-
-  String get _monthLabel {
-    const months = ['January','February','March','April','May','June',
-      'July','August','September','October','November','December'];
-    return '${months[_calMonth]} $_calYear';
-  }
 }
 
-// ── Stat card ─────────────────────────────────────────────
-class _StatCard extends StatelessWidget {
-  final String val, label;
-  const _StatCard({required this.val, required this.label});
-  @override
-  Widget build(BuildContext context) => Expanded(
-    child: Container(
-      padding: const EdgeInsets.all(14),
-      decoration: cardDecoration(context),
-      child: Column(children: [
-        Text(val, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: kPrimary)),
-        const SizedBox(height: 2),
-        Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
-      ]),
-    ),
-  );
-}
-
-// ── Calendar grid ─────────────────────────────────────────
-class _CalendarGrid extends StatelessWidget {
-  final int year, month;
-  final List<Habit> habits;
-  final Set<String> completions;
-  const _CalendarGrid({required this.year, required this.month,
-    required this.habits, required this.completions});
+// ── Stage card ────────────────────────────────────────────
+class _StageCard extends StatelessWidget {
+  final WaterStage stage;
+  final int activeDays, toNext;
+  final double stageProgress;
+  const _StageCard({
+    required this.stage, required this.activeDays,
+    required this.toNext, required this.stageProgress,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final firstDay = DateTime(year, month + 1, 1).weekday % 7;
-    final daysInMonth = DateTime(year, month + 2, 0).day;
-    final today = DateTime.now();
-    final todayStr = '${today.year}-${today.month.toString().padLeft(2,'0')}-${today.day.toString().padLeft(2,'0')}';
-
-    return GridView.builder(
-      shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 7, mainAxisSpacing: 4, crossAxisSpacing: 4, childAspectRatio: 1,
+    final isOcean = stage == WaterStage.ocean;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: kMidnightTide,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: kReefBlue.withOpacity(0.5), width: 0.5),
       ),
-      itemCount: firstDay + daysInMonth,
-      itemBuilder: (_, idx) {
-        if (idx < firstDay) return const SizedBox();
-        final day = idx - firstDay + 1;
-        final ds = '$year-${(month+1).toString().padLeft(2,'0')}-${day.toString().padLeft(2,'0')}';
-        final date = DateTime(year, month + 1, day);
-        final isFuture = ds.compareTo(todayStr) > 0;
-        final isToday = ds == todayStr;
-        final scheduled = habits.where((h) => h.isScheduledOn(date)).toList();
-        final done = scheduled.where((h) =>
-            completions.contains(StorageService.completionKey(h.id, date))).length;
-        final isPerfect = scheduled.isNotEmpty && done == scheduled.length && !isFuture;
-        final hasData = done > 0 && !isFuture;
-
-        return Container(
-          decoration: BoxDecoration(
-            color: isPerfect ? kPrimary
-                : hasData ? kPrimary.withOpacity(0.15)
-                : Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: BorderRadius.circular(8),
-            border: isToday ? Border.all(color: kPrimary, width: 2) : null,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Text(ProgressionService.stageEmoji(stage),
+            style: const TextStyle(fontSize: 32)),
+          const SizedBox(width: 14),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Your flow',
+              style: const TextStyle(color: kSeaFoam, fontSize: 12,
+                  fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+            Text(ProgressionService.stageName(stage),
+              style: const TextStyle(color: Colors.white,
+                  fontSize: 22, fontWeight: FontWeight.w800)),
+          ])),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: kOceanBlue.withOpacity(0.25),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text('Day $activeDays',
+              style: const TextStyle(color: kSeaFoam,
+                  fontSize: 12, fontWeight: FontWeight.w700)),
           ),
-          alignment: Alignment.center,
-          child: Text('$day',
-            style: TextStyle(
-              fontSize: 12, fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
-              color: isPerfect ? Colors.white
-                  : isToday ? kPrimary
-                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-            )),
-        );
-      },
+        ]),
+        const SizedBox(height: 12),
+        Text(ProgressionService.stageDescription(stage),
+          style: const TextStyle(color: kSeaFoam, fontSize: 13, height: 1.4)),
+        if (!isOcean) ...[
+          const SizedBox(height: 16),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text('$toNext days to ${ProgressionService.stageName(WaterStage.values[stage.index + 1])}',
+              style: const TextStyle(color: Colors.white70, fontSize: 12)),
+            Text('${(stageProgress * 100).round()}%',
+              style: const TextStyle(color: kSeaFoam, fontSize: 12,
+                  fontWeight: FontWeight.w700)),
+          ]),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: stageProgress,
+              minHeight: 8,
+              backgroundColor: kOceanBlue.withOpacity(0.2),
+              valueColor: const AlwaysStoppedAnimation(kReefBlue),
+            ),
+          ),
+        ],
+      ]),
     );
   }
+}
+
+// ── Stat chip ─────────────────────────────────────────────
+class _StatChip extends StatelessWidget {
+  final String label, value, icon;
+  const _StatChip({required this.label, required this.value, required this.icon});
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+    decoration: BoxDecoration(
+      color: const Color(0xFF083348),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: kOceanBlue.withOpacity(0.3), width: 0.5),
+    ),
+    child: Column(children: [
+      Text(icon, style: const TextStyle(fontSize: 18)),
+      const SizedBox(height: 4),
+      Text(value,
+        style: const TextStyle(color: Colors.white,
+            fontSize: 18, fontWeight: FontWeight.w800)),
+      const SizedBox(height: 2),
+      Text(label, textAlign: TextAlign.center,
+        style: const TextStyle(color: kSeaFoam, fontSize: 10)),
+    ]),
+  );
+}
+
+// ── Calendar heatmap ──────────────────────────────────────
+class _CalendarSection extends StatelessWidget {
+  final List<Habit> habits;
+  final Set<String> completions;
+  final int year, month;
+  final VoidCallback onPrev, onNext;
+
+  const _CalendarSection({
+    required this.habits, required this.completions,
+    required this.year, required this.month,
+    required this.onPrev, required this.onNext,
+  });
+
+  static const _monthNames = ['January','February','March','April','May','June',
+    'July','August','September','October','November','December'];
+  static const _dayLabels = ['M','T','W','T','F','S','S'];
+
+  @override
+  Widget build(BuildContext context) {
+    final todayStr = _dateKey(DateTime.now());
+    final firstDay = DateTime(year, month + 1, 1);
+    final daysInMonth = DateTime(year, month + 2, 0).day;
+    // weekday: Mon=1..Sun=7 → offset 0..6
+    final startOffset = (firstDay.weekday - 1) % 7;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: kMidnightTide,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: kOceanBlue.withOpacity(0.3), width: 0.5),
+      ),
+      child: Column(children: [
+        // Month nav
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          IconButton(
+            onPressed: onPrev,
+            icon: const Icon(Icons.chevron_left, color: kSeaFoam)),
+          Text('${_monthNames[month]} $year',
+            style: const TextStyle(color: Colors.white,
+                fontSize: 15, fontWeight: FontWeight.w700)),
+          IconButton(
+            onPressed: onNext,
+            icon: const Icon(Icons.chevron_right, color: kSeaFoam)),
+        ]),
+        const SizedBox(height: 8),
+        // Day labels
+        Row(children: _dayLabels.map((d) => Expanded(
+          child: Center(child: Text(d,
+            style: const TextStyle(color: kSeaFoam,
+                fontSize: 10, fontWeight: FontWeight.w600))),
+        )).toList()),
+        const SizedBox(height: 6),
+        // Grid
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 7, mainAxisSpacing: 4, crossAxisSpacing: 4),
+          itemCount: startOffset + daysInMonth,
+          itemBuilder: (_, idx) {
+            if (idx < startOffset) return const SizedBox();
+            final day = idx - startOffset + 1;
+            final ds = _dateKey(DateTime(year, month + 1, day));
+            final isFuture = ds.compareTo(todayStr) > 0;
+            final isToday  = ds == todayStr;
+            final date = DateTime(year, month + 1, day);
+            final scheduled = habits.where((h) => h.isScheduledOn(date)).toList();
+            final done = scheduled.where((h) =>
+                completions.contains(StorageService.completionKey(h.id, date))).length;
+            final isPerfect = !isFuture && scheduled.isNotEmpty && done == scheduled.length;
+            final hasPartial = !isFuture && done > 0 && done < scheduled.length;
+
+            Color dotColor;
+            if (isFuture)       dotColor = kOceanBlue.withOpacity(0.15);
+            else if (isPerfect) dotColor = kSuccess;
+            else if (hasPartial) dotColor = kWarning;
+            else if (scheduled.isEmpty) dotColor = kOceanBlue.withOpacity(0.2);
+            else                dotColor = kDanger.withOpacity(0.6);
+
+            return Container(
+              decoration: BoxDecoration(
+                color: dotColor,
+                shape: BoxShape.circle,
+                border: isToday
+                    ? Border.all(color: kSeaFoam, width: 1.5)
+                    : null,
+              ),
+              child: Center(
+                child: Text('$day',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: isToday ? FontWeight.w800 : FontWeight.w400,
+                    color: isFuture ? kOceanBlue.withOpacity(0.4)
+                        : isPerfect || hasPartial ? kDeepOcean
+                        : Colors.white70,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+        // Legend
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          _dot(kSuccess), const SizedBox(width: 4),
+          const Text('All done', style: TextStyle(color: kSeaFoam, fontSize: 10)),
+          const SizedBox(width: 12),
+          _dot(kWarning), const SizedBox(width: 4),
+          const Text('Partial', style: TextStyle(color: kSeaFoam, fontSize: 10)),
+          const SizedBox(width: 12),
+          _dot(kDanger, opacity: 0.6), const SizedBox(width: 4),
+          const Text('Missed', style: TextStyle(color: kSeaFoam, fontSize: 10)),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _dot(Color c, {double opacity = 1}) => Container(
+    width: 10, height: 10,
+    decoration: BoxDecoration(
+      color: c.withOpacity(opacity),
+      shape: BoxShape.circle,
+    ),
+  );
+
+  static String _dateKey(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
 }
 
 // ── Streak row ────────────────────────────────────────────
 class _StreakRow extends StatelessWidget {
   final Habit habit;
-  final int streak, best, maxStreak;
-  const _StreakRow({required this.habit, required this.streak,
-    required this.best, required this.maxStreak});
-  @override
-  Widget build(BuildContext context) {
-    final color = hexColor(habit.color);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
-      ),
-      child: Row(children: [
-        Container(width: 36, height: 36,
-          decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
-          alignment: Alignment.center,
-          child: Text(habit.icon, style: const TextStyle(fontSize: 18))),
-        const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(habit.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 5),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: streak / maxStreak,
-              minHeight: 6,
-              backgroundColor: Theme.of(context).dividerColor,
-              valueColor: AlwaysStoppedAnimation(kPrimary),
-            ),
-          ),
-        ])),
-        const SizedBox(width: 12),
-        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text('$streak 🔥',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: kPrimary)),
-          Text('best $best',
-            style: TextStyle(fontSize: 10,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4))),
-        ]),
-      ]),
-    );
-  }
-}
+  final int streak, maxStreak;
+  const _StreakRow({required this.habit, required this.streak, required this.maxStreak});
 
-extension on _StatsScreenState {
-  List<_StreakRow> get _sortedStreakRows => [];
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    decoration: BoxDecoration(
+      color: const Color(0xFF083348),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: kOceanBlue.withOpacity(0.25), width: 0.5),
+    ),
+    child: Row(children: [
+      Text(habit.icon, style: const TextStyle(fontSize: 18)),
+      const SizedBox(width: 10),
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(habit.name,
+          style: const TextStyle(color: Colors.white,
+              fontSize: 13, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 5),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(3),
+          child: LinearProgressIndicator(
+            value: maxStreak == 0 ? 0 : streak / maxStreak,
+            minHeight: 6,
+            backgroundColor: kOceanBlue.withOpacity(0.2),
+            valueColor: const AlwaysStoppedAnimation(kReefBlue),
+          ),
+        ),
+      ])),
+      const SizedBox(width: 12),
+      Text(streak > 0 ? '${streak}d 🔥' : '—',
+        style: TextStyle(
+          color: streak > 0 ? kWarning : kSeaFoam.withOpacity(0.4),
+          fontSize: 12, fontWeight: FontWeight.w700)),
+    ]),
+  );
 }

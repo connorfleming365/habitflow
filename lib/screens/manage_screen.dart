@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/habit.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
@@ -14,13 +15,44 @@ class ManageScreen extends StatefulWidget {
 
 class _ManageScreenState extends State<ManageScreen> {
   List<Habit> _habits = [];
+  Set<String> _completions = {};
+  bool _gridView = true; // default: 3-column grid
 
   @override
-  void initState() { super.initState(); _load(); }
+  void initState() {
+    super.initState();
+    _loadPrefs();
+    _load();
+  }
+
+  Future<void> _loadPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) setState(() => _gridView = prefs.getBool('habit_grid_view') ?? true);
+  }
+
+  Future<void> _setGridView(bool v) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('habit_grid_view', v);
+    if (mounted) setState(() => _gridView = v);
+  }
 
   Future<void> _load() async {
-    final h = await StorageService.loadHabits();
-    if (mounted) setState(() => _habits = h);
+    final habits = await StorageService.loadHabits();
+    final completions = await StorageService.loadCompletions();
+    if (mounted) setState(() { _habits = habits; _completions = completions; });
+  }
+
+  int _streakFor(Habit h) {
+    int streak = 0;
+    var d = DateTime.now();
+    while (true) {
+      final key = '${h.id}_${d.year}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
+      if (_completions.contains(key)) {
+        streak++;
+        d = d.subtract(const Duration(days: 1));
+      } else { break; }
+    }
+    return streak;
   }
 
   Future<void> _delete(Habit habit) async {
@@ -28,11 +60,13 @@ class _ManageScreenState extends State<ManageScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Delete habit?'),
-        content: Text('Delete "${habit.name}"? All completion history will be removed.'),
+        content: Text('Delete "${habit.name}"? All history will be removed.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
           TextButton(onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red))),
+              child: const Text('Delete',
+                  style: TextStyle(color: kDanger))),
         ],
       ),
     );
@@ -40,7 +74,6 @@ class _ManageScreenState extends State<ManageScreen> {
     final habits = await StorageService.loadHabits();
     habits.removeWhere((h) => h.id == habit.id);
     await StorageService.saveHabits(habits);
-    // Clean completions
     final completions = await StorageService.loadCompletions();
     completions.removeWhere((k) => k.startsWith('${habit.id}_'));
     await StorageService.saveCompletions(completions);
@@ -52,112 +85,304 @@ class _ManageScreenState extends State<ManageScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My Habits')),
-      floatingActionButton: FloatingActionButton.extended(
+      appBar: AppBar(
+        title: const Text('My Habits'),
+        actions: [
+          // Grid / list toggle
+          IconButton(
+            icon: Icon(_gridView ? Icons.view_list_rounded : Icons.grid_view_rounded,
+                color: kSeaFoam),
+            tooltip: _gridView ? 'Switch to list' : 'Switch to grid',
+            onPressed: () => _setGridView(!_gridView),
+          ),
+          IconButton(
+            icon: const Icon(Icons.add, color: kSeaFoam),
+            onPressed: () async {
+              await Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const AddHabitScreen()));
+              _load();
+            },
+          ),
+        ],
+      ),
+      body: _habits.isEmpty
+          ? _buildEmpty()
+          : _gridView
+              ? _buildGrid()
+              : _buildList(),
+    );
+  }
+
+  Widget _buildEmpty() => Center(
+    child: Column(mainAxisSize: MainAxisSize.min, children: [
+      const Text('💧', style: TextStyle(fontSize: 52)),
+      const SizedBox(height: 16),
+      const Text('No habits yet',
+        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+      const SizedBox(height: 8),
+      const Text('Tap + to add your first habit',
+        style: TextStyle(color: kSeaFoam, fontSize: 14)),
+      const SizedBox(height: 28),
+      ElevatedButton.icon(
         onPressed: () async {
           await Navigator.push(context,
               MaterialPageRoute(builder: (_) => const AddHabitScreen()));
           _load();
         },
-        backgroundColor: kPrimary,
-        foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('Add Habit', style: TextStyle(fontWeight: FontWeight.w700)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: kReefBlue, foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
       ),
-      body: _habits.isEmpty
-          ? Center(
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const Text('✨', style: TextStyle(fontSize: 52)),
-                const SizedBox(height: 12),
-                Text('No habits yet',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
-                Text('Tap the button below to get started',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
-              ]),
-            )
-          : ReorderableListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-              itemCount: _habits.length,
-              onReorder: (oldIdx, newIdx) async {
-                if (newIdx > oldIdx) newIdx--;
-                setState(() {
-                  final h = _habits.removeAt(oldIdx);
-                  _habits.insert(newIdx, h);
-                });
-                await StorageService.saveHabits(_habits);
-              },
-              itemBuilder: (ctx, i) {
-                final h = _habits[i];
-                return _HabitManageCard(
-                  key: ValueKey(h.id),
-                  habit: h,
-                  onEdit: () async {
-                    await Navigator.push(ctx,
-                        MaterialPageRoute(builder: (_) => AddHabitScreen(existing: h)));
-                    _load();
-                  },
-                  onDelete: () => _delete(h),
-                );
-              },
-            ),
+    ]),
+  );
+
+  // ── 3-column grid ─────────────────────────────────────
+  Widget _buildGrid() {
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 0.82,
+      ),
+      itemCount: _habits.length + 1, // +1 for the add tile
+      itemBuilder: (_, i) {
+        if (i == _habits.length) return _AddTile(onTap: () async {
+          await Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const AddHabitScreen()));
+          _load();
+        });
+        final h = _habits[i];
+        final streak = _streakFor(h);
+        return _GridTile(
+          habit: h,
+          streak: streak,
+          onTap: () => _showHabitOptions(h),
+        );
+      },
     );
   }
+
+  // ── Reorderable list ──────────────────────────────────
+  Widget _buildList() {
+    return ReorderableListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+      itemCount: _habits.length,
+      onReorder: (oldIdx, newIdx) async {
+        if (newIdx > oldIdx) newIdx--;
+        setState(() {
+          final h = _habits.removeAt(oldIdx);
+          _habits.insert(newIdx, h);
+        });
+        await StorageService.saveHabits(_habits);
+      },
+      itemBuilder: (ctx, i) {
+        final h = _habits[i];
+        return _ListTile(
+          key: ValueKey(h.id),
+          habit: h,
+          streak: _streakFor(h),
+          onEdit: () async {
+            await Navigator.push(ctx,
+                MaterialPageRoute(builder: (_) => AddHabitScreen(existing: h)));
+            _load();
+          },
+          onDelete: () => _delete(h),
+        );
+      },
+    );
+  }
+
+  void _showHabitOptions(Habit h) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: kMidnightTide,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(width: 40, height: 4,
+              decoration: BoxDecoration(color: kOceanBlue,
+                  borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 16),
+          Row(children: [
+            Text(h.icon, style: const TextStyle(fontSize: 28)),
+            const SizedBox(width: 12),
+            Text(h.name,
+              style: const TextStyle(color: Colors.white,
+                  fontSize: 18, fontWeight: FontWeight.w700)),
+          ]),
+          const SizedBox(height: 20),
+          _sheetBtn(Icons.edit_outlined, 'Edit habit', kSeaFoam, () async {
+            Navigator.pop(context);
+            await Navigator.push(context,
+                MaterialPageRoute(builder: (_) => AddHabitScreen(existing: h)));
+            _load();
+          }),
+          const SizedBox(height: 10),
+          _sheetBtn(Icons.delete_outline, 'Delete habit', kDanger, () {
+            Navigator.pop(context);
+            _delete(h);
+          }),
+        ]),
+      ),
+    );
+  }
+
+  Widget _sheetBtn(IconData icon, String label, Color color, VoidCallback onTap) =>
+    GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 12),
+          Text(label, style: TextStyle(color: color,
+              fontSize: 15, fontWeight: FontWeight.w600)),
+        ]),
+      ),
+    );
 }
 
-class _HabitManageCard extends StatelessWidget {
+// ── Grid tile ─────────────────────────────────────────────
+class _GridTile extends StatelessWidget {
   final Habit habit;
-  final VoidCallback onEdit, onDelete;
-  const _HabitManageCard({super.key, required this.habit, required this.onEdit, required this.onDelete});
+  final int streak;
+  final VoidCallback onTap;
+  const _GridTile({required this.habit, required this.streak, required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
-    final color = hexColor(habit.color);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: cardDecoration(context),
-      child: Row(children: [
-        ReorderableDragStartListener(
-          index: 0,
-          child: const Padding(
-            padding: EdgeInsets.only(right: 10),
-            child: Icon(Icons.drag_handle, color: Colors.grey),
-          ),
-        ),
-        Container(
-          width: 44, height: 44,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          alignment: Alignment.center,
-          child: Text(habit.icon, style: const TextStyle(fontSize: 20)),
-        ),
-        const SizedBox(width: 12),
-        Expanded(child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(habit.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-            Text(
-              habit.freqLabel + (habit.reminderTime.isNotEmpty ? ' · ⏰ ${_fmtTime(habit.reminderTime)}' : ''),
-              style: TextStyle(fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      decoration: BoxDecoration(
+        color: kMidnightTide,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: kOceanBlue.withOpacity(0.35), width: 0.5),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(habit.icon, style: const TextStyle(fontSize: 26)),
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Text(
+              habit.name,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white, fontSize: 11,
+                fontWeight: FontWeight.w600, height: 1.3),
             ),
-          ],
-        )),
-        IconButton(
-          icon: const Icon(Icons.edit_outlined, size: 20),
-          onPressed: onEdit,
-          color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(height: 4),
+          if (streak > 0)
+            Text('${streak}d 🔥',
+              style: const TextStyle(
+                  color: kWarning, fontSize: 10, fontWeight: FontWeight.w700))
+          else
+            Text(habit.freqLabel,
+              style: const TextStyle(color: kSeaFoam, fontSize: 9)),
+        ],
+      ),
+    ),
+  );
+}
+
+// ── Add tile ──────────────────────────────────────────────
+class _AddTile extends StatelessWidget {
+  final VoidCallback onTap;
+  const _AddTile({required this.onTap});
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: kOceanBlue.withOpacity(0.5),
+          width: 1,
+          strokeAlign: BorderSide.strokeAlignInside,
         ),
-        IconButton(
-          icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
-          onPressed: onDelete,
-        ),
+      ),
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Icon(Icons.add_rounded, color: kOceanBlue.withOpacity(0.7), size: 28),
+        const SizedBox(height: 4),
+        Text('New habit',
+          style: TextStyle(color: kOceanBlue.withOpacity(0.7),
+              fontSize: 10, fontWeight: FontWeight.w600)),
       ]),
-    );
-  }
+    ),
+  );
+}
+
+// ── List tile ─────────────────────────────────────────────
+class _ListTile extends StatelessWidget {
+  final Habit habit;
+  final int streak;
+  final VoidCallback onEdit, onDelete;
+  const _ListTile({
+    super.key, required this.habit, required this.streak,
+    required this.onEdit, required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.all(14),
+    decoration: cardDecoration(context),
+    child: Row(children: [
+      ReorderableDragStartListener(
+        index: 0,
+        child: Padding(
+          padding: const EdgeInsets.only(right: 10),
+          child: Icon(Icons.drag_handle, color: kOceanBlue.withOpacity(0.5)),
+        ),
+      ),
+      Container(
+        width: 42, height: 42,
+        decoration: BoxDecoration(
+          color: kOceanBlue.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(11),
+        ),
+        alignment: Alignment.center,
+        child: Text(habit.icon, style: const TextStyle(fontSize: 20)),
+      ),
+      const SizedBox(width: 12),
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(habit.name,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700,
+              color: Colors.white)),
+        const SizedBox(height: 2),
+        Text(
+          habit.freqLabel + (streak > 0 ? ' · ${streak}d 🔥' : ''),
+          style: const TextStyle(fontSize: 11, color: kSeaFoam),
+        ),
+      ])),
+      IconButton(
+        icon: const Icon(Icons.edit_outlined, size: 18, color: kSeaFoam),
+        onPressed: onEdit,
+      ),
+      IconButton(
+        icon: const Icon(Icons.delete_outline, size: 18, color: kDanger),
+        onPressed: onDelete,
+      ),
+    ]),
+  );
 
   String _fmtTime(String t) {
     final p = t.split(':');

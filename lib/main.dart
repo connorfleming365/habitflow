@@ -9,6 +9,7 @@ import 'screens/stats_screen.dart';
 import 'screens/settings_screen.dart';
 import 'services/notification_service.dart';
 import 'services/widget_service.dart';
+import 'services/sound_service.dart';
 import 'services/storage_service.dart';
 import 'theme.dart';
 
@@ -17,6 +18,7 @@ void main() async {
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await NotificationService.init();
   await WidgetService.init();
+  await SoundService.init();
   await _seedIfEmpty();
   runApp(const HabitFlowApp());
 }

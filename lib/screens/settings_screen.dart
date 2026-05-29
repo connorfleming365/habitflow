@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
 import '../theme.dart';
@@ -13,43 +14,42 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _notifsEnabled = false;
+  bool _notifsEnabled  = false;
+  bool _soundsEnabled  = true;
+  bool _animsEnabled   = true;
+  bool _gridView       = true;
 
   @override
   void initState() {
     super.initState();
-    _checkNotifStatus();
+    _loadPrefs();
   }
 
-  Future<void> _checkNotifStatus() async {
-    // Simple heuristic — if there's at least one scheduled notification
-    setState(() => _notifsEnabled = true);
+  Future<void> _loadPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) setState(() {
+      _notifsEnabled = prefs.getBool('notifs_enabled') ?? false;
+      _soundsEnabled = prefs.getBool('sounds_enabled') ?? true;
+      _animsEnabled  = prefs.getBool('anims_enabled')  ?? true;
+      _gridView      = prefs.getBool('habit_grid_view') ?? true;
+    });
+  }
+
+  Future<void> _setPref(String key, bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, value);
   }
 
   Future<void> _requestNotifications() async {
     await NotificationService.requestPermission();
     final habits = await StorageService.loadHabits();
     await NotificationService.scheduleAll(habits);
+    await _setPref('notifs_enabled', true);
     if (mounted) {
       setState(() => _notifsEnabled = true);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('🔔 Reminders enabled!')));
+        const SnackBar(content: Text('💧 Reminders enabled!')));
     }
-  }
-
-  Future<void> _exportToGoogleCal() async {
-    final habits = await StorageService.loadHabits();
-    if (habits.isEmpty) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No habits to export')));
-      return;
-    }
-    final h = habits.first;
-    final title = Uri.encodeComponent('${h.icon} ${h.name} - Daily Habit');
-    final url = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=$title&recur=RRULE:FREQ=DAILY';
-    // Open URL — requires url_launcher in a real build; we show a message here
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Opening Google Calendar for: ${h.name}')));
   }
 
   Future<void> _exportData() async {
@@ -62,21 +62,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
     if (mounted) {
       await showDialog(context: context, builder: (_) => AlertDialog(
-        title: const Text('Your Data (JSON)'),
-        content: SingleChildScrollView(child: SelectableText(data, style: const TextStyle(fontSize: 11))),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))],
+        title: const Text('Your data (JSON)'),
+        content: SingleChildScrollView(
+            child: SelectableText(data, style: const TextStyle(fontSize: 11))),
+        actions: [TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'))],
       ));
     }
   }
 
   Future<void> _clearData() async {
     final confirm = await showDialog<bool>(context: context, builder: (_) => AlertDialog(
-      title: const Text('Clear all data?'),
-      content: const Text('This will delete all habits and completion history. Cannot be undone.'),
+      title: const Text('Reset all habits?'),
+      content: const Text(
+          'This will delete all habits and completion history. Cannot be undone.'),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel')),
         TextButton(onPressed: () => Navigator.pop(context, true),
-          child: const Text('Clear', style: TextStyle(color: Colors.red))),
+            child: const Text('Reset', style: TextStyle(color: kDanger))),
       ],
     ));
     if (confirm != true) return;
@@ -91,94 +96,123 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
         children: [
-          _Section(
-            label: 'Appearance',
-            children: [
-              _SettingsRow(
-                icon: '🌙', title: 'Dark Mode', subtitle: 'Easy on the eyes',
-                trailing: Switch(
-                  value: widget.isDark,
-                  onChanged: widget.onThemeChange,
-                  activeColor: kPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _Section(
-            label: 'Notifications',
-            children: [
-              _SettingsRow(
-                icon: '🔔', title: 'Enable Reminders',
-                subtitle: 'Daily push notifications per habit',
-                trailing: Switch(
-                  value: _notifsEnabled,
-                  onChanged: (_) => _requestNotifications(),
-                  activeColor: kPrimary,
-                ),
-              ),
-              _SettingsRow(
-                icon: '⏰', title: 'Reschedule All',
-                subtitle: 'Re-sync all habit reminders',
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () async {
-                  final habits = await StorageService.loadHabits();
-                  await NotificationService.scheduleAll(habits);
-                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+
+          // ── Reminders ─────────────────────────────
+          _Section(label: 'Reminders', children: [
+            _ToggleRow(
+              icon: '🔔',
+              title: 'Daily reminders',
+              subtitle: 'Push notifications per habit',
+              value: _notifsEnabled,
+              onChanged: (v) {
+                if (v) {
+                  _requestNotifications();
+                } else {
+                  _setPref('notifs_enabled', false);
+                  setState(() => _notifsEnabled = false);
+                }
+              },
+            ),
+            _DividerLine(),
+            _ActionRow(
+              icon: '⏰',
+              title: 'Re-sync reminders',
+              subtitle: 'Reschedule all habit notifications',
+              onTap: () async {
+                final habits = await StorageService.loadHabits();
+                await NotificationService.scheduleAll(habits);
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('⏰ Reminders rescheduled!')));
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _Section(
-            label: 'Calendar',
-            children: [
-              _SettingsRow(
-                icon: '📅', title: 'Add to Google Calendar',
-                subtitle: 'Create recurring reminder events',
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _exportToGoogleCal,
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _Section(
-            label: 'Data',
-            children: [
-              _SettingsRow(
-                icon: '💾', title: 'Export Data',
-                subtitle: 'View your habit history as JSON',
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _exportData,
-              ),
-              _SettingsRow(
-                icon: '🗑️', title: 'Clear All Data',
-                subtitle: 'This cannot be undone',
-                titleColor: Colors.red,
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _clearData,
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _Section(
-            label: 'About',
-            children: [
-              const _SettingsRow(
-                icon: '🌊', title: 'HabitFlow v1.0',
-                subtitle: 'Your personal habit companion',
-              ),
-            ],
-          ),
+              },
+            ),
+          ]),
+          const SizedBox(height: 16),
+
+          // ── Sounds & feel ─────────────────────────
+          _Section(label: 'Sounds & feel', children: [
+            _ToggleRow(
+              icon: '💧',
+              title: 'Water drop sounds',
+              subtitle: 'Plays on each habit check-off',
+              value: _soundsEnabled,
+              onChanged: (v) {
+                _setPref('sounds_enabled', v);
+                setState(() => _soundsEnabled = v);
+              },
+            ),
+            _DividerLine(),
+            _ToggleRow(
+              icon: '🌊',
+              title: 'Animations',
+              subtitle: 'Wave and ripple effects',
+              value: _animsEnabled,
+              onChanged: (v) {
+                _setPref('anims_enabled', v);
+                setState(() => _animsEnabled = v);
+              },
+            ),
+          ]),
+          const SizedBox(height: 16),
+
+          // ── Appearance ────────────────────────────
+          _Section(label: 'Appearance', children: [
+            _ToggleRow(
+              icon: '🌙',
+              title: 'Dark mode',
+              subtitle: 'Ocean deep (recommended)',
+              value: widget.isDark,
+              onChanged: widget.onThemeChange,
+            ),
+            _DividerLine(),
+            _ToggleRow(
+              icon: '⊞',
+              title: 'Grid view for habits',
+              subtitle: 'Show habits as 3-column grid',
+              value: _gridView,
+              onChanged: (v) {
+                _setPref('habit_grid_view', v);
+                setState(() => _gridView = v);
+              },
+            ),
+          ]),
+          const SizedBox(height: 16),
+
+          // ── Data ──────────────────────────────────
+          _Section(label: 'Data', children: [
+            _ActionRow(
+              icon: '💾',
+              title: 'Export my data',
+              subtitle: 'View habit history as JSON',
+              onTap: _exportData,
+            ),
+            _DividerLine(),
+            _ActionRow(
+              icon: '🗑️',
+              title: 'Reset all habits',
+              subtitle: 'Cannot be undone',
+              titleColor: kDanger,
+              onTap: _clearData,
+            ),
+          ]),
+          const SizedBox(height: 16),
+
+          // ── About ─────────────────────────────────
+          _Section(label: 'About', children: [
+            const _InfoRow(
+              icon: '🌊',
+              title: 'HabitFlow v1.0',
+              subtitle: 'Drop by drop, you build your ocean.',
+            ),
+          ]),
         ],
       ),
     );
   }
 }
 
+// ── Section wrapper ───────────────────────────────────────
 class _Section extends StatelessWidget {
   final String label;
   final List<Widget> children;
@@ -188,49 +222,127 @@ class _Section extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Padding(
-        padding: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(left: 4, bottom: 8),
         child: Text(label.toUpperCase(),
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.8,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4))),
+          style: const TextStyle(
+            fontSize: 11, fontWeight: FontWeight.w700,
+            letterSpacing: 1.0, color: kSeaFoam)),
       ),
       Container(
-        decoration: cardDecoration(context),
+        decoration: BoxDecoration(
+          color: kMidnightTide,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: kOceanBlue.withOpacity(0.3), width: 0.5),
+        ),
         child: Column(children: children),
       ),
     ],
   );
 }
 
-class _SettingsRow extends StatelessWidget {
+class _DividerLine extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Divider(
+    height: 0, thickness: 0.5,
+    indent: 16, endIndent: 16,
+    color: kOceanBlue.withOpacity(0.2),
+  );
+}
+
+// ── Row types ─────────────────────────────────────────────
+class _ToggleRow extends StatelessWidget {
+  final String icon, title, subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  const _ToggleRow({
+    required this.icon, required this.title,
+    required this.subtitle, required this.value,
+    required this.onChanged,
+  });
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    child: Row(children: [
+      _IconBox(icon),
+      const SizedBox(width: 12),
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(title, style: const TextStyle(
+            color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 1),
+        Text(subtitle, style: const TextStyle(color: kSeaFoam, fontSize: 12)),
+      ])),
+      Switch(
+        value: value,
+        onChanged: onChanged,
+        activeColor: kReefBlue,
+        activeTrackColor: kOceanBlue.withOpacity(0.5),
+        inactiveThumbColor: kOceanBlue,
+        inactiveTrackColor: kMidnightTide,
+      ),
+    ]),
+  );
+}
+
+class _ActionRow extends StatelessWidget {
   final String icon, title, subtitle;
   final Color? titleColor;
-  final Widget? trailing;
-  final VoidCallback? onTap;
-  const _SettingsRow({
-    required this.icon, required this.title, required this.subtitle,
-    this.titleColor, this.trailing, this.onTap,
+  final VoidCallback onTap;
+  const _ActionRow({
+    required this.icon, required this.title,
+    required this.subtitle, this.titleColor,
+    required this.onTap,
   });
   @override
   Widget build(BuildContext context) => InkWell(
     onTap: onTap,
-    borderRadius: BorderRadius.circular(18),
+    borderRadius: BorderRadius.circular(16),
     child: Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(children: [
-        Container(width: 36, height: 36,
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: BorderRadius.circular(10)),
-          alignment: Alignment.center,
-          child: Text(icon, style: const TextStyle(fontSize: 18))),
+        _IconBox(icon),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: titleColor)),
-          Text(subtitle, style: TextStyle(fontSize: 12,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+          Text(title, style: TextStyle(
+              color: titleColor ?? Colors.white,
+              fontSize: 14, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 1),
+          Text(subtitle, style: const TextStyle(color: kSeaFoam, fontSize: 12)),
         ])),
-        if (trailing != null) trailing!,
+        Icon(Icons.chevron_right, color: kOceanBlue.withOpacity(0.6), size: 20),
       ]),
     ),
+  );
+}
+
+class _InfoRow extends StatelessWidget {
+  final String icon, title, subtitle;
+  const _InfoRow({required this.icon, required this.title, required this.subtitle});
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    child: Row(children: [
+      _IconBox(icon),
+      const SizedBox(width: 12),
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(title, style: const TextStyle(
+            color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+        Text(subtitle, style: const TextStyle(color: kSeaFoam, fontSize: 12)),
+      ]),
+    ]),
+  );
+}
+
+class _IconBox extends StatelessWidget {
+  final String icon;
+  const _IconBox(this.icon);
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 36, height: 36,
+    decoration: BoxDecoration(
+      color: kOceanBlue.withOpacity(0.15),
+      borderRadius: BorderRadius.circular(9),
+    ),
+    alignment: Alignment.center,
+    child: Text(icon, style: const TextStyle(fontSize: 17)),
   );
 }

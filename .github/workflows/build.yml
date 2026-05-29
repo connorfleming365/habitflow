@@ -33,6 +33,8 @@ jobs:
           rm -rf /tmp/build_app/lib/*
           cp -r lib/. /tmp/build_app/lib/
           cp pubspec.yaml /tmp/build_app/pubspec.yaml
+          mkdir -p /tmp/build_app/assets/sounds
+          cp -r assets/. /tmp/build_app/assets/ 2>/dev/null || true
 
       - name: Copy Android widget files
         run: |
