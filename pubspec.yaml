@@ -23,7 +23,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/sounds/water_drop.mp3
-    - assets/sounds/wave.mp3
-    - assets/sounds/flow.mp3
+  # Sound assets will be added when audio files are ready
+  # assets:
+  #   - assets/sounds/water_drop.mp3
+  #   - assets/sounds/wave.mp3
+  #   - assets/sounds/flow.mp3

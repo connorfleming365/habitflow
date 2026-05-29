@@ -28,10 +28,12 @@ jobs:
         run: |
           flutter create --org com.habitflow --project-name habitflow /tmp/build_app
 
-      - name: Bump compileSdkVersion for audioplayers
+      - name: Bump compileSdk for audioplayers
         run: |
-          sed -i 's/compileSdkVersion [0-9]*/compileSdkVersion 35/' /tmp/build_app/android/app/build.gradle
-          sed -i 's/targetSdkVersion [0-9]*/targetSdkVersion 35/' /tmp/build_app/android/app/build.gradle
+          sed -i 's/compileSdk [0-9]*/compileSdk 35/g' /tmp/build_app/android/app/build.gradle
+          sed -i 's/compileSdkVersion [0-9]*/compileSdkVersion 35/g' /tmp/build_app/android/app/build.gradle
+          sed -i 's/targetSdk [0-9]*/targetSdk 35/g' /tmp/build_app/android/app/build.gradle
+          sed -i 's/targetSdkVersion [0-9]*/targetSdkVersion 35/g' /tmp/build_app/android/app/build.gradle
 
       - name: Copy Dart source & pubspec
         run: |

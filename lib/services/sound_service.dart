@@ -19,18 +19,18 @@ class SoundService {
   /// Single water drop — played on every habit check-off.
   static Future<void> playDrop() async {
     if (!await _soundsEnabled()) return;
-    await _player.play(AssetSource('sounds/water_drop.mp3'));
+    try { await _player.play(AssetSource('sounds/water_drop.mp3')); } catch (_) {}
   }
 
   /// Gentle wave splash — played when all habits are done for the day.
   static Future<void> playWave() async {
     if (!await _soundsEnabled()) return;
-    await _player.play(AssetSource('sounds/wave.mp3'));
+    try { await _player.play(AssetSource('sounds/wave.mp3')); } catch (_) {}
   }
 
   /// Flowing water — played on a stage-up celebration.
   static Future<void> playFlow() async {
     if (!await _soundsEnabled()) return;
-    await _player.play(AssetSource('sounds/flow.mp3'));
+    try { await _player.play(AssetSource('sounds/flow.mp3')); } catch (_) {}
   }
 }
