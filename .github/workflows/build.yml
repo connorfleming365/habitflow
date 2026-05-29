@@ -27,6 +27,13 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Generate Gradle wrapper
+        run: |
+          flutter create --org com.habitflow --project-name temp /tmp/temp_proj
+          cp /tmp/temp_proj/android/gradlew android/gradlew
+          chmod +x android/gradlew
+          cp -r /tmp/temp_proj/android/gradle android/gradle
+
       - name: Build release APK
         run: flutter build apk --release --no-shrink
 
