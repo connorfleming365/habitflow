@@ -3,7 +3,7 @@ name: Build HabitFlow APK
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:   # lets you trigger manually from GitHub
+  workflow_dispatch:
 
 jobs:
   build:
