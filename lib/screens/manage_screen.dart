@@ -185,6 +185,7 @@ class _ManageScreenState extends State<ManageScreen> {
         final h = _habits[i];
         return _ListTile(
           key: ValueKey(h.id),
+          index: i,
           habit: h,
           streak: _streakFor(h),
           onEdit: () async {
@@ -333,11 +334,11 @@ class _AddTile extends StatelessWidget {
 // ── List tile ─────────────────────────────────────────────
 class _ListTile extends StatelessWidget {
   final Habit habit;
-  final int streak;
+  final int index, streak;
   final VoidCallback onEdit, onDelete;
   const _ListTile({
-    super.key, required this.habit, required this.streak,
-    required this.onEdit, required this.onDelete,
+    super.key, required this.habit, required this.index,
+    required this.streak, required this.onEdit, required this.onDelete,
   });
 
   @override
@@ -347,7 +348,7 @@ class _ListTile extends StatelessWidget {
     decoration: cardDecoration(context),
     child: Row(children: [
       ReorderableDragStartListener(
-        index: 0,
+        index: index,
         child: Padding(
           padding: const EdgeInsets.only(right: 10),
           child: Icon(Icons.drag_handle, color: kOceanBlue.withOpacity(0.5)),

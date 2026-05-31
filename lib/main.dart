@@ -7,6 +7,7 @@ import 'screens/today_screen.dart';
 import 'screens/manage_screen.dart';
 import 'screens/stats_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'services/notification_service.dart';
 import 'services/widget_service.dart';
 import 'services/sound_service.dart';
@@ -19,6 +20,7 @@ void main() async {
   await NotificationService.init();
   await WidgetService.init();
   await SoundService.init();
+  await StorageService.setInstallDateIfNew(); // record install date on first run
   await _seedIfEmpty();
   runApp(const HabitFlowApp());
 }
@@ -26,7 +28,7 @@ void main() async {
 Habit _preset(String name, String icon, String color, String freq, String time) =>
     Habit(
       id: const Uuid().v4(), name: name, icon: icon, color: color,
-      freq: freq, days: [1,2,3,4,5], reminderTime: time,
+      freq: freq, days: [1, 2, 3, 4, 5], reminderTime: time,
       createdAt: DateTime.now().millisecondsSinceEpoch,
     );
 
@@ -49,52 +51,72 @@ class HabitFlowApp extends StatefulWidget {
 }
 
 class _HabitFlowAppState extends State<HabitFlowApp> {
-  ThemeMode _themeMode = ThemeMode.light;
+  /// 'deep_ocean' (default) or 'sea_mist'
+  String _appTheme = 'deep_ocean';
+  bool _onboardingDone = true; // start true; set false if pref missing
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadTheme();
+    _loadPrefs();
   }
 
-  Future<void> _loadTheme() async {
+  Future<void> _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
-        _themeMode = prefs.getBool('dark_mode') == true
-            ? ThemeMode.dark
-            : ThemeMode.light;
+        _appTheme = prefs.getString('app_theme') ?? 'deep_ocean';
+        _onboardingDone = prefs.getBool('onboarding_done') ?? false;
+        _loading = false;
       });
     }
   }
 
-  void _toggleTheme(bool dark) async {
+  Future<void> _setTheme(String theme) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('dark_mode', dark);
-    if (mounted) setState(() => _themeMode = dark ? ThemeMode.dark : ThemeMode.light);
+    await prefs.setString('app_theme', theme);
+    if (mounted) setState(() => _appTheme = theme);
   }
+
+  Future<void> _completeOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboarding_done', true);
+    if (mounted) setState(() => _onboardingDone = true);
+  }
+
+  ThemeData get _themeData =>
+      _appTheme == 'sea_mist' ? AppTheme.seaMist : AppTheme.deepOcean;
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.deepOcean,
+        home: const Scaffold(
+          body: Center(child: CircularProgressIndicator(color: kSeaFoam)),
+        ),
+      );
+    }
+
     return MaterialApp(
       title: 'HabitFlow',
       debugShowCheckedModeBanner: false,
-      themeMode: _themeMode,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      home: MainShell(
-        onThemeChange: _toggleTheme,
-        isDark: _themeMode == ThemeMode.dark,
-      ),
+      theme: _themeData,
+      home: _onboardingDone
+          ? MainShell(appTheme: _appTheme, onThemeChange: _setTheme)
+          : OnboardingScreen(onComplete: _completeOnboarding),
     );
   }
 }
 
 // ── Shell with bottom nav ─────────────────────────────────
 class MainShell extends StatefulWidget {
-  final void Function(bool) onThemeChange;
-  final bool isDark;
-  const MainShell({super.key, required this.onThemeChange, required this.isDark});
+  final String appTheme;
+  final void Function(String) onThemeChange;
+  const MainShell(
+      {super.key, required this.appTheme, required this.onThemeChange});
   @override
   State<MainShell> createState() => _MainShellState();
 }
@@ -105,16 +127,22 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _index,
+      // TodayScreen lives in Offstage so its animation state is preserved
+      // across tab switches. All other screens rebuild when visited so they
+      // always show fresh data.
+      body: Stack(
         children: [
-          const TodayScreen(),
-          const ManageScreen(),
-          const StatsScreen(),
-          SettingsScreen(
-            onThemeChange: widget.onThemeChange,
-            isDark: widget.isDark,
+          Offstage(
+            offstage: _index != 0,
+            child: const TodayScreen(),
           ),
+          if (_index == 1) const ManageScreen(),
+          if (_index == 2) const StatsScreen(),
+          if (_index == 3)
+            SettingsScreen(
+              appTheme: widget.appTheme,
+              onThemeChange: widget.onThemeChange,
+            ),
         ],
       ),
       bottomNavigationBar: NavigationBar(

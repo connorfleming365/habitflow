@@ -54,6 +54,14 @@ jobs:
           cp android/app/src/main/res/values/strings.xml \
              /tmp/build_app/android/app/src/main/res/values/strings.xml
 
+      - name: Copy app icons
+        run: |
+          cp -r android/app/src/main/res/mipmap-mdpi   /tmp/build_app/android/app/src/main/res/
+          cp -r android/app/src/main/res/mipmap-hdpi   /tmp/build_app/android/app/src/main/res/
+          cp -r android/app/src/main/res/mipmap-xhdpi  /tmp/build_app/android/app/src/main/res/
+          cp -r android/app/src/main/res/mipmap-xxhdpi /tmp/build_app/android/app/src/main/res/
+          cp -r android/app/src/main/res/mipmap-xxxhdpi /tmp/build_app/android/app/src/main/res/
+
       - name: Add widget receiver to AndroidManifest
         run: |
           sed -i 's|</application>|    <receiver android:name=".HabitWidget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/habit_widget_info"/></receiver>\n    </application>|' \

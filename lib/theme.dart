@@ -17,75 +17,137 @@ const kDanger   = Color(0xFFFF7B5C); // coral — missed / delete
 const kPrimary = kReefBlue;
 
 class AppTheme {
-  static ThemeData get light => _build(Brightness.light);
-  static ThemeData get dark  => _build(Brightness.dark);
+  /// Dark navy ocean theme (default)
+  static ThemeData get deepOcean => _buildDark();
 
-  static ThemeData _build(Brightness brightness) {
-    final isDark = brightness == Brightness.dark;
-    return ThemeData(
-      useMaterial3: true,
-      brightness: brightness,
-      colorScheme: ColorScheme(
-        brightness: brightness,
-        primary:          kReefBlue,
-        onPrimary:        Colors.white,
-        secondary:        kSeaFoam,
-        onSecondary:      kDeepOcean,
-        surface:          isDark ? kMidnightTide : kMist,
-        onSurface:        isDark ? Colors.white   : kDeepOcean,
-        error:            kDanger,
-        onError:          Colors.white,
-        // M3 extras
-        primaryContainer: kOceanBlue,
-        onPrimaryContainer: Colors.white,
-        surfaceContainerHighest: isDark ? const Color(0xFF083348) : const Color(0xFFD0EAF5),
+  /// Light sky-blue "Sea Mist" theme
+  static ThemeData get seaMist => _buildSeaMist();
+
+  // Aliases so any remaining references compile
+  static ThemeData get light => _buildSeaMist();
+  static ThemeData get dark  => _buildDark();
+
+  static ThemeData _buildDark() => ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    colorScheme: const ColorScheme(
+      brightness: Brightness.dark,
+      primary:    kReefBlue,
+      onPrimary:  Colors.white,
+      secondary:  kSeaFoam,
+      onSecondary: kDeepOcean,
+      surface:    kMidnightTide,
+      onSurface:  Colors.white,
+      error:      kDanger,
+      onError:    Colors.white,
+      primaryContainer: kOceanBlue,
+      onPrimaryContainer: Colors.white,
+      surfaceContainerHighest: Color(0xFF083348),
+    ),
+    scaffoldBackgroundColor: kDeepOcean,
+    cardColor: kMidnightTide,
+    fontFamily: 'Roboto',
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: kMidnightTide,
+      indicatorColor:  kOceanBlue.withOpacity(0.35),
+      labelTextStyle: const WidgetStatePropertyAll(
+        TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kSeaFoam),
       ),
-      scaffoldBackgroundColor: isDark ? kDeepOcean : const Color(0xFF083A55),
-      cardColor:               isDark ? kMidnightTide : const Color(0xFF0A3D5C),
-      fontFamily: 'Roboto',
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor:  isDark ? kMidnightTide : const Color(0xFF083348),
-        indicatorColor:   kOceanBlue.withOpacity(0.35),
-        labelTextStyle: const WidgetStatePropertyAll(
-          TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kSeaFoam),
-        ),
-        iconTheme: WidgetStatePropertyAll(
-          IconThemeData(color: kSeaFoam.withOpacity(0.7)),
-        ),
+      iconTheme: WidgetStatePropertyAll(
+        IconThemeData(color: kSeaFoam.withOpacity(0.7)),
       ),
-      appBarTheme: AppBarTheme(
-        backgroundColor:       isDark ? kDeepOcean : const Color(0xFF062233),
-        elevation:             0,
-        scrolledUnderElevation: 0,
-        iconTheme:             const IconThemeData(color: kSeaFoam),
-        titleTextStyle: const TextStyle(
-          color: Colors.white,
-          fontSize: 22,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.5,
-        ),
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: kDeepOcean,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      iconTheme: IconThemeData(color: kSeaFoam),
+      titleTextStyle: TextStyle(
+        color: Colors.white, fontSize: 22,
+        fontWeight: FontWeight.w800, letterSpacing: -0.5,
       ),
-      dividerColor: kOceanBlue.withOpacity(0.3),
-      switchTheme: SwitchThemeData(
-        thumbColor: const WidgetStatePropertyAll(Colors.white),
-        trackColor: WidgetStateProperty.resolveWith((states) =>
-          states.contains(WidgetState.selected) ? kReefBlue : kMidnightTide),
+    ),
+    dividerColor: Color(0x4D0E6FA6),
+    switchTheme: SwitchThemeData(
+      thumbColor: const WidgetStatePropertyAll(Colors.white),
+      trackColor: WidgetStateProperty.resolveWith((states) =>
+        states.contains(WidgetState.selected) ? kReefBlue : kMidnightTide),
+    ),
+    dialogTheme: DialogTheme(
+      backgroundColor: kMidnightTide,
+      titleTextStyle: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+      contentTextStyle: const TextStyle(color: kSeaFoam, fontSize: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    ),
+    snackBarTheme: const SnackBarThemeData(
+      backgroundColor: kMidnightTide,
+      contentTextStyle: TextStyle(color: Colors.white),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(foregroundColor: kSeaFoam),
+    ),
+  );
+
+  static ThemeData _buildSeaMist() => ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.light,
+    colorScheme: ColorScheme(
+      brightness: Brightness.light,
+      primary:    kReefBlue,
+      onPrimary:  Colors.white,
+      secondary:  kOceanBlue,
+      onSecondary: Colors.white,
+      surface:    Colors.white,
+      onSurface:  kDeepOcean,
+      error:      kDanger,
+      onError:    Colors.white,
+      primaryContainer: kReefBlue.withOpacity(0.12),
+      onPrimaryContainer: kDeepOcean,
+      surfaceContainerHighest: const Color(0xFFD0E8F5),
+    ),
+    scaffoldBackgroundColor: const Color(0xFFEAF5FB),
+    cardColor: Colors.white,
+    fontFamily: 'Roboto',
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: Colors.white,
+      indicatorColor: kReefBlue.withOpacity(0.15),
+      labelTextStyle: const WidgetStatePropertyAll(
+        TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kOceanBlue),
       ),
-      dialogTheme: DialogTheme(
-        backgroundColor: kMidnightTide,
-        titleTextStyle: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
-        contentTextStyle: const TextStyle(color: kSeaFoam, fontSize: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      iconTheme: WidgetStatePropertyAll(
+        IconThemeData(color: kOceanBlue.withOpacity(0.8)),
       ),
-      snackBarTheme: const SnackBarThemeData(
-        backgroundColor: kMidnightTide,
-        contentTextStyle: TextStyle(color: Colors.white),
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: kReefBlue,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      iconTheme: IconThemeData(color: Colors.white),
+      titleTextStyle: TextStyle(
+        color: Colors.white, fontSize: 22,
+        fontWeight: FontWeight.w800, letterSpacing: -0.5,
       ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: kSeaFoam),
-      ),
-    );
-  }
+    ),
+    dividerColor: Color(0x330E6FA6),
+    switchTheme: SwitchThemeData(
+      thumbColor: const WidgetStatePropertyAll(Colors.white),
+      trackColor: WidgetStateProperty.resolveWith((states) =>
+        states.contains(WidgetState.selected) ? kReefBlue : const Color(0xFFCCE4F0)),
+    ),
+    dialogTheme: DialogTheme(
+      backgroundColor: Colors.white,
+      titleTextStyle: const TextStyle(color: kDeepOcean, fontSize: 18, fontWeight: FontWeight.w700),
+      contentTextStyle: const TextStyle(color: kMidnightTide, fontSize: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    ),
+    snackBarTheme: const SnackBarThemeData(
+      backgroundColor: kMidnightTide,
+      contentTextStyle: TextStyle(color: Colors.white),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(foregroundColor: kOceanBlue),
+    ),
+  );
 }
 
 // ── Utility helpers ───────────────────────────────────────

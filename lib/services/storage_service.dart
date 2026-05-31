@@ -75,6 +75,20 @@ class StorageService {
     return best;
   }
 
+  // ── Install date ────────────────────────────────────
+  static Future<String?> getInstallDate() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('install_date');
+  }
+
+  static Future<void> setInstallDateIfNew() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getString('install_date') != null) return;
+    final d = DateTime.now();
+    await prefs.setString('install_date',
+        '${d.year}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}');
+  }
+
   static ({int done, int total}) weekStats(
       List<Habit> habits, Set<String> completions) {
     int done = 0, total = 0;

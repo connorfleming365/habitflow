@@ -13,6 +13,7 @@ class StatsScreen extends StatefulWidget {
 class _StatsScreenState extends State<StatsScreen> {
   List<Habit> _habits = [];
   Set<String> _completions = {};
+  String? _installDate;
   int _calYear = DateTime.now().year;
   int _calMonth = DateTime.now().month - 1; // 0-indexed
 
@@ -20,9 +21,16 @@ class _StatsScreenState extends State<StatsScreen> {
   void initState() { super.initState(); _load(); }
 
   Future<void> _load() async {
-    final habits = await StorageService.loadHabits();
-    final comp   = await StorageService.loadCompletions();
-    if (mounted) setState(() { _habits = habits; _completions = comp; });
+    final habits      = await StorageService.loadHabits();
+    final comp        = await StorageService.loadCompletions();
+    final installDate = await StorageService.getInstallDate();
+    if (mounted) {
+      setState(() {
+        _habits = habits;
+        _completions = comp;
+        _installDate = installDate;
+      });
+    }
   }
 
   int _streakFor(Habit h) => StorageService.getStreak(h, _completions);
@@ -85,6 +93,7 @@ class _StatsScreenState extends State<StatsScreen> {
               completions: _completions,
               year: _calYear,
               month: _calMonth,
+              installDate: _installDate,
               onPrev: () => setState(() {
                 if (_calMonth == 0) { _calYear--; _calMonth = 11; }
                 else _calMonth--;
@@ -219,11 +228,13 @@ class _CalendarSection extends StatelessWidget {
   final List<Habit> habits;
   final Set<String> completions;
   final int year, month;
+  final String? installDate;
   final VoidCallback onPrev, onNext;
 
   const _CalendarSection({
     required this.habits, required this.completions,
     required this.year, required this.month,
+    this.installDate,
     required this.onPrev, required this.onNext,
   });
 
@@ -278,21 +289,22 @@ class _CalendarSection extends StatelessWidget {
             if (idx < startOffset) return const SizedBox();
             final day = idx - startOffset + 1;
             final ds = _dateKey(DateTime(year, month + 1, day));
-            final isFuture = ds.compareTo(todayStr) > 0;
-            final isToday  = ds == todayStr;
+            final isFuture    = ds.compareTo(todayStr) > 0;
+            final isToday     = ds == todayStr;
+            final isPreInstall = installDate != null && ds.compareTo(installDate!) < 0;
             final date = DateTime(year, month + 1, day);
             final scheduled = habits.where((h) => h.isScheduledOn(date)).toList();
             final done = scheduled.where((h) =>
                 completions.contains(StorageService.completionKey(h.id, date))).length;
-            final isPerfect = !isFuture && scheduled.isNotEmpty && done == scheduled.length;
-            final hasPartial = !isFuture && done > 0 && done < scheduled.length;
+            final isPerfect  = !isFuture && !isPreInstall && scheduled.isNotEmpty && done == scheduled.length;
+            final hasPartial = !isFuture && !isPreInstall && done > 0 && done < scheduled.length;
 
             Color dotColor;
-            if (isFuture)       dotColor = kOceanBlue.withOpacity(0.15);
-            else if (isPerfect) dotColor = kSuccess;
-            else if (hasPartial) dotColor = kWarning;
-            else if (scheduled.isEmpty) dotColor = kOceanBlue.withOpacity(0.2);
-            else                dotColor = kDanger.withOpacity(0.6);
+            if (isFuture || isPreInstall) dotColor = kOceanBlue.withOpacity(0.1);
+            else if (isPerfect)           dotColor = kSuccess;
+            else if (hasPartial)          dotColor = kWarning;
+            else if (scheduled.isEmpty)   dotColor = kOceanBlue.withOpacity(0.2);
+            else                          dotColor = kDanger.withOpacity(0.6);
 
             return Container(
               decoration: BoxDecoration(
@@ -307,7 +319,7 @@ class _CalendarSection extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 9,
                     fontWeight: isToday ? FontWeight.w800 : FontWeight.w400,
-                    color: isFuture ? kOceanBlue.withOpacity(0.4)
+                    color: (isFuture || isPreInstall) ? kOceanBlue.withOpacity(0.3)
                         : isPerfect || hasPartial ? kDeepOcean
                         : Colors.white70,
                   ),

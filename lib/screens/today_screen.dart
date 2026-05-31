@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/habit.dart';
 import '../services/storage_service.dart';
 import '../services/widget_service.dart';
@@ -20,6 +21,7 @@ class _TodayScreenState extends State<TodayScreen>
   List<Habit> _habits = [];
   Set<String> _completions = {};
   bool _loading = true;
+  bool _animsEnabled = true;
 
   late AnimationController _waveCtrl;
   late AnimationController _pctCtrl;
@@ -29,12 +31,27 @@ class _TodayScreenState extends State<TodayScreen>
   @override
   void initState() {
     super.initState();
-    _waveCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 4))
-      ..repeat();
-    _pctCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
+    _waveCtrl = AnimationController(
+        vsync: this, duration: const Duration(seconds: 4));
+    _pctCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 800));
     _pctAnim = Tween<double>(begin: 0, end: 0).animate(
-      CurvedAnimation(parent: _pctCtrl, curve: Curves.easeOut));
+        CurvedAnimation(parent: _pctCtrl, curve: Curves.easeOut));
+    _loadPrefs();
     _load();
+  }
+
+  Future<void> _loadPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final anims = prefs.getBool('anims_enabled') ?? true;
+    if (mounted) {
+      setState(() => _animsEnabled = anims);
+      if (anims) {
+        _waveCtrl.repeat();
+      } else {
+        _waveCtrl.stop();
+      }
+    }
   }
 
   @override
@@ -176,12 +193,18 @@ class _TodayScreenState extends State<TodayScreen>
               if (remaining.isNotEmpty) ...[
                 _sliverLabel("TODAY'S HABITS"),
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverList(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  sliver: SliverGrid(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio: 1.05,
+                    ),
                     delegate: SliverChildBuilderDelegate(
-                      (_, i) => _HabitCard(
-                        habit: remaining[i], done: false,
-                        delay: i * 60,
+                      (_, i) => _HabitGridCard(
+                        habit: remaining[i],
+                        done: false,
                         onTap: () => _toggle(remaining[i]),
                       ),
                       childCount: remaining.length,
@@ -192,11 +215,18 @@ class _TodayScreenState extends State<TodayScreen>
               if (done.isNotEmpty) ...[
                 _sliverLabel('COMPLETED ✓'),
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverList(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  sliver: SliverGrid(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio: 1.05,
+                    ),
                     delegate: SliverChildBuilderDelegate(
-                      (_, i) => _HabitCard(
-                        habit: done[i], done: true, delay: 0,
+                      (_, i) => _HabitGridCard(
+                        habit: done[i],
+                        done: true,
                         onTap: () => _toggle(done[i]),
                       ),
                       childCount: done.length,
@@ -206,10 +236,10 @@ class _TodayScreenState extends State<TodayScreen>
               ],
               if (allDone)
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   sliver: SliverToBoxAdapter(child: _AllDoneCard()),
                 ),
-              const SliverToBoxAdapter(child: SizedBox(height: 32)),
+              const SliverToBoxAdapter(child: SizedBox(height: 40)),
             ],
           ],
         ),
@@ -402,94 +432,76 @@ class _WavePainter extends CustomPainter {
       old.phase != phase || old.fill != fill;
 }
 
-// ── Habit card ────────────────────────────────────────────
-class _HabitCard extends StatefulWidget {
+// ── Habit grid card (2-column) ────────────────────────────
+class _HabitGridCard extends StatelessWidget {
   final Habit habit;
   final bool done;
-  final int delay;
   final VoidCallback onTap;
-  const _HabitCard({
-    required this.habit, required this.done,
-    required this.delay, required this.onTap,
+  const _HabitGridCard({
+    required this.habit, required this.done, required this.onTap,
   });
-  @override
-  State<_HabitCard> createState() => _HabitCardState();
-}
-
-class _HabitCardState extends State<_HabitCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 200));
-    _scale = Tween(begin: 0.94, end: 1.0)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
-    Future.delayed(Duration(milliseconds: widget.delay),
-        () { if (mounted) _ctrl.forward(); });
-  }
-
-  @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _scale,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 300),
-          opacity: widget.done ? 0.6 : 1.0,
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: widget.done
-                  ? const Color(0xFF083348)
-                  : kMidnightTide,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: widget.done
-                    ? kSuccess.withOpacity(0.3)
-                    : kOceanBlue.withOpacity(0.4),
-                width: 0.5,
-              ),
-            ),
-            child: Row(children: [
-              Container(
-                width: 46, height: 46,
-                decoration: BoxDecoration(
-                  color: kOceanBlue.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                alignment: Alignment.center,
-                child: Text(widget.habit.icon,
-                    style: const TextStyle(fontSize: 22)),
-              ),
-              const SizedBox(width: 14),
-              Expanded(child: Column(
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        decoration: BoxDecoration(
+          color: done
+              ? kSuccess.withOpacity(0.12)
+              : Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: done
+                ? kSuccess.withOpacity(0.5)
+                : kOceanBlue.withOpacity(0.4),
+            width: done ? 1.5 : 0.5,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top row: emoji + check circle
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.habit.name,
-                    style: TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w700,
-                      color: widget.done ? kSeaFoam.withOpacity(0.7) : Colors.white,
-                      decoration: widget.done ? TextDecoration.lineThrough : null,
-                      decorationColor: kSeaFoam.withOpacity(0.5),
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(widget.habit.freqLabel,
-                    style: const TextStyle(fontSize: 12, color: kSeaFoam, fontWeight: FontWeight.w500)),
+                  Text(habit.icon, style: const TextStyle(fontSize: 28)),
+                  _CheckCircle(checked: done),
                 ],
-              )),
-              const SizedBox(width: 10),
-              _CheckCircle(checked: widget.done),
-            ]),
+              ),
+              const Spacer(),
+              // Habit name
+              Text(
+                habit.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: done
+                      ? kSuccess
+                      : Theme.of(context).colorScheme.onSurface,
+                  decoration: done ? TextDecoration.lineThrough : null,
+                  decorationColor: kSuccess.withOpacity(0.6),
+                  height: 1.25,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                habit.freqLabel,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: done
+                      ? kSuccess.withOpacity(0.7)
+                      : kSeaFoam.withOpacity(0.8),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
       ),

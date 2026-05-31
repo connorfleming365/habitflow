@@ -65,9 +65,13 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       ));
     }
     await StorageService.saveHabits(habits);
-    final completions = await StorageService.loadCompletions();
-    await WidgetService.update(habits, completions);
-    await NotificationService.scheduleAll(habits);
+    try {
+      final completions = await StorageService.loadCompletions();
+      await WidgetService.update(habits, completions);
+      await NotificationService.scheduleAll(habits);
+    } catch (_) {
+      // non-fatal — notifications or widget may fail; still pop
+    }
     if (mounted) Navigator.pop(context, true);
   }
 
