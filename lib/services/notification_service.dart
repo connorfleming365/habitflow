@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -14,6 +15,14 @@ class NotificationService {
     if (kIsWeb) return;
     if (_initialized) return;
     tz.initializeTimeZones();
+    // Set the local timezone so zonedSchedule fires at the correct local time.
+    // Without this, tz.local defaults to UTC and reminders fire at the wrong hour.
+    try {
+      final String tzName = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(tzName));
+    } catch (_) {
+      // Fallback: stay on UTC — better than crashing
+    }
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
     const settings = InitializationSettings(android: android);
     await _plugin.initialize(settings);

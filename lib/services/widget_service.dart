@@ -1,11 +1,15 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/habit.dart';
 import 'storage_service.dart';
 
 /// Writes today's progress into SharedPreferences so the Android AppWidget
-/// can read it and render interactive habit rows.
+/// can read it, then forces an immediate widget redraw via MethodChannel.
 class WidgetService {
+  static const _channel = MethodChannel('com.habitflow.habitflow/widget');
+
   static Future<void> init() async {}
 
   static Future<void> update(List<Habit> habits, Set<String> completions) async {
@@ -16,7 +20,6 @@ class WidgetService {
         .length;
     final total = scheduled.length;
 
-    // Build per-habit JSON list that the Kotlin widget renders as interactive rows
     final habitJson = scheduled.map((h) => {
       'id':   h.id,
       'icon': h.icon,
@@ -25,12 +28,20 @@ class WidgetService {
     }).toList();
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('hf_done',       doneCount.toString());
-    await prefs.setString('hf_total',      total.toString());
-    await prefs.setString('hf_date',       _dayLabel(today));
+    await prefs.setString('hf_done',        doneCount.toString());
+    await prefs.setString('hf_total',       total.toString());
+    await prefs.setString('hf_date',        _dayLabel(today));
     await prefs.setString('hf_habits_json', jsonEncode(habitJson));
-    // Store today's date key so Kotlin can build the right completion key
-    await prefs.setString('hf_today_date', _dateKey(today));
+    await prefs.setString('hf_today_date',  _dateKey(today));
+
+    // Force the Android widget to redraw immediately
+    if (!kIsWeb) {
+      try {
+        await _channel.invokeMethod('forceWidgetUpdate');
+      } catch (_) {
+        // Silently ignore – widget refreshes on its own update cycle otherwise
+      }
+    }
   }
 
   static String _dayLabel(DateTime d) {

@@ -21,6 +21,9 @@ class StorageService {
   // stored as Set<String> of 'habitId_YYYY-MM-DD'
   static Future<Set<String>> loadCompletions() async {
     final prefs = await SharedPreferences.getInstance();
+    // reload() flushes the in-memory cache so we always see writes made by the
+    // Kotlin widget process (which shares the same SharedPreferences file).
+    await prefs.reload();
     return Set<String>.from(prefs.getStringList(_completionsKey) ?? []);
   }
 

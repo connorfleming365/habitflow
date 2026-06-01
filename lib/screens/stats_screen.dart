@@ -16,6 +16,9 @@ class _StatsScreenState extends State<StatsScreen> {
   String? _installDate;
   int _calYear = DateTime.now().year;
   int _calMonth = DateTime.now().month - 1; // 0-indexed
+  /// Incremented on every retro-edit save. Used as a ValueKey on _CalendarSection
+  /// so Flutter completely recreates the widget — guaranteed fresh color render.
+  int _refreshKey = 0;
 
   @override
   void initState() { super.initState(); _load(); }
@@ -130,8 +133,14 @@ class _StatsScreenState extends State<StatsScreen> {
                     await StorageService.saveCompletions(tempComp);
                     if (ctx.mounted) Navigator.pop(ctx);
                     if (mounted) {
-                      setState(() => _completions = tempComp); // immediate visual update
-                      await _load(); // sync from disk
+                      // Bump _refreshKey to force complete widget recreation —
+                      // guarantees calendar/graph/history all re-render with
+                      // the new completions immediately.
+                      setState(() {
+                        _completions = Set<String>.from(tempComp);
+                        _refreshKey++;
+                      });
+                      await _load();
                     }
                   },
                   child: const Text('Save changes',
@@ -199,6 +208,7 @@ class _StatsScreenState extends State<StatsScreen> {
 
             // ── Calendar heatmap ──────────────────────
             _CalendarSection(
+              key: ValueKey(_refreshKey),
               habits: _habits,
               completions: _completions,
               year: _calYear,
@@ -372,14 +382,8 @@ class _CalendarSection extends StatefulWidget {
 }
 
 class _CalendarSectionState extends State<_CalendarSection> {
-  bool _graphView = false; // false = Calendar (12-month), true = Graph (heatmap)
+  bool _graphView = false; // false = Calendar (single month), true = Graph (heatmap)
   final _graphScrollCtrl = ScrollController();
-
-  @override
-  void didUpdateWidget(_CalendarSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.completions != widget.completions) setState(() {});
-  }
 
   @override
   void dispose() {
@@ -441,7 +445,7 @@ class _CalendarSectionState extends State<_CalendarSection> {
           Text(
             _graphView
                 ? 'Graph View'
-                : 'Calendar View ${DateTime.now().year}',
+                : '${_monthNames[widget.month]} ${widget.year}',
             style: const TextStyle(color: Colors.white,
                 fontSize: 15, fontWeight: FontWeight.w700)),
           Row(mainAxisSize: MainAxisSize.min, children: [
@@ -468,7 +472,7 @@ class _CalendarSectionState extends State<_CalendarSection> {
           ]),
         ]),
         const SizedBox(height: 8),
-        if (_graphView) _buildGraphView() else _buildCalendarView(),
+        if (_graphView) _buildGraphView() else _buildMonthView(),
         const SizedBox(height: 12),
         // Legend
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -489,82 +493,64 @@ class _CalendarSectionState extends State<_CalendarSection> {
     );
   }
 
-  // ── Calendar View: full year (all 12 months) ─────────────
-  Widget _buildCalendarView() {
-    final todayStr  = _dateKey(DateTime.now());
-    final year      = DateTime.now().year;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (int m = 1; m <= 12; m++) ...[
-          Padding(
-            padding: const EdgeInsets.only(top: 12, bottom: 6),
-            child: Text(_monthNames[m - 1],
-              style: const TextStyle(color: Colors.white,
-                  fontSize: 12, fontWeight: FontWeight.w700)),
-          ),
-          // Day-of-week header
-          Row(children: _dayLabels.map((d) => Expanded(
-            child: Center(child: Text(d,
-              style: const TextStyle(color: kSeaFoam,
-                  fontSize: 9, fontWeight: FontWeight.w600))),
-          )).toList()),
-          const SizedBox(height: 4),
-          _buildMonthGrid(year, m, todayStr),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildMonthGrid(int year, int month, String todayStr) {
-    final firstDay    = DateTime(year, month, 1);
-    final daysInMonth = DateTime(year, month + 1, 0).day;
+  // ── Calendar View: single month with navigation ──────────
+  Widget _buildMonthView() {
+    final todayStr    = _dateKey(DateTime.now());
+    final firstDay    = DateTime(widget.year, widget.month + 1, 1);
+    final daysInMonth = DateTime(widget.year, widget.month + 2, 0).day;
     final startOffset = (firstDay.weekday - 1) % 7;
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 7, mainAxisSpacing: 3, crossAxisSpacing: 3,
-        childAspectRatio: 1.0),
-      itemCount: startOffset + daysInMonth,
-      itemBuilder: (_, idx) {
-        if (idx < startOffset) return const SizedBox();
-        final day  = idx - startOffset + 1;
-        final date = DateTime(year, month, day);
-        final ds   = _dateKey(date);
-        final isToday  = ds == todayStr;
-        final isFuture = ds.compareTo(todayStr) > 0;
-        final color    = _dayColor(date, todayStr, widget.installDate);
-        final isPerfect  = color == kSuccess;
-        final hasPartial = color == kWarning;
+    return Column(children: [
+      // Day-of-week header
+      Row(children: _dayLabels.map((d) => Expanded(
+        child: Center(child: Text(d,
+          style: const TextStyle(color: kSeaFoam,
+              fontSize: 10, fontWeight: FontWeight.w600))),
+      )).toList()),
+      const SizedBox(height: 6),
+      GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 7, mainAxisSpacing: 4, crossAxisSpacing: 4),
+        itemCount: startOffset + daysInMonth,
+        itemBuilder: (_, idx) {
+          if (idx < startOffset) return const SizedBox();
+          final day  = idx - startOffset + 1;
+          final date = DateTime(widget.year, widget.month + 1, day);
+          final ds   = _dateKey(date);
+          final isToday  = ds == todayStr;
+          final isFuture = ds.compareTo(todayStr) > 0;
+          final color    = _dayColor(date, todayStr, widget.installDate);
+          final isPerfect  = color == kSuccess;
+          final hasPartial = color == kWarning;
 
-        return GestureDetector(
-          onTap: isFuture ? null : () => widget.onDayTap(date),
-          child: Container(
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              border: isToday
-                  ? Border.all(color: kSeaFoam, width: 1.5)
-                  : null,
-            ),
-            child: Center(
-              child: Text('$day',
-                style: TextStyle(
-                  fontSize: 8,
-                  fontWeight: isToday ? FontWeight.w800 : FontWeight.w400,
-                  color: isFuture ? kOceanBlue.withOpacity(0.3)
-                      : isPerfect || hasPartial ? kDeepOcean
-                      : Colors.white70,
+          return GestureDetector(
+            onTap: isFuture ? null : () => widget.onDayTap(date),
+            child: Container(
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                border: isToday
+                    ? Border.all(color: kSeaFoam, width: 1.5)
+                    : null,
+              ),
+              child: Center(
+                child: Text('$day',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: isToday ? FontWeight.w800 : FontWeight.w400,
+                    color: isFuture ? kOceanBlue.withOpacity(0.3)
+                        : isPerfect || hasPartial ? kDeepOcean
+                        : Colors.white70,
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-      },
-    );
+          );
+        },
+      ),
+    ]);
   }
 
   // ── Graph View: per-habit heatmap with frozen names ───────

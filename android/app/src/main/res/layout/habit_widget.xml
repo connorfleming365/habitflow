@@ -67,8 +67,8 @@
             android:textColor="#DDFFFFFF" android:textSize="12sp"
             android:maxLines="1" android:ellipsize="end"/>
         <TextView android:id="@+id/habit_check_0"
-            android:layout_width="24dp" android:layout_height="wrap_content"
-            android:textSize="14sp" android:gravity="center"/>
+            android:layout_width="40dp" android:layout_height="wrap_content"
+            android:textSize="20sp" android:gravity="center"/>
     </LinearLayout>
 
     <LinearLayout
@@ -90,8 +90,8 @@
             android:textColor="#DDFFFFFF" android:textSize="12sp"
             android:maxLines="1" android:ellipsize="end"/>
         <TextView android:id="@+id/habit_check_1"
-            android:layout_width="24dp" android:layout_height="wrap_content"
-            android:textSize="14sp" android:gravity="center"/>
+            android:layout_width="40dp" android:layout_height="wrap_content"
+            android:textSize="20sp" android:gravity="center"/>
     </LinearLayout>
 
     <LinearLayout
@@ -113,8 +113,8 @@
             android:textColor="#DDFFFFFF" android:textSize="12sp"
             android:maxLines="1" android:ellipsize="end"/>
         <TextView android:id="@+id/habit_check_2"
-            android:layout_width="24dp" android:layout_height="wrap_content"
-            android:textSize="14sp" android:gravity="center"/>
+            android:layout_width="40dp" android:layout_height="wrap_content"
+            android:textSize="20sp" android:gravity="center"/>
     </LinearLayout>
 
     <LinearLayout
@@ -136,8 +136,8 @@
             android:textColor="#DDFFFFFF" android:textSize="12sp"
             android:maxLines="1" android:ellipsize="end"/>
         <TextView android:id="@+id/habit_check_3"
-            android:layout_width="24dp" android:layout_height="wrap_content"
-            android:textSize="14sp" android:gravity="center"/>
+            android:layout_width="40dp" android:layout_height="wrap_content"
+            android:textSize="20sp" android:gravity="center"/>
     </LinearLayout>
 
     <LinearLayout
@@ -159,8 +159,8 @@
             android:textColor="#DDFFFFFF" android:textSize="12sp"
             android:maxLines="1" android:ellipsize="end"/>
         <TextView android:id="@+id/habit_check_4"
-            android:layout_width="24dp" android:layout_height="wrap_content"
-            android:textSize="14sp" android:gravity="center"/>
+            android:layout_width="40dp" android:layout_height="wrap_content"
+            android:textSize="20sp" android:gravity="center"/>
     </LinearLayout>
 
     <!-- ── Date footer ── -->

@@ -20,9 +20,20 @@ void main() async {
   await NotificationService.init();
   await WidgetService.init();
   await SoundService.init();
-  await StorageService.setInstallDateIfNew(); // record install date on first run
+  await StorageService.setInstallDateIfNew();
   await _seedIfEmpty();
+  await _rescheduleNotifsIfEnabled();
   runApp(const HabitFlowApp());
+}
+
+/// Re-schedule all habit reminders on every cold start (Android kills exact
+/// alarms on reboot/reinstall, so we need to restore them when the app opens).
+Future<void> _rescheduleNotifsIfEnabled() async {
+  final prefs = await SharedPreferences.getInstance();
+  if (!(prefs.getBool('notifs_enabled') ?? false)) return;
+  final habits = await StorageService.loadHabits();
+  final globalTime = prefs.getString('global_reminder_time') ?? '08:00';
+  await NotificationService.scheduleAll(habits, globalTime: globalTime);
 }
 
 Habit _preset(String name, String icon, String color, String freq, String time) =>
@@ -121,9 +132,30 @@ class MainShell extends StatefulWidget {
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   int _index = 0;
   final _todayKey = GlobalKey<TodayScreenState>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Reload Today when the app returns to the foreground – this picks up
+  /// any completions the user toggled directly from the Android widget.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _todayKey.currentState?.reload();
+    }
+  }
 
   void _onTabSelected(int i) {
     // Reload Today data when switching back to it from another tab

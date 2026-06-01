@@ -165,16 +165,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   static String _stageNameFor(int days) {
     if (days >= 180) return 'Ocean';
-    if (days >= 60)  return 'Lake';
-    if (days >= 21)  return 'Stream';
+    if (days >= 90)  return 'Lake';
+    if (days >= 45)  return 'Stream';
+    if (days >= 21)  return 'Pond';
     if (days >= 7)   return 'Puddle';
     return 'Droplets';
   }
 
   static String _stageEmojiFor(int days) {
     if (days >= 180) return '🌅';
-    if (days >= 60)  return '🏞️';
-    if (days >= 21)  return '🌊';
+    if (days >= 90)  return '🏞️';
+    if (days >= 45)  return '🌊';
+    if (days >= 21)  return '🌿';
     if (days >= 7)   return '💦';
     return '💧';
   }

@@ -44,6 +44,8 @@ jobs:
           mkdir -p /tmp/build_app/android/app/src/main/res/xml
           cp android/app/src/main/kotlin/com/habitflow/app/HabitWidget.kt \
              /tmp/build_app/android/app/src/main/kotlin/com/habitflow/habitflow/
+          cp android/app/src/main/kotlin/com/habitflow/app/MainActivity.kt \
+             /tmp/build_app/android/app/src/main/kotlin/com/habitflow/habitflow/
           cp android/app/src/main/res/layout/habit_widget.xml \
              /tmp/build_app/android/app/src/main/res/layout/
           cp android/app/src/main/res/xml/habit_widget_info.xml \
