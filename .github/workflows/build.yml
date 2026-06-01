@@ -24,11 +24,6 @@ jobs:
           flutter-version: '3.22.0'
           channel: 'stable'
 
-      - name: Install Android SDK platform 35
-        run: |
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" 2>/dev/null || \
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35"
-
       - name: Scaffold clean Flutter project
         run: |
           flutter create --org com.habitflow --project-name habitflow /tmp/build_app
@@ -71,13 +66,6 @@ jobs:
         run: |
           sed -i 's|</application>|    <receiver android:name=".HabitWidget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/habit_widget_info"/></receiver>\n    </application>|' \
             /tmp/build_app/android/app/src/main/AndroidManifest.xml
-
-      - name: Patch compileSdk 35 for audioplayers
-        run: |
-          sed -i -E 's/compileSdk[[:space:]]+flutter\.compileSdkVersion/compileSdk 35/g' \
-            /tmp/build_app/android/app/build.gradle
-          sed -i -E 's/compileSdkVersion[[:space:]]+flutter\.compileSdkVersion/compileSdkVersion 35/g' \
-            /tmp/build_app/android/app/build.gradle
 
       - name: Get dependencies
         working-directory: /tmp/build_app
