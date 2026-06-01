@@ -24,6 +24,11 @@ jobs:
           flutter-version: '3.22.0'
           channel: 'stable'
 
+      - name: Install Android SDK platform 35
+        run: |
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" 2>/dev/null || \
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35"
+
       - name: Scaffold clean Flutter project
         run: |
           flutter create --org com.habitflow --project-name habitflow /tmp/build_app

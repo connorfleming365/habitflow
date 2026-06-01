@@ -17,8 +17,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notifsEnabled = false;
   bool _soundsEnabled = true;
-  bool _animsEnabled  = true;
-  bool _gridView      = true;
 
   @override
   void initState() {
@@ -32,8 +30,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {
         _notifsEnabled = prefs.getBool('notifs_enabled') ?? false;
         _soundsEnabled = prefs.getBool('sounds_enabled') ?? true;
-        _animsEnabled  = prefs.getBool('anims_enabled')  ?? true;
-        _gridView      = prefs.getBool('habit_grid_view') ?? true;
       });
     }
   }
@@ -175,18 +171,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 setState(() => _soundsEnabled = v);
               },
             ),
-            _DividerLine(isDark: isDark),
-            _ToggleRow(
-              icon: '🌊',
-              title: 'Wave animations',
-              subtitle: 'Animated wave on Today screen',
-              value: _animsEnabled,
-              isDark: isDark,
-              onChanged: (v) {
-                _setPref('anims_enabled', v);
-                setState(() => _animsEnabled = v);
-              },
-            ),
           ]),
           const SizedBox(height: 16),
 
@@ -233,13 +217,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _DividerLine(isDark: isDark),
             _ToggleRow(
               icon: '⊞',
-              title: 'Grid view for habits',
-              subtitle: 'Show habits as 3-column grid',
-              value: _gridView,
-              isDark: isDark,
-              onChanged: (v) {
-                _setPref('habit_grid_view', v);
-                setState(() => _gridView = v);
               },
             ),
           ]),
@@ -502,3 +479,4 @@ class _IconBox extends StatelessWidget {
         child: Text(icon, style: const TextStyle(fontSize: 17)),
       );
 }
+                                                            

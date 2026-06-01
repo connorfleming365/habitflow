@@ -203,35 +203,50 @@ class _ManageScreenState extends State<ManageScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: kMidnightTide,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(width: 40, height: 4,
-              decoration: BoxDecoration(color: kOceanBlue,
-                  borderRadius: BorderRadius.circular(2))),
-          const SizedBox(height: 16),
-          Row(children: [
-            Text(h.icon, style: const TextStyle(fontSize: 28)),
-            const SizedBox(width: 12),
-            Text(h.name,
-              style: const TextStyle(color: Colors.white,
-                  fontSize: 18, fontWeight: FontWeight.w700)),
-          ]),
-          const SizedBox(height: 20),
-          _sheetBtn(Icons.edit_outlined, 'Edit habit', kSeaFoam, () async {
-            Navigator.pop(context);
-            await Navigator.push(context,
-                MaterialPageRoute(builder: (_) => AddHabitScreen(existing: h)));
-            _load();
-          }),
-          const SizedBox(height: 10),
-          _sheetBtn(Icons.delete_outline, 'Delete habit', kDanger, () {
-            Navigator.pop(context);
-            _delete(h);
-          }),
-        ]),
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.55,
+        minChildSize: 0.4,
+        maxChildSize: 0.85,
+        builder: (_, scrollCtrl) => ListView(
+          controller: scrollCtrl,
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          children: [
+            // Handle
+            Center(
+              child: Container(width: 40, height: 4,
+                  decoration: BoxDecoration(color: kOceanBlue,
+                      borderRadius: BorderRadius.circular(2))),
+            ),
+            const SizedBox(height: 16),
+            // Habit name header
+            Row(children: [
+              Text(h.icon, style: const TextStyle(fontSize: 28)),
+              const SizedBox(width: 12),
+              Expanded(child: Text(h.name,
+                style: const TextStyle(color: Colors.white,
+                    fontSize: 18, fontWeight: FontWeight.w700))),
+            ]),
+            const SizedBox(height: 20),
+            // 30-day history strip
+            _HabitHistoryStrip(habit: h, completions: _completions),
+            const SizedBox(height: 20),
+            _sheetBtn(Icons.edit_outlined, 'Edit habit', kSeaFoam, () async {
+              Navigator.pop(context);
+              await Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => AddHabitScreen(existing: h)));
+              _load();
+            }),
+            const SizedBox(height: 10),
+            _sheetBtn(Icons.delete_outline, 'Delete habit', kDanger, () {
+              Navigator.pop(context);
+              _delete(h);
+            }),
+          ],
+        ),
       ),
     );
   }
@@ -390,4 +405,83 @@ class _ListTile extends StatelessWidget {
     final h = int.parse(p[0]); final m = int.parse(p[1]);
     return '${h % 12 == 0 ? 12 : h % 12}:${m.toString().padLeft(2,'0')}${h < 12 ? 'am' : 'pm'}';
   }
+}
+
+
+// ── Habit 30-day history strip (used in detail bottom sheet) ─
+class _HabitHistoryStrip extends StatelessWidget {
+  final Habit habit;
+  final Set<String> completions;
+  const _HabitHistoryStrip({required this.habit, required this.completions});
+
+  static String _fmt(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  @override
+  Widget build(BuildContext context) {
+    final today = DateTime.now();
+    const days = 30;
+    final dates =
+        List.generate(days, (i) => today.subtract(Duration(days: days - 1 - i)));
+    final todayStr = _fmt(today);
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Text('LAST 30 DAYS',
+          style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: kSeaFoam)),
+      const SizedBox(height: 8),
+      Row(
+        children: dates.map((date) {
+          final ds = _fmt(date);
+          final isToday = ds == todayStr;
+          final scheduled = habit.isScheduledOn(date);
+          final done = completions
+              .contains(StorageService.completionKey(habit.id, date));
+
+          Color color;
+          if (!scheduled) {
+            color = kOceanBlue.withOpacity(0.1);
+          } else if (done) {
+            color = kSuccess;
+          } else {
+            color = kDanger.withOpacity(0.5);
+          }
+
+          return Expanded(
+            child: Container(
+              height: 28,
+              margin: const EdgeInsets.symmetric(horizontal: 1),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(4),
+                border: isToday
+                    ? Border.all(color: kSeaFoam, width: 1.5)
+                    : null,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+      const SizedBox(height: 6),
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Text(
+          '${dates.first.day} ${_monthAbbr(dates.first.month)}',
+          style: const TextStyle(color: kSeaFoam, fontSize: 9),
+        ),
+        Text(
+          'Today',
+          style: const TextStyle(color: kSeaFoam, fontSize: 9),
+        ),
+      ]),
+    ]);
+  }
+
+  static const _months = [
+    '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+  static String _monthAbbr(int m) => _months[m];
 }

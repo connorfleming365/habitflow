@@ -118,6 +118,22 @@ class _StatsScreenState extends State<StatsScreen> {
                 streak: _streakFor(h),
                 maxStreak: _habits.map(_streakFor).fold(1, (a, b) => a > b ? a : b),
               )),
+              const SizedBox(height: 24),
+            ],
+
+            // ── Per-habit day strips ──────────────────
+            if (_habits.isNotEmpty) ...[
+              const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: Text('HABIT HISTORY',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+                      letterSpacing: 1.0, color: kSeaFoam)),
+              ),
+              ..._habits.map((h) => _HabitDayStrip(
+                habit: h,
+                completions: _completions,
+                installDate: _installDate,
+              )),
             ],
           ],
         ),
@@ -396,4 +412,119 @@ class _StreakRow extends StatelessWidget {
           fontSize: 12, fontWeight: FontWeight.w700)),
     ]),
   );
+}
+
+// ── Per-habit scrollable day strip ───────────────────────
+class _HabitDayStrip extends StatelessWidget {
+  final Habit habit;
+  final Set<String> completions;
+  final String? installDate;
+
+  const _HabitDayStrip({
+    required this.habit,
+    required this.completions,
+    this.installDate,
+  });
+
+  static String _fmt(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
+
+  @override
+  Widget build(BuildContext context) {
+    final today = DateTime.now();
+    const days = 60;
+    final dates = List.generate(days,
+        (i) => today.subtract(Duration(days: days - 1 - i)));
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF083348),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: kOceanBlue.withOpacity(0.25), width: 0.5),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Text(habit.icon, style: const TextStyle(fontSize: 16)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(habit.name,
+              style: const TextStyle(color: Colors.white,
+                  fontSize: 13, fontWeight: FontWeight.w600)),
+          ),
+          const Text('← swipe',
+            style: TextStyle(color: kSeaFoam, fontSize: 9,
+                fontStyle: FontStyle.italic)),
+        ]),
+        const SizedBox(height: 10),
+        // Scrollable day dots — oldest to newest (left to right)
+        SizedBox(
+          height: 22,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: dates.length,
+            itemBuilder: (_, i) {
+              final date = dates[i];
+              final ds = _fmt(date);
+              final isToday = ds == _fmt(today);
+              final isPreInstall = installDate != null &&
+                  ds.compareTo(installDate!) < 0;
+              final scheduled = habit.isScheduledOn(date);
+              final done = completions.contains(
+                  StorageService.completionKey(habit.id, date));
+
+              Color dotColor;
+              if (isPreInstall || !scheduled) {
+                dotColor = kOceanBlue.withOpacity(0.1);
+              } else if (done) {
+                dotColor = kSuccess;
+              } else {
+                dotColor = kDanger.withOpacity(0.55);
+              }
+
+              return Container(
+                width: 20,
+                alignment: Alignment.center,
+                child: Container(
+                  width: isToday ? 16 : 12,
+                  height: isToday ? 16 : 12,
+                  decoration: BoxDecoration(
+                    color: dotColor,
+                    shape: BoxShape.circle,
+                    border: isToday
+                        ? Border.all(color: kSeaFoam, width: 1.5)
+                        : null,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 4),
+        // Month labels
+        SizedBox(
+          height: 10,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: dates.length,
+            itemBuilder: (_, i) {
+              final date = dates[i];
+              final showLabel = date.day == 1 || i == 0;
+              const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May',
+                  'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+              return SizedBox(
+                width: 20,
+                child: showLabel
+                    ? Text(months[date.month],
+                        style: const TextStyle(color: kSeaFoam, fontSize: 8))
+                    : null,
+              );
+            },
+          ),
+        ),
+      ]),
+    );
+  }
 }

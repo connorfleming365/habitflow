@@ -443,66 +443,82 @@ class _HabitGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = done ? kSuccess : hexColor(habit.color);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         decoration: BoxDecoration(
           color: done
-              ? kSuccess.withOpacity(0.12)
+              ? kSuccess.withOpacity(0.10)
               : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: done
-                ? kSuccess.withOpacity(0.5)
-                : kOceanBlue.withOpacity(0.4),
-            width: done ? 1.5 : 0.5,
+            color: accentColor.withOpacity(done ? 0.6 : 0.35),
+            width: done ? 1.5 : 0.8,
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top row: emoji + check circle
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(habit.icon, style: const TextStyle(fontSize: 28)),
-                  _CheckCircle(checked: done),
-                ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Coloured accent bar at top
+            Container(
+              height: 4,
+              decoration: BoxDecoration(
+                color: accentColor.withOpacity(done ? 0.8 : 0.55),
+                borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(15)),
               ),
-              const Spacer(),
-              // Habit name
-              Text(
-                habit.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: done
-                      ? kSuccess
-                      : Theme.of(context).colorScheme.onSurface,
-                  decoration: done ? TextDecoration.lineThrough : null,
-                  decorationColor: kSuccess.withOpacity(0.6),
-                  height: 1.25,
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Emoji + check circle
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(habit.icon,
+                            style: const TextStyle(fontSize: 26)),
+                        _CheckCircle(checked: done, color: accentColor),
+                      ],
+                    ),
+                    const Spacer(),
+                    Text(
+                      habit.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: done
+                            ? kSuccess
+                            : Theme.of(context).colorScheme.onSurface,
+                        decoration:
+                            done ? TextDecoration.lineThrough : null,
+                        decorationColor: kSuccess.withOpacity(0.6),
+                        height: 1.25,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      habit.freqLabel,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: done
+                            ? kSuccess.withOpacity(0.7)
+                            : kSeaFoam.withOpacity(0.8),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 3),
-              Text(
-                habit.freqLabel,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: done
-                      ? kSuccess.withOpacity(0.7)
-                      : kSeaFoam.withOpacity(0.8),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -511,24 +527,25 @@ class _HabitGridCard extends StatelessWidget {
 
 class _CheckCircle extends StatelessWidget {
   final bool checked;
-  const _CheckCircle({required this.checked});
+  final Color? color;
+  const _CheckCircle({required this.checked, this.color});
   @override
-  Widget build(BuildContext context) => AnimatedContainer(
-    duration: const Duration(milliseconds: 300),
-    curve: Curves.elasticOut,
-    width: 34, height: 34,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      color: checked ? kSuccess : Colors.transparent,
-      border: Border.all(
-        color: checked ? kSuccess : kOceanBlue,
-        width: 2,
+  Widget build(BuildContext context) {
+    final c = color ?? kSuccess;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.elasticOut,
+      width: 28, height: 28,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: checked ? c : Colors.transparent,
+        border: Border.all(color: checked ? c : c.withOpacity(0.5), width: 2),
       ),
-    ),
-    child: checked
-        ? const Icon(Icons.check, color: Colors.white, size: 18)
-        : null,
-  );
+      child: checked
+          ? const Icon(Icons.check, color: Colors.white, size: 16)
+          : null,
+    );
+  }
 }
 
 // ── Empty state ───────────────────────────────────────────
@@ -580,11 +597,11 @@ class _AllDoneCard extends StatelessWidget {
     child: const Column(children: [
       Text('🌊', style: TextStyle(fontSize: 40)),
       SizedBox(height: 10),
-      Text('All done!',
+      Text('Flow complete!',
         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800,
             color: kSuccess)),
       SizedBox(height: 4),
-      Text('Another drop in your ocean.\nSee you tomorrow.',
+      Text('Your ocean is rising.\nSee you tomorrow.',
         textAlign: TextAlign.center,
         style: TextStyle(color: kSuccess, fontSize: 13, height: 1.5)),
     ]),
