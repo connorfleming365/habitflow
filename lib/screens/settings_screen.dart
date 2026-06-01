@@ -48,14 +48,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (mounted) {
         setState(() => _notifsEnabled = true);
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('💧 Reminders enabled!')));
+            const SnackBar(content: Text('Reminders enabled!')));
       }
     } catch (_) {
       if (mounted) {
         setState(() => _notifsEnabled = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Could not enable reminders. Check app permissions.')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Could not enable reminders. Check app permissions.')));
       }
     }
   }
@@ -98,8 +98,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: const Text('Cancel')),
                 TextButton(
                     onPressed: () => Navigator.pop(context, true),
-                    child:
-                        const Text('Reset', style: TextStyle(color: kDanger))),
+                    child: const Text('Reset',
+                        style: TextStyle(color: kDanger))),
               ],
             ));
     if (confirm != true) return;
@@ -121,7 +121,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
         children: [
 
-          // ── Reminders ─────────────────────────────
+          // Reminders
           _Section(label: 'Reminders', isDark: isDark, children: [
             _ToggleRow(
               icon: '🔔',
@@ -135,7 +135,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 } else {
                   _setPref('notifs_enabled', false);
                   setState(() => _notifsEnabled = false);
-                  NotificationService.scheduleAll([]); // cancel all
+                  NotificationService.scheduleAll([]);
                 }
               },
             ),
@@ -149,17 +149,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 final habits = await StorageService.loadHabits();
                 await NotificationService.scheduleAll(habits);
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('⏰ Reminders rescheduled!')));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Reminders rescheduled!')));
                 }
               },
             ),
           ]),
           const SizedBox(height: 16),
 
-          // ── Sounds & feel ─────────────────────────
-          _Section(label: 'Sounds & feel', isDark: isDark, children: [
+          // Sounds
+          _Section(label: 'Sounds', isDark: isDark, children: [
             _ToggleRow(
               icon: '💧',
               title: 'Water drop sounds',
@@ -174,9 +173,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ]),
           const SizedBox(height: 16),
 
-          // ── Appearance ────────────────────────────
+          // Appearance
           _Section(label: 'Appearance', isDark: isDark, children: [
-            // Theme selector
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -214,15 +212,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
-            _DividerLine(isDark: isDark),
-            _ToggleRow(
-              icon: '⊞',
-              },
-            ),
           ]),
           const SizedBox(height: 16),
 
-          // ── Data ──────────────────────────────────
+          // Data
           _Section(label: 'Data', isDark: isDark, children: [
             _ActionRow(
               icon: '💾',
@@ -243,7 +236,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ]),
           const SizedBox(height: 16),
 
-          // ── About ─────────────────────────────────
+          // About
           _Section(label: 'About', isDark: isDark, children: [
             _InfoRow(
               icon: '🌊',
@@ -258,14 +251,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-// ── Theme option card ─────────────────────────────────────
+// Theme option card
 class _ThemeOption extends StatelessWidget {
   final String name, subtitle, emoji;
   final bool selected, isDark;
   final VoidCallback onTap;
   const _ThemeOption({
-    required this.name, required this.subtitle, required this.emoji,
-    required this.selected, required this.isDark, required this.onTap,
+    required this.name,
+    required this.subtitle,
+    required this.emoji,
+    required this.selected,
+    required this.isDark,
+    required this.onTap,
   });
 
   @override
@@ -294,8 +291,7 @@ class _ThemeOption extends StatelessWidget {
                   fontWeight: FontWeight.w700)),
           Text(subtitle,
               style: TextStyle(
-                  color: isDark ? kSeaFoam : kOceanBlue,
-                  fontSize: 10)),
+                  color: isDark ? kSeaFoam : kOceanBlue, fontSize: 10)),
           if (selected)
             Padding(
               padding: const EdgeInsets.only(top: 6),
@@ -307,7 +303,7 @@ class _ThemeOption extends StatelessWidget {
   }
 }
 
-// ── Section wrapper ───────────────────────────────────────
+// Section wrapper
 class _Section extends StatelessWidget {
   final String label;
   final bool isDark;
@@ -354,14 +350,18 @@ class _DividerLine extends StatelessWidget {
       );
 }
 
-// ── Row types ─────────────────────────────────────────────
+// Row types
 class _ToggleRow extends StatelessWidget {
   final String icon, title, subtitle;
   final bool value, isDark;
   final ValueChanged<bool> onChanged;
   const _ToggleRow({
-    required this.icon, required this.title, required this.subtitle,
-    required this.value, required this.isDark, required this.onChanged,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.isDark,
+    required this.onChanged,
   });
 
   @override
@@ -385,10 +385,7 @@ class _ToggleRow extends StatelessWidget {
                         color: isDark ? kSeaFoam : kOceanBlue,
                         fontSize: 12)),
               ])),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-          ),
+          Switch(value: value, onChanged: onChanged),
         ]),
       );
 }
@@ -399,8 +396,12 @@ class _ActionRow extends StatelessWidget {
   final bool isDark;
   final VoidCallback onTap;
   const _ActionRow({
-    required this.icon, required this.title, required this.subtitle,
-    this.titleColor, required this.isDark, required this.onTap,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.titleColor,
+    required this.isDark,
+    required this.onTap,
   });
 
   @override
@@ -418,8 +419,8 @@ class _ActionRow extends StatelessWidget {
                     children: [
                   Text(title,
                       style: TextStyle(
-                          color: titleColor ??
-                              (isDark ? Colors.white : kDeepOcean),
+                          color:
+                              titleColor ?? (isDark ? Colors.white : kDeepOcean),
                           fontSize: 14,
                           fontWeight: FontWeight.w600)),
                   const SizedBox(height: 1),
@@ -438,9 +439,12 @@ class _ActionRow extends StatelessWidget {
 class _InfoRow extends StatelessWidget {
   final String icon, title, subtitle;
   final bool isDark;
-  const _InfoRow(
-      {required this.icon, required this.title,
-       required this.subtitle, required this.isDark});
+  const _InfoRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -479,4 +483,3 @@ class _IconBox extends StatelessWidget {
         child: Text(icon, style: const TextStyle(fontSize: 17)),
       );
 }
-                                                            
