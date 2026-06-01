@@ -12,12 +12,12 @@ enum WaterStage {
 
 class ProgressionService {
   static const _stageDays = [0, 7, 21, 60, 180];
-  static const _stageNames = ['Drop', 'Puddle', 'Stream', 'Lake', 'Ocean'];
+  static const _stageNames = ['Droplets', 'Puddle', 'Stream', 'Lake', 'Ocean'];
   static const _stageEmojis = ['💧', '💦', '🌊', '🏞️', '🌅'];
   static const _stageDescriptions = [
-    'Every ocean starts with a single drop.',
-    'Your drops are forming a puddle.',
-    'Your consistency is building a stream.',
+    'Every ocean starts with a single drop.\nComplete your daily habits to grow your flow and build your ocean.',
+    'Your drops are forming a puddle. Keep showing up.',
+    'Your consistency is building a stream. Keep flowing.',
     'You\'ve filled a lake. Keep flowing.',
     'You\'ve reached the ocean. You are the tide.',
   ];
@@ -50,7 +50,7 @@ class ProgressionService {
     for (final threshold in _stageDays) {
       if (days < threshold) return threshold - days;
     }
-    return 0; // ocean — no next stage
+    return 0;
   }
 
   static int nextThreshold(int days) {
@@ -67,6 +67,29 @@ class ProgressionService {
     final start = _stageDays[stage.index];
     final end   = _stageDays[stage.index + 1];
     return (days - start) / (end - start);
+  }
+
+  /// Milestone day thresholds
+  static const milestones = [7, 21, 60, 180];
+
+  static String milestoneTitle(int days) {
+    switch (days) {
+      case 7:   return 'First Week! 💦';
+      case 21:  return 'Three Weeks Strong! 🌊';
+      case 60:  return 'Two Months! 🏞️';
+      case 180: return 'Half a Year! 🌅';
+      default:  return 'Milestone! 💧';
+    }
+  }
+
+  static String milestoneMessage(int days) {
+    switch (days) {
+      case 7:   return 'Your drops are becoming a puddle.\nSeven days of showing up. That\'s real.';
+      case 21:  return 'Science says 21 days builds a habit.\nYou\'re now flowing like a stream.';
+      case 60:  return 'Two months of consistency.\nYour lake is deep and clear.';
+      case 180: return 'Half a year. You didn\'t just build habits —\nyou became the ocean.';
+      default:  return 'Keep flowing.';
+    }
   }
 }
 

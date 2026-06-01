@@ -482,9 +482,10 @@ class _HabitDayStripState extends State<_HabitDayStrip> {
                 fontStyle: FontStyle.italic)),
         ]),
         const SizedBox(height: 10),
-        // Scrollable day dots — oldest to newest (left=oldest, right=today)
+        // Scrollable day strip — oldest to newest (left=oldest, right=today)
+        // Each column: day-of-week letter → dot with date number
         SizedBox(
-          height: 22,
+          height: 52,
           child: ListView.builder(
             controller: _scrollCtrl,
             scrollDirection: Axis.horizontal,
@@ -508,43 +509,64 @@ class _HabitDayStripState extends State<_HabitDayStrip> {
                 dotColor = kDanger.withOpacity(0.55);
               }
 
-              return Container(
-                width: 20,
-                alignment: Alignment.center,
-                child: Container(
-                  width: isToday ? 16 : 12,
-                  height: isToday ? 16 : 12,
-                  decoration: BoxDecoration(
-                    color: dotColor,
-                    shape: BoxShape.circle,
-                    border: isToday
-                        ? Border.all(color: kSeaFoam, width: 1.5)
-                        : null,
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 4),
-        // Month labels (static — aligned to dot strip)
-        SizedBox(
-          height: 10,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: dates.length,
-            itemBuilder: (_, i) {
-              final date = dates[i];
-              final showLabel = date.day == 1 || i == 0;
+              const dayLetters = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+              final dayLetter = dayLetters[date.weekday - 1];
+              final isMonday = date.weekday == 1;
+              // Show month label at month boundary or start
               const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May',
                   'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+              final showMonth = date.day == 1 || i == 0;
+
               return SizedBox(
-                width: 20,
-                child: showLabel
-                    ? Text(months[date.month],
-                        style: const TextStyle(color: kSeaFoam, fontSize: 8))
-                    : null,
+                width: 28,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    // Day-of-week letter
+                    Text(
+                      showMonth ? months[date.month] : dayLetter,
+                      style: TextStyle(
+                        color: showMonth
+                            ? kReefBlue
+                            : isToday
+                                ? kSeaFoam
+                                : kSeaFoam.withOpacity(0.45),
+                        fontSize: 7,
+                        fontWeight: showMonth || isToday
+                            ? FontWeight.w700
+                            : FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    // Dot with date number inside
+                    Container(
+                      width: isToday ? 24 : 22,
+                      height: isToday ? 24 : 22,
+                      decoration: BoxDecoration(
+                        color: dotColor,
+                        shape: BoxShape.circle,
+                        border: isToday
+                            ? Border.all(color: kSeaFoam, width: 1.5)
+                            : null,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '${date.day}',
+                        style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: isToday
+                              ? FontWeight.w800
+                              : FontWeight.w500,
+                          color: (isPreInstall || !scheduled)
+                              ? kSeaFoam.withOpacity(0.3)
+                              : done
+                                  ? kDeepOcean
+                                  : Colors.white70,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               );
             },
           ),

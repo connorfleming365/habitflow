@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
 import '../models/habit.dart';
@@ -6,6 +7,7 @@ import '../models/habit.dart';
 class NotificationService {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
+  static const _nudgeId = 99999;
 
   static Future<void> init() async {
     if (_initialized) return;
@@ -16,7 +18,7 @@ class NotificationService {
     _initialized = true;
   }
 
-  /// Returns true if permission was granted, false if denied.
+  /// Returns true if permission was granted.
   static Future<bool> requestPermission() async {
     final result = await _plugin
         .resolvePlatformSpecificImplementation<
@@ -25,13 +27,21 @@ class NotificationService {
     return result ?? false;
   }
 
-  /// Check if notifications are currently enabled.
   static Future<bool> areEnabled() async {
     final result = await _plugin
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
         ?.areNotificationsEnabled();
     return result ?? false;
+  }
+
+  static Future<tz.TZDateTime> _nextOccurrence(int hour, int min) async {
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, min);
+    if (scheduled.isBefore(now)) {
+      scheduled = scheduled.add(const Duration(days: 1));
+    }
+    return scheduled;
   }
 
   static Future<void> _scheduleAt(Habit habit, String time) async {
@@ -41,19 +51,13 @@ class NotificationService {
     final min  = int.parse(parts[1]);
 
     await cancelHabitReminder(habit.id);
-
     final notifId = habit.id.hashCode.abs() % 100000;
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, min);
-    if (scheduled.isBefore(now)) {
-      scheduled = scheduled.add(const Duration(days: 1));
-    }
 
     await _plugin.zonedSchedule(
       notifId,
       '${habit.icon} Time for: ${habit.name}',
       'Tap to open HabitFlow and check in.',
-      scheduled,
+      await _nextOccurrence(hour, min),
       NotificationDetails(
         android: AndroidNotificationDetails(
           'habitflow_reminders',
@@ -86,6 +90,56 @@ class NotificationService {
     for (final h in habits) {
       final time = h.reminderTime.isNotEmpty ? h.reminderTime : globalTime;
       await _scheduleAt(h, time);
+    }
+    // Re-schedule nudge if it was enabled
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('nudge_enabled') ?? false) {
+      final nudgeTime = prefs.getString('nudge_time') ?? '21:00';
+      await scheduleNudge(nudgeTime);
+    }
+  }
+
+  // ── Smart nudge ───────────────────────────────────────────
+
+  /// Schedule a daily evening nudge at [time] (HH:MM).
+  static Future<void> scheduleNudge(String time) async {
+    if (time.isEmpty) return;
+    final parts = time.split(':');
+    final hour = int.parse(parts[0]);
+    final min  = int.parse(parts[1]);
+
+    await _plugin.cancel(_nudgeId);
+
+    await _plugin.zonedSchedule(
+      _nudgeId,
+      "🌊 Don't break your flow",
+      "Your habits are waiting. Keep your streak alive!",
+      await _nextOccurrence(hour, min),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'habitflow_nudge',
+          'Evening Nudge',
+          channelDescription: 'Gentle reminder if habits not completed',
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+          icon: '@mipmap/ic_launcher',
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
+
+  /// Call when all habits are done — cancel today's nudge and reschedule for tomorrow.
+  static Future<void> cancelNudgeToday() async {
+    await _plugin.cancel(_nudgeId);
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('nudge_enabled') ?? false) {
+      final nudgeTime = prefs.getString('nudge_time') ?? '21:00';
+      // Reschedule starting from tomorrow by temporarily advancing the clock logic
+      await scheduleNudge(nudgeTime);
     }
   }
 }

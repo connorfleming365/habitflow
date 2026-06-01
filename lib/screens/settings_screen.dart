@@ -18,7 +18,9 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notifsEnabled = false;
   bool _soundsEnabled = true;
+  bool _nudgeEnabled = false;
   String _reminderTime = '08:00';
+  String _nudgeTime = '21:00';
 
   @override
   void initState() {
@@ -32,7 +34,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {
         _notifsEnabled = prefs.getBool('notifs_enabled') ?? false;
         _soundsEnabled = prefs.getBool('sounds_enabled') ?? true;
+        _nudgeEnabled  = prefs.getBool('nudge_enabled') ?? false;
         _reminderTime  = prefs.getString('global_reminder_time') ?? '08:00';
+        _nudgeTime     = prefs.getString('nudge_time') ?? '21:00';
       });
     }
   }
@@ -122,6 +126,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final period = h < 12 ? 'AM' : 'PM';
     final displayH = h % 12 == 0 ? 12 : h % 12;
     return '$displayH:${m.toString().padLeft(2, '0')} $period';
+  }
+
+  Future<void> _pickNudgeTime() async {
+    final parts = _nudgeTime.split(':');
+    final initial = TimeOfDay(
+        hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+    final picked = await showTimePicker(context: context, initialTime: initial);
+    if (picked == null || !mounted) return;
+
+    final formatted =
+        '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+    setState(() => _nudgeTime = formatted);
+    await _setStringPref('nudge_time', formatted);
+
+    if (_nudgeEnabled) {
+      await NotificationService.scheduleNudge(formatted);
+    }
   }
 
   Future<void> _exportData() async {
@@ -225,6 +246,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       content: Text('Reminders rescheduled!')));
                 }
               },
+            ),
+            _DividerLine(isDark: isDark),
+            _ToggleRow(
+              icon: '🌙',
+              title: 'Evening nudge',
+              subtitle: 'Gentle reminder if habits not done',
+              value: _nudgeEnabled,
+              isDark: isDark,
+              onChanged: (v) async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('nudge_enabled', v);
+                setState(() => _nudgeEnabled = v);
+                if (v) {
+                  await NotificationService.scheduleNudge(_nudgeTime);
+                } else {
+                  await NotificationService.cancelNudgeToday();
+                }
+              },
+            ),
+            _DividerLine(isDark: isDark),
+            _ActionRow(
+              icon: '🕘',
+              title: 'Nudge time',
+              subtitle: _fmtTime(_nudgeTime),
+              isDark: isDark,
+              onTap: _pickNudgeTime,
             ),
           ]),
           const SizedBox(height: 16),
