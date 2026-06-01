@@ -370,6 +370,7 @@ class _CalendarSection extends StatefulWidget {
   final VoidCallback onPrev, onNext;
 
   const _CalendarSection({
+    super.key,
     required this.habits, required this.completions,
     required this.year, required this.month,
     this.installDate,
