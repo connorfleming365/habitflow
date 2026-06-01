@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -10,6 +11,7 @@ class NotificationService {
   static const _nudgeId = 99999;
 
   static Future<void> init() async {
+    if (kIsWeb) return;
     if (_initialized) return;
     tz.initializeTimeZones();
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -20,6 +22,7 @@ class NotificationService {
 
   /// Returns true if permission was granted.
   static Future<bool> requestPermission() async {
+    if (kIsWeb) return false;
     final result = await _plugin
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
@@ -28,6 +31,7 @@ class NotificationService {
   }
 
   static Future<bool> areEnabled() async {
+    if (kIsWeb) return false;
     final result = await _plugin
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
@@ -45,6 +49,7 @@ class NotificationService {
   }
 
   static Future<void> _scheduleAt(Habit habit, String time) async {
+    if (kIsWeb) return;
     if (time.isEmpty) return;
     final parts = time.split(':');
     final hour = int.parse(parts[0]);
@@ -76,16 +81,19 @@ class NotificationService {
   }
 
   static Future<void> scheduleHabitReminder(Habit habit) async {
+    if (kIsWeb) return;
     await _scheduleAt(habit, habit.reminderTime);
   }
 
   static Future<void> cancelHabitReminder(String habitId) async {
+    if (kIsWeb) return;
     final notifId = habitId.hashCode.abs() % 100000;
     await _plugin.cancel(notifId);
   }
 
   /// Schedule all habits. [globalTime] is used for habits with no specific time.
   static Future<void> scheduleAll(List<Habit> habits, {String globalTime = ''}) async {
+    if (kIsWeb) return;
     await _plugin.cancelAll();
     for (final h in habits) {
       final time = h.reminderTime.isNotEmpty ? h.reminderTime : globalTime;
@@ -103,6 +111,7 @@ class NotificationService {
 
   /// Schedule a daily evening nudge at [time] (HH:MM).
   static Future<void> scheduleNudge(String time) async {
+    if (kIsWeb) return;
     if (time.isEmpty) return;
     final parts = time.split(':');
     final hour = int.parse(parts[0]);
@@ -134,11 +143,11 @@ class NotificationService {
 
   /// Call when all habits are done — cancel today's nudge and reschedule for tomorrow.
   static Future<void> cancelNudgeToday() async {
+    if (kIsWeb) return;
     await _plugin.cancel(_nudgeId);
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool('nudge_enabled') ?? false) {
       final nudgeTime = prefs.getString('nudge_time') ?? '21:00';
-      // Reschedule starting from tomorrow by temporarily advancing the clock logic
       await scheduleNudge(nudgeTime);
     }
   }

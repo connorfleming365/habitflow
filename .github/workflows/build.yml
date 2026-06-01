@@ -1,4 +1,4 @@
-name: Build HabitFlow APK
+name: Build HabitFlow
 
 on:
   push:
@@ -6,7 +6,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+
+  # ── Android APK ────────────────────────────────────────────
+  build-android:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -25,8 +27,7 @@ jobs:
           channel: 'stable'
 
       - name: Scaffold clean Flutter project
-        run: |
-          flutter create --org com.habitflow --project-name habitflow /tmp/build_app
+        run: flutter create --org com.habitflow --project-name habitflow /tmp/build_app
 
       - name: Copy Dart source & pubspec
         run: |
@@ -56,10 +57,10 @@ jobs:
 
       - name: Copy app icons
         run: |
-          cp -r android/app/src/main/res/mipmap-mdpi   /tmp/build_app/android/app/src/main/res/
-          cp -r android/app/src/main/res/mipmap-hdpi   /tmp/build_app/android/app/src/main/res/
-          cp -r android/app/src/main/res/mipmap-xhdpi  /tmp/build_app/android/app/src/main/res/
-          cp -r android/app/src/main/res/mipmap-xxhdpi /tmp/build_app/android/app/src/main/res/
+          cp -r android/app/src/main/res/mipmap-mdpi    /tmp/build_app/android/app/src/main/res/
+          cp -r android/app/src/main/res/mipmap-hdpi    /tmp/build_app/android/app/src/main/res/
+          cp -r android/app/src/main/res/mipmap-xhdpi   /tmp/build_app/android/app/src/main/res/
+          cp -r android/app/src/main/res/mipmap-xxhdpi  /tmp/build_app/android/app/src/main/res/
           cp -r android/app/src/main/res/mipmap-xxxhdpi /tmp/build_app/android/app/src/main/res/
 
       - name: Add widget receiver to AndroidManifest
@@ -70,7 +71,6 @@ jobs:
       - name: Add notification & alarm permissions to AndroidManifest
         run: |
           MANIFEST=/tmp/build_app/android/app/src/main/AndroidManifest.xml
-          # Insert permissions before the <application tag
           sed -i 's|<application|<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n    <application|' \
             "$MANIFEST"
 
@@ -88,3 +88,101 @@ jobs:
           name: habitflow-release
           path: /tmp/build_app/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
+
+  # ── Web PWA → GitHub Pages ─────────────────────────────────
+  deploy-web:
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.0'
+          channel: 'stable'
+
+      - name: Enable Flutter web
+        run: flutter config --enable-web
+
+      - name: Scaffold Flutter project with web support
+        run: flutter create --org com.habitflow --project-name habitflow /tmp/web_app
+
+      - name: Copy Dart source & pubspec
+        run: |
+          rm -rf /tmp/web_app/lib/*
+          cp -r lib/. /tmp/web_app/lib/
+          cp pubspec.yaml /tmp/web_app/pubspec.yaml
+          mkdir -p /tmp/web_app/assets/sounds
+          cp -r assets/. /tmp/web_app/assets/ 2>/dev/null || true
+
+      - name: Patch web/index.html for PWA
+        run: |
+          # Set app name and theme colour in the generated index.html
+          sed -i 's|<title>habitflow</title>|<title>HabitFlow</title>|' \
+            /tmp/web_app/web/index.html
+          # Add apple-mobile-web-app meta tags for iOS "Add to Home Screen"
+          sed -i 's|</head>|  <meta name="apple-mobile-web-app-capable" content="yes">\n  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n  <meta name="apple-mobile-web-app-title" content="HabitFlow">\n  <meta name="theme-color" content="#041C2C">\n</head>|' \
+            /tmp/web_app/web/index.html
+
+      - name: Patch web/manifest.json for PWA
+        run: |
+          cat > /tmp/web_app/web/manifest.json << 'EOF'
+          {
+            "name": "HabitFlow",
+            "short_name": "HabitFlow",
+            "description": "Drop by drop, build your ocean.",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#041C2C",
+            "theme_color": "#041C2C",
+            "orientation": "portrait",
+            "icons": [
+              {
+                "src": "icons/Icon-192.png",
+                "sizes": "192x192",
+                "type": "image/png"
+              },
+              {
+                "src": "icons/Icon-512.png",
+                "sizes": "512x512",
+                "type": "image/png"
+              },
+              {
+                "src": "icons/Icon-maskable-192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "maskable"
+              },
+              {
+                "src": "icons/Icon-maskable-512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "maskable"
+              }
+            ]
+          }
+          EOF
+
+      - name: Get dependencies
+        working-directory: /tmp/web_app
+        run: flutter pub get
+
+      - name: Build web release
+        working-directory: /tmp/web_app
+        run: flutter build web --release --base-href /habitflow/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/web_app/build/web
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
