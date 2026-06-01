@@ -43,6 +43,17 @@ class _StatsScreenState extends State<StatsScreen> {
     final dateStr  = _fmt(date);
     if (dateStr.compareTo(todayStr) > 0) return; // no future editing
 
+    // Limit retro editing to the last 7 days to keep flow stage meaningful
+    final cutoff = DateTime.now().subtract(const Duration(days: 7));
+    final cutoffStr = _fmt(DateTime(cutoff.year, cutoff.month, cutoff.day));
+    if (dateStr.compareTo(cutoffStr) < 0) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Editing is limited to the last 7 days')));
+      }
+      return;
+    }
+
     final scheduled = _habits.where((h) => h.isScheduledOn(date)).toList();
     if (scheduled.isEmpty) {
       if (mounted) {
@@ -117,8 +128,8 @@ class _StatsScreenState extends State<StatsScreen> {
                   ),
                   onPressed: () async {
                     await StorageService.saveCompletions(tempComp);
-                    if (mounted) setState(() => _completions = tempComp);
                     if (ctx.mounted) Navigator.pop(ctx);
+                    if (mounted) await _load(); // full reload updates calendar colours
                   },
                   child: const Text('Save changes',
                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
@@ -359,6 +370,21 @@ class _CalendarSection extends StatefulWidget {
 
 class _CalendarSectionState extends State<_CalendarSection> {
   bool _yearView = false;
+  final _yearScrollCtrl = ScrollController();
+
+  @override
+  void dispose() {
+    _yearScrollCtrl.dispose();
+    super.dispose();
+  }
+
+  void _scrollYearToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_yearScrollCtrl.hasClients) {
+        _yearScrollCtrl.jumpTo(_yearScrollCtrl.position.maxScrollExtent);
+      }
+    });
+  }
 
   static const _monthNames = ['January','February','March','April','May','June',
     'July','August','September','October','November','December'];
@@ -415,14 +441,17 @@ class _CalendarSectionState extends State<_CalendarSection> {
                   onPressed: widget.onNext,
                   icon: const Icon(Icons.chevron_right, color: kSeaFoam)),
             GestureDetector(
-              onTap: () => setState(() => _yearView = !_yearView),
+              onTap: () {
+              setState(() => _yearView = !_yearView);
+              if (!_yearView) _scrollYearToEnd();
+            },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: kOceanBlue.withOpacity(0.25),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Text(_yearView ? 'Month' : 'Year',
+                child: Text(_yearView ? '← Month' : '📊 Year',
                   style: const TextStyle(color: kSeaFoam,
                       fontSize: 11, fontWeight: FontWeight.w700)),
               ),
@@ -512,69 +541,123 @@ class _CalendarSectionState extends State<_CalendarSection> {
 
   Widget _buildYearView() {
     final todayStr = _dateKey(DateTime.now());
-    final today = DateTime.now();
-    // Start from 52 weeks ago (Monday of that week)
-    final currentWeekMonday = today.subtract(Duration(days: today.weekday - 1));
-    final gridStart = currentWeekMonday.subtract(const Duration(days: 51 * 7));
-    // 52 weeks × 7 days
-    const totalWeeks = 52;
+    final today    = DateTime.now();
+    const days     = 90; // ~3 months of history
+    const cellSize = 10.0;
+    const cellGap  = 2.0;
+    const nameWidth = 82.0;
+
+    final dates = List.generate(days,
+        (i) => today.subtract(Duration(days: days - 1 - i)));
+
+    final habits = widget.habits;
+
+    if (habits.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(
+          child: Text('Add habits to see your overview',
+              style: TextStyle(color: kSeaFoam, fontSize: 12))),
+      );
+    }
+
+    // Scroll to the end (today) after build
+    _scrollYearToEnd();
 
     return SingleChildScrollView(
+      controller: _yearScrollCtrl,
       scrollDirection: Axis.horizontal,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // Month labels row
-        SizedBox(
-          height: 14,
-          child: Row(
-            children: List.generate(totalWeeks, (w) {
-              final weekStart = gridStart.add(Duration(days: w * 7));
-              // Show label if this is the first week of a month or week 0
-              final showLabel = weekStart.day <= 7 || w == 0;
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Month labels ─────────────────────────────────
+          Row(children: [
+            const SizedBox(width: nameWidth),
+            ...dates.map((date) {
+              final show = date.day == 1 || date == dates.first;
               return SizedBox(
-                width: 13,
-                child: showLabel
-                    ? Text(_monthShort[weekStart.month - 1],
-                        style: const TextStyle(color: kSeaFoam, fontSize: 7,
-                            fontWeight: FontWeight.w600))
+                width: cellSize + cellGap,
+                child: show
+                    ? Text(_monthShort[date.month - 1],
+                        style: const TextStyle(color: kReefBlue,
+                            fontSize: 7, fontWeight: FontWeight.w700))
                     : null,
               );
             }),
-          ),
-        ),
-        const SizedBox(height: 3),
-        // Grid: rows = days of week, cols = weeks
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Day labels column
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: ['M','','W','','F','','S'].map((d) => SizedBox(
-                height: 11,
-                width: 12,
-                child: Text(d,
-                  style: const TextStyle(color: kSeaFoam, fontSize: 7)),
-              )).toList(),
-            ),
-            const SizedBox(width: 2),
-            // Week columns
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: List.generate(totalWeeks, (w) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(7, (d) {
-                    final date = gridStart.add(Duration(days: w * 7 + d));
-                    final ds = _dateKey(date);
-                    final isFuture = ds.compareTo(todayStr) > 0;
-                    final isToday  = ds == todayStr;
-                    final color = _dayColor(date, todayStr, widget.installDate);
+          ]),
+
+          // ── Day-of-month numbers (every 5th) ─────────────
+          Row(children: [
+            const SizedBox(width: nameWidth),
+            ...dates.map((date) {
+              final show = date.day % 5 == 0;
+              return SizedBox(
+                width: cellSize + cellGap,
+                child: show
+                    ? Text('${date.day}',
+                        style: const TextStyle(color: kSeaFoam, fontSize: 6))
+                    : null,
+              );
+            }),
+          ]),
+          const SizedBox(height: 5),
+
+          // ── One row per habit ─────────────────────────────
+          ...habits.map((habit) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 5),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Habit label
+                  SizedBox(
+                    width: nameWidth,
+                    child: Row(children: [
+                      Text(habit.icon,
+                          style: const TextStyle(fontSize: 11)),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(habit.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600)),
+                      ),
+                    ]),
+                  ),
+
+                  // Day cells
+                  ...dates.map((date) {
+                    final ds          = _dateKey(date);
+                    final isFuture    = ds.compareTo(todayStr) > 0;
+                    final isToday     = ds == todayStr;
+                    final isPreInstall = widget.installDate != null &&
+                        ds.compareTo(widget.installDate!) < 0;
+                    final scheduled   = habit.isScheduledOn(date);
+                    final done        = widget.completions.contains(
+                        StorageService.completionKey(habit.id, date));
+
+                    Color color;
+                    if (!scheduled || isPreInstall || isFuture) {
+                      color = kOceanBlue.withOpacity(0.08);
+                    } else if (done) {
+                      color = kSuccess;
+                    } else {
+                      color = kDanger.withOpacity(0.6);
+                    }
 
                     return GestureDetector(
-                      onTap: isFuture ? null : () => widget.onDayTap(date),
+                      onTap: (isFuture || isPreInstall)
+                          ? null
+                          : () => widget.onDayTap(date),
                       child: Container(
-                        width: 9, height: 9,
-                        margin: const EdgeInsets.all(1),
+                        width: cellSize,
+                        height: cellSize,
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: cellGap / 2),
                         decoration: BoxDecoration(
                           color: color,
                           borderRadius: BorderRadius.circular(2),
@@ -585,12 +668,12 @@ class _CalendarSectionState extends State<_CalendarSection> {
                       ),
                     );
                   }),
-                );
-              }),
-            ),
-          ],
-        ),
-      ]),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 

@@ -19,7 +19,7 @@ class ProgressionService {
     'Your drops are forming a puddle. Keep showing up.',
     'Your consistency is building a stream. Keep flowing.',
     'You\'ve filled a lake. Keep flowing.',
-    'You\'ve reached the ocean. You are the tide.',
+    'You\'ve reached the ocean. You are the tide.\nKeep up your incredible work.',
   ];
 
   /// Count how many distinct days had at least one completion.
