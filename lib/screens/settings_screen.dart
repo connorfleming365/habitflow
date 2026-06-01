@@ -160,7 +160,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         'I\'m at the $stage stage — tracking ${habits.length} habits and flowing stronger every day. 🌊\n\n'
         'Drop by drop, you build your ocean.';
 
-    await SharePlus.instance.share(ShareParams(text: text));
+    await Share.share(text);
   }
 
   static String _stageNameFor(int days) {
