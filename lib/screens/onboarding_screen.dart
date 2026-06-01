@@ -43,7 +43,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           '🏔 Lake — Days 60 to 179\n'
           'Two months of consistency. Impressive.\n\n'
           '🌊 Ocean — Day 180+\n'
-          'You've built something extraordinary.',
+          'You\'ve built something extraordinary.',
     ),
     _OnboardPage(
       emoji: '🌅',

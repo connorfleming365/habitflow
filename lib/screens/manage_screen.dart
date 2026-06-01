@@ -418,7 +418,7 @@ class _HabitHistoryStrip extends StatelessWidget {
   const _HabitHistoryStrip({required this.habit, required this.completions, this.installDate});
 
   static String _fmt(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+      '${d.year}-${d.month.toString().padLeft(2, "0")}-${d.day.toString().padLeft(2, "0")}';
 
   @override
   Widget build(BuildContext context) {
@@ -443,9 +443,9 @@ class _HabitHistoryStrip extends StatelessWidget {
           final scheduled = habit.isScheduledOn(date);
           final done = completions
               .contains(StorageService.completionKey(habit.id, date));
-
           final isPreInstall = installDate != null &&
               ds.compareTo(installDate!) < 0;
+
           Color color;
           if (!scheduled || isPreInstall) {
             color = kOceanBlue.withOpacity(0.1);
@@ -469,4 +469,24 @@ class _HabitHistoryStrip extends StatelessWidget {
             ),
           );
         }).toList(),
-      
+      ),
+      const SizedBox(height: 6),
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Text(
+          '${dates.first.day} ${_monthAbbr(dates.first.month)}',
+          style: const TextStyle(color: kSeaFoam, fontSize: 9),
+        ),
+        Text(
+          'Today',
+          style: const TextStyle(color: kSeaFoam, fontSize: 9),
+        ),
+      ]),
+    ]);
+  }
+
+  static const _months = [
+    '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+  static String _monthAbbr(int m) => _months[m];
+}
