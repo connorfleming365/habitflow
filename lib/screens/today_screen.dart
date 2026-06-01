@@ -217,7 +217,7 @@ class TodayScreenState extends State<TodayScreen>
                       crossAxisCount: 3,
                       mainAxisSpacing: 10,
                       crossAxisSpacing: 10,
-                      childAspectRatio: 0.78,
+                      childAspectRatio: 1.0,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (_, i) => _HabitDropCard(
@@ -238,7 +238,7 @@ class TodayScreenState extends State<TodayScreen>
                       crossAxisCount: 3,
                       mainAxisSpacing: 10,
                       crossAxisSpacing: 10,
-                      childAspectRatio: 0.78,
+                      childAspectRatio: 1.0,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (_, i) => _HabitDropCard(
@@ -290,7 +290,7 @@ class _WaveHeader extends StatelessWidget {
 
   String get _flowGreeting {
     if (total == 0) return 'Start your flow';
-    if (allDone)    return 'Ocean complete! 🌊';
+    if (allDone)    return 'Flow complete! 🌊';
     if (done == 0)  return 'Make your first drop 💧';
     if (pct < 0.5)  return 'Your tide is rising 🌊';
     return 'Almost there, keep flowing';
@@ -338,23 +338,31 @@ class _WaveHeader extends StatelessWidget {
                     Text(_flowGreeting, style: const TextStyle(
                         color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
                   ]),
-                  GestureDetector(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: kOceanBlue.withOpacity(0.4),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: kSeaFoam.withOpacity(0.4)),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('STAGE',
+                        style: TextStyle(color: kSeaFoam, fontSize: 9,
+                            fontWeight: FontWeight.w700, letterSpacing: 1.2)),
+                      const SizedBox(height: 3),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: kOceanBlue.withOpacity(0.4),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: kSeaFoam.withOpacity(0.4)),
+                        ),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Text(ProgressionService.stageEmoji(stage),
+                              style: const TextStyle(fontSize: 14)),
+                          const SizedBox(width: 5),
+                          Text(ProgressionService.stageName(stage),
+                              style: const TextStyle(color: Colors.white,
+                                  fontSize: 12, fontWeight: FontWeight.w700)),
+                        ]),
                       ),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Text(ProgressionService.stageEmoji(stage),
-                            style: const TextStyle(fontSize: 14)),
-                        const SizedBox(width: 5),
-                        Text(ProgressionService.stageName(stage),
-                            style: const TextStyle(color: Colors.white,
-                                fontSize: 12, fontWeight: FontWeight.w700)),
-                      ]),
-                    ),
+                    ],
                   ),
                 ]),
                 const Spacer(),

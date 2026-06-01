@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:share_plus/share_plus.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
 import '../theme.dart';
@@ -143,6 +144,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (_nudgeEnabled) {
       await NotificationService.scheduleNudge(formatted);
     }
+  }
+
+  Future<void> _shareProgress() async {
+    final habits = await StorageService.loadHabits();
+    final completions = await StorageService.loadCompletions();
+    final activeDays = completions
+        .map((k) => k.split('_').last)
+        .toSet()
+        .length;
+    final stage = _stageNameFor(activeDays);
+    final stageEmoji = _stageEmojiFor(activeDays);
+
+    final text = '$stageEmoji I\'ve been building my flow for $activeDays days on HabitFlow!\n\n'
+        'I\'m at the $stage stage — tracking ${habits.length} habits and flowing stronger every day. 🌊\n\n'
+        'Drop by drop, you build your ocean.';
+
+    await SharePlus.instance.share(ShareParams(text: text));
+  }
+
+  static String _stageNameFor(int days) {
+    if (days >= 180) return 'Ocean';
+    if (days >= 60)  return 'Lake';
+    if (days >= 21)  return 'Stream';
+    if (days >= 7)   return 'Puddle';
+    return 'Droplets';
+  }
+
+  static String _stageEmojiFor(int days) {
+    if (days >= 180) return '🌅';
+    if (days >= 60)  return '🏞️';
+    if (days >= 21)  return '🌊';
+    if (days >= 7)   return '💦';
+    return '💧';
   }
 
   Future<void> _exportData() async {
@@ -351,6 +385,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               titleColor: kDanger,
               isDark: isDark,
               onTap: _clearData,
+            ),
+          ]),
+          const SizedBox(height: 16),
+
+          // Share
+          _Section(label: 'Share', isDark: isDark, children: [
+            _ActionRow(
+              icon: '🌊',
+              title: 'Share my progress',
+              subtitle: 'Tell friends about your flow',
+              isDark: isDark,
+              onTap: _shareProgress,
             ),
           ]),
           const SizedBox(height: 16),

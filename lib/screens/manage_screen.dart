@@ -93,7 +93,7 @@ class _ManageScreenState extends State<ManageScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('My Habits'),
-            Text('Track and manage your daily flow',
+            Text('Manage your Habits. Edit or add new ones.',
               style: TextStyle(fontSize: 11, color: kSeaFoam,
                   fontWeight: FontWeight.w400)),
           ],

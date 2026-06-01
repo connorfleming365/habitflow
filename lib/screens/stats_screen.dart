@@ -35,6 +35,102 @@ class _StatsScreenState extends State<StatsScreen> {
 
   int _streakFor(Habit h) => StorageService.getStreak(h, _completions);
 
+  static String _fmt(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
+
+  Future<void> _showRetroEdit(DateTime date) async {
+    final todayStr = _fmt(DateTime.now());
+    final dateStr  = _fmt(date);
+    if (dateStr.compareTo(todayStr) > 0) return; // no future editing
+
+    final scheduled = _habits.where((h) => h.isScheduledOn(date)).toList();
+    if (scheduled.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No habits scheduled on this day')));
+      }
+      return;
+    }
+
+    var tempComp = Set<String>.from(_completions);
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: kMidnightTide,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModal) {
+          const dayNames  = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+          const monNames  = ['Jan','Feb','Mar','Apr','May','Jun',
+                             'Jul','Aug','Sep','Oct','Nov','Dec'];
+          final label = '${dayNames[date.weekday-1]}, ${monNames[date.month-1]} ${date.day}';
+
+          return Padding(
+            padding: EdgeInsets.fromLTRB(20, 16, 20,
+                MediaQuery.of(ctx).viewInsets.bottom + 32),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Container(width: 36, height: 4,
+                decoration: BoxDecoration(color: kOceanBlue,
+                    borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 16),
+              Text(label,
+                  style: const TextStyle(color: Colors.white,
+                      fontSize: 16, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 2),
+              const Text('Tap habits to toggle completion',
+                  style: TextStyle(color: kSeaFoam, fontSize: 12)),
+              const SizedBox(height: 12),
+              ...scheduled.map((h) {
+                final key  = StorageService.completionKey(h.id, date);
+                final done = tempComp.contains(key);
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Text(h.icon, style: const TextStyle(fontSize: 22)),
+                  title: Text(h.name,
+                    style: TextStyle(
+                      color: done ? kSuccess : Colors.white,
+                      fontWeight: FontWeight.w600,
+                      decoration: done ? TextDecoration.lineThrough : null,
+                    )),
+                  trailing: Icon(
+                    done ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+                    color: done ? kSuccess : kSeaFoam.withOpacity(0.4),
+                  ),
+                  onTap: () => setModal(() {
+                    if (done) tempComp.remove(key);
+                    else      tempComp.add(key);
+                  }),
+                );
+              }),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kReefBlue, foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                  onPressed: () async {
+                    await StorageService.saveCompletions(tempComp);
+                    if (mounted) setState(() => _completions = tempComp);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                  child: const Text('Save changes',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ]),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final now         = DateTime.now();
@@ -94,6 +190,7 @@ class _StatsScreenState extends State<StatsScreen> {
               year: _calYear,
               month: _calMonth,
               installDate: _installDate,
+              onDayTap: _showRetroEdit,
               onPrev: () => setState(() {
                 if (_calMonth == 0) { _calYear--; _calMonth = 11; }
                 else _calMonth--;
@@ -192,7 +289,7 @@ class _StageCard extends StatelessWidget {
         if (!isOcean) ...[
           const SizedBox(height: 16),
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text('$toNext days to ${ProgressionService.stageName(WaterStage.values[stage.index + 1])}',
+            Text('$toNext consistent days to ${ProgressionService.stageName(WaterStage.values[stage.index + 1])}',
               style: const TextStyle(color: Colors.white70, fontSize: 12)),
             Text('${(stageProgress * 100).round()}%',
               style: const TextStyle(color: kSeaFoam, fontSize: 12,
@@ -240,32 +337,57 @@ class _StatChip extends StatelessWidget {
 }
 
 // ── Calendar heatmap ──────────────────────────────────────
-class _CalendarSection extends StatelessWidget {
+class _CalendarSection extends StatefulWidget {
   final List<Habit> habits;
   final Set<String> completions;
   final int year, month;
   final String? installDate;
+  final void Function(DateTime) onDayTap;
   final VoidCallback onPrev, onNext;
 
   const _CalendarSection({
     required this.habits, required this.completions,
     required this.year, required this.month,
     this.installDate,
+    required this.onDayTap,
     required this.onPrev, required this.onNext,
   });
 
+  @override
+  State<_CalendarSection> createState() => _CalendarSectionState();
+}
+
+class _CalendarSectionState extends State<_CalendarSection> {
+  bool _yearView = false;
+
   static const _monthNames = ['January','February','March','April','May','June',
     'July','August','September','October','November','December'];
+  static const _monthShort = ['Jan','Feb','Mar','Apr','May','Jun',
+    'Jul','Aug','Sep','Oct','Nov','Dec'];
   static const _dayLabels = ['M','T','W','T','F','S','S'];
+
+  static String _dateKey(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
+
+  Color _dayColor(DateTime date, String todayStr, String? installDate) {
+    final ds = _dateKey(date);
+    final isFuture    = ds.compareTo(todayStr) > 0;
+    final isPreInstall = installDate != null && ds.compareTo(installDate) < 0;
+    final scheduled = widget.habits.where((h) => h.isScheduledOn(date)).toList();
+    final done = scheduled.where((h) =>
+        widget.completions.contains(StorageService.completionKey(h.id, date))).length;
+    final isPerfect  = !isFuture && !isPreInstall && scheduled.isNotEmpty && done == scheduled.length;
+    final hasPartial = !isFuture && !isPreInstall && done > 0 && done < scheduled.length;
+
+    if (isFuture || isPreInstall) return kOceanBlue.withOpacity(0.1);
+    if (isPerfect)                return kSuccess;
+    if (hasPartial)               return kWarning;
+    if (scheduled.isEmpty)        return kOceanBlue.withOpacity(0.2);
+    return kDanger.withOpacity(0.6);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final todayStr = _dateKey(DateTime.now());
-    final firstDay = DateTime(year, month + 1, 1);
-    final daysInMonth = DateTime(year, month + 2, 0).day;
-    // weekday: Mon=1..Sun=7 → offset 0..6
-    final startOffset = (firstDay.weekday - 1) % 7;
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -274,76 +396,41 @@ class _CalendarSection extends StatelessWidget {
         border: Border.all(color: kOceanBlue.withOpacity(0.3), width: 0.5),
       ),
       child: Column(children: [
-        // Month nav
+        // Header row
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          IconButton(
-            onPressed: onPrev,
-            icon: const Icon(Icons.chevron_left, color: kSeaFoam)),
-          Text('${_monthNames[month]} $year',
+          _yearView
+              ? const SizedBox(width: 40)
+              : IconButton(
+                  onPressed: widget.onPrev,
+                  icon: const Icon(Icons.chevron_left, color: kSeaFoam)),
+          Text(
+            _yearView
+                ? '${DateTime.now().year - 1} – ${DateTime.now().year}'
+                : '${_monthNames[widget.month]} ${widget.year}',
             style: const TextStyle(color: Colors.white,
                 fontSize: 15, fontWeight: FontWeight.w700)),
-          IconButton(
-            onPressed: onNext,
-            icon: const Icon(Icons.chevron_right, color: kSeaFoam)),
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            if (!_yearView)
+              IconButton(
+                  onPressed: widget.onNext,
+                  icon: const Icon(Icons.chevron_right, color: kSeaFoam)),
+            GestureDetector(
+              onTap: () => setState(() => _yearView = !_yearView),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: kOceanBlue.withOpacity(0.25),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(_yearView ? 'Month' : 'Year',
+                  style: const TextStyle(color: kSeaFoam,
+                      fontSize: 11, fontWeight: FontWeight.w700)),
+              ),
+            ),
+          ]),
         ]),
         const SizedBox(height: 8),
-        // Day labels
-        Row(children: _dayLabels.map((d) => Expanded(
-          child: Center(child: Text(d,
-            style: const TextStyle(color: kSeaFoam,
-                fontSize: 10, fontWeight: FontWeight.w600))),
-        )).toList()),
-        const SizedBox(height: 6),
-        // Grid
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7, mainAxisSpacing: 4, crossAxisSpacing: 4),
-          itemCount: startOffset + daysInMonth,
-          itemBuilder: (_, idx) {
-            if (idx < startOffset) return const SizedBox();
-            final day = idx - startOffset + 1;
-            final ds = _dateKey(DateTime(year, month + 1, day));
-            final isFuture    = ds.compareTo(todayStr) > 0;
-            final isToday     = ds == todayStr;
-            final isPreInstall = installDate != null && ds.compareTo(installDate!) < 0;
-            final date = DateTime(year, month + 1, day);
-            final scheduled = habits.where((h) => h.isScheduledOn(date)).toList();
-            final done = scheduled.where((h) =>
-                completions.contains(StorageService.completionKey(h.id, date))).length;
-            final isPerfect  = !isFuture && !isPreInstall && scheduled.isNotEmpty && done == scheduled.length;
-            final hasPartial = !isFuture && !isPreInstall && done > 0 && done < scheduled.length;
-
-            Color dotColor;
-            if (isFuture || isPreInstall) dotColor = kOceanBlue.withOpacity(0.1);
-            else if (isPerfect)           dotColor = kSuccess;
-            else if (hasPartial)          dotColor = kWarning;
-            else if (scheduled.isEmpty)   dotColor = kOceanBlue.withOpacity(0.2);
-            else                          dotColor = kDanger.withOpacity(0.6);
-
-            return Container(
-              decoration: BoxDecoration(
-                color: dotColor,
-                shape: BoxShape.circle,
-                border: isToday
-                    ? Border.all(color: kSeaFoam, width: 1.5)
-                    : null,
-              ),
-              child: Center(
-                child: Text('$day',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: isToday ? FontWeight.w800 : FontWeight.w400,
-                    color: (isFuture || isPreInstall) ? kOceanBlue.withOpacity(0.3)
-                        : isPerfect || hasPartial ? kDeepOcean
-                        : Colors.white70,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
+        if (_yearView) _buildYearView() else _buildMonthView(),
         const SizedBox(height: 12),
         // Legend
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -355,7 +442,154 @@ class _CalendarSection extends StatelessWidget {
           const SizedBox(width: 12),
           _dot(kDanger, opacity: 0.6), const SizedBox(width: 4),
           const Text('Missed', style: TextStyle(color: kSeaFoam, fontSize: 10)),
+          const SizedBox(width: 8),
+          const Text('← Tap a day to edit',
+            style: TextStyle(color: kSeaFoam, fontSize: 9,
+                fontStyle: FontStyle.italic)),
         ]),
+      ]),
+    );
+  }
+
+  Widget _buildMonthView() {
+    final todayStr = _dateKey(DateTime.now());
+    final firstDay = DateTime(widget.year, widget.month + 1, 1);
+    final daysInMonth = DateTime(widget.year, widget.month + 2, 0).day;
+    final startOffset = (firstDay.weekday - 1) % 7;
+
+    return Column(children: [
+      // Day labels
+      Row(children: _dayLabels.map((d) => Expanded(
+        child: Center(child: Text(d,
+          style: const TextStyle(color: kSeaFoam,
+              fontSize: 10, fontWeight: FontWeight.w600))),
+      )).toList()),
+      const SizedBox(height: 6),
+      GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 7, mainAxisSpacing: 4, crossAxisSpacing: 4),
+        itemCount: startOffset + daysInMonth,
+        itemBuilder: (_, idx) {
+          if (idx < startOffset) return const SizedBox();
+          final day  = idx - startOffset + 1;
+          final date = DateTime(widget.year, widget.month + 1, day);
+          final ds   = _dateKey(date);
+          final isToday = ds == todayStr;
+          final isFuture = ds.compareTo(todayStr) > 0;
+          final color = _dayColor(date, todayStr, widget.installDate);
+          final isPerfect = color == kSuccess;
+          final hasPartial = color == kWarning;
+
+          return GestureDetector(
+            onTap: isFuture ? null : () => widget.onDayTap(date),
+            child: Container(
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                border: isToday
+                    ? Border.all(color: kSeaFoam, width: 1.5)
+                    : null,
+              ),
+              child: Center(
+                child: Text('$day',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: isToday ? FontWeight.w800 : FontWeight.w400,
+                    color: isFuture ? kOceanBlue.withOpacity(0.3)
+                        : isPerfect || hasPartial ? kDeepOcean
+                        : Colors.white70,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    ]);
+  }
+
+  Widget _buildYearView() {
+    final todayStr = _dateKey(DateTime.now());
+    final today = DateTime.now();
+    // Start from 52 weeks ago (Monday of that week)
+    final currentWeekMonday = today.subtract(Duration(days: today.weekday - 1));
+    final gridStart = currentWeekMonday.subtract(const Duration(days: 51 * 7));
+    // 52 weeks × 7 days
+    const totalWeeks = 52;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // Month labels row
+        SizedBox(
+          height: 14,
+          child: Row(
+            children: List.generate(totalWeeks, (w) {
+              final weekStart = gridStart.add(Duration(days: w * 7));
+              // Show label if this is the first week of a month or week 0
+              final showLabel = weekStart.day <= 7 || w == 0;
+              return SizedBox(
+                width: 13,
+                child: showLabel
+                    ? Text(_monthShort[weekStart.month - 1],
+                        style: const TextStyle(color: kSeaFoam, fontSize: 7,
+                            fontWeight: FontWeight.w600))
+                    : null,
+              );
+            }),
+          ),
+        ),
+        const SizedBox(height: 3),
+        // Grid: rows = days of week, cols = weeks
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Day labels column
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: ['M','','W','','F','','S'].map((d) => SizedBox(
+                height: 11,
+                width: 12,
+                child: Text(d,
+                  style: const TextStyle(color: kSeaFoam, fontSize: 7)),
+              )).toList(),
+            ),
+            const SizedBox(width: 2),
+            // Week columns
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: List.generate(totalWeeks, (w) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(7, (d) {
+                    final date = gridStart.add(Duration(days: w * 7 + d));
+                    final ds = _dateKey(date);
+                    final isFuture = ds.compareTo(todayStr) > 0;
+                    final isToday  = ds == todayStr;
+                    final color = _dayColor(date, todayStr, widget.installDate);
+
+                    return GestureDetector(
+                      onTap: isFuture ? null : () => widget.onDayTap(date),
+                      child: Container(
+                        width: 9, height: 9,
+                        margin: const EdgeInsets.all(1),
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: BorderRadius.circular(2),
+                          border: isToday
+                              ? Border.all(color: kSeaFoam, width: 1)
+                              : null,
+                        ),
+                      ),
+                    );
+                  }),
+                );
+              }),
+            ),
+          ],
+        ),
       ]),
     );
   }
@@ -367,9 +601,6 @@ class _CalendarSection extends StatelessWidget {
       shape: BoxShape.circle,
     ),
   );
-
-  static String _dateKey(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
 }
 
 // ── Streak row ────────────────────────────────────────────
