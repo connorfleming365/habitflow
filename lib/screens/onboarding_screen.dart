@@ -38,11 +38,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           'Your journey begins. One drip at a time.\n\n'
           '💦 Puddle — Days 7 to 20\n'
           'A week in. Small but real.\n\n'
-          '🏞 Stream — Days 21 to 59\n'
+          '🌿 Pond — Days 21 to 44\n'
+          'Deepening into something steady.\n\n'
+          '🌊 Stream — Days 45 to 89\n'
           'A habit is forming. Keep flowing.\n\n'
-          '🏔 Lake — Days 60 to 179\n'
-          'Two months of consistency. Impressive.\n\n'
-          '🌊 Ocean — Day 180+\n'
+          '🏞️ Lake — Days 90 to 179\n'
+          'Three months of consistency. Impressive.\n\n'
+          '🌅 Ocean — Day 180+\n'
           'You\'ve built something extraordinary.',
     ),
     _OnboardPage(
@@ -172,45 +174,47 @@ class _PageContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(32, 16, 32, 24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Decorative circle behind emoji
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: kOceanBlue.withOpacity(0.18),
-              border: Border.all(
-                  color: kReefBlue.withOpacity(0.3), width: 1),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Decorative circle behind emoji
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: kOceanBlue.withOpacity(0.18),
+                border: Border.all(
+                    color: kReefBlue.withOpacity(0.3), width: 1),
+              ),
+              alignment: Alignment.center,
+              child: Text(page.emoji,
+                  style: const TextStyle(fontSize: 54)),
             ),
-            alignment: Alignment.center,
-            child: Text(page.emoji,
-                style: const TextStyle(fontSize: 54)),
-          ),
-          const SizedBox(height: 36),
-          Text(
-            page.title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              height: 1.2,
+            const SizedBox(height: 36),
+            Text(
+              page.title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                height: 1.2,
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            page.body,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: kSeaFoam,
-              fontSize: 15,
-              height: 1.65,
+            const SizedBox(height: 20),
+            Text(
+              page.body,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: kSeaFoam,
+                fontSize: 15,
+                height: 1.65,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

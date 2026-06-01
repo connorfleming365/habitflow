@@ -58,6 +58,7 @@ class TodayScreenState extends State<TodayScreen>
   Future<void> _load() async {
     final habits = await StorageService.loadHabits();
     final completions = await StorageService.loadCompletions();
+    await WidgetService.update(habits, completions);
     if (mounted) {
       final today = habits.where((h) => h.isScheduledOn(DateTime.now())).toList();
       final pct = today.isEmpty ? 0.0 :
@@ -374,7 +375,7 @@ class _WaveHeader extends StatelessWidget {
                       Text(
                         total == 0 ? 'Add your first habit →'
                             : allDone ? 'All done! 🎉'
-                            : '$done of $total habits done',
+                            : '$done of $total habits done today',
                         style: const TextStyle(color: Colors.white70, fontSize: 13),
                       ),
                       const SizedBox(height: 6),
@@ -470,6 +471,7 @@ class _StageAnimPainter extends CustomPainter {
     switch (stage) {
       case WaterStage.drop:   _paintDrops(canvas, size); break;
       case WaterStage.puddle: _paintPuddle(canvas, size); break;
+      case WaterStage.pond:   _paintPuddle(canvas, size); break; // deeper ripples
       case WaterStage.stream: _paintStream(canvas, size); break;
       case WaterStage.lake:   _paintLake(canvas, size);   break;
       case WaterStage.ocean:  _paintOcean(canvas, size);  break;

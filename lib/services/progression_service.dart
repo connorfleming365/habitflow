@@ -5,18 +5,20 @@ library;
 enum WaterStage {
   drop,   // day 1–6
   puddle, // day 7–20
-  stream, // day 21–59
-  lake,   // day 60–179
+  pond,   // day 21–44
+  stream, // day 45–89
+  lake,   // day 90–179
   ocean,  // day 180+
 }
 
 class ProgressionService {
-  static const _stageDays = [0, 7, 21, 60, 180];
-  static const _stageNames = ['Droplets', 'Puddle', 'Stream', 'Lake', 'Ocean'];
-  static const _stageEmojis = ['💧', '💦', '🌊', '🏞️', '🌅'];
+  static const _stageDays = [0, 7, 21, 45, 90, 180];
+  static const _stageNames = ['Droplets', 'Puddle', 'Pond', 'Stream', 'Lake', 'Ocean'];
+  static const _stageEmojis = ['💧', '💦', '🌿', '🌊', '🏞️', '🌅'];
   static const _stageDescriptions = [
     'Every ocean starts with a single drop.\nComplete your daily habits to grow your flow and build your ocean.',
     'Your drops are forming a puddle. Keep showing up.',
+    'Your puddle is deepening into a pond. You\'re building real momentum.',
     'Your consistency is building a stream. Keep flowing.',
     'You\'ve filled a lake. Keep flowing.',
     'You\'ve reached the ocean. You are the tide.\nKeep up your incredible work.',
@@ -35,8 +37,9 @@ class ProgressionService {
 
   static WaterStage stageForDays(int days) {
     if (days >= 180) return WaterStage.ocean;
-    if (days >= 60)  return WaterStage.lake;
-    if (days >= 21)  return WaterStage.stream;
+    if (days >= 90)  return WaterStage.lake;
+    if (days >= 45)  return WaterStage.stream;
+    if (days >= 21)  return WaterStage.pond;
     if (days >= 7)   return WaterStage.puddle;
     return WaterStage.drop;
   }
@@ -70,13 +73,14 @@ class ProgressionService {
   }
 
   /// Milestone day thresholds
-  static const milestones = [7, 21, 60, 180];
+  static const milestones = [7, 21, 45, 90, 180];
 
   static String milestoneTitle(int days) {
     switch (days) {
       case 7:   return 'First Week! 💦';
-      case 21:  return 'Three Weeks Strong! 🌊';
-      case 60:  return 'Two Months! 🏞️';
+      case 21:  return 'Three Weeks Strong! 🌿';
+      case 45:  return 'Six Weeks! 🌊';
+      case 90:  return 'Three Months! 🏞️';
       case 180: return 'Half a Year! 🌅';
       default:  return 'Milestone! 💧';
     }
@@ -85,8 +89,9 @@ class ProgressionService {
   static String milestoneMessage(int days) {
     switch (days) {
       case 7:   return 'Your drops are becoming a puddle.\nSeven days of showing up. That\'s real.';
-      case 21:  return 'Science says 21 days builds a habit.\nYou\'re now flowing like a stream.';
-      case 60:  return 'Two months of consistency.\nYour lake is deep and clear.';
+      case 21:  return 'Three weeks in. Your puddle is\ndeepening into a pond.';
+      case 45:  return 'Six weeks of flow. You\'ve built\na stream of momentum.';
+      case 90:  return 'Three months of consistency.\nYour lake is deep and clear.';
       case 180: return 'Half a year. You didn\'t just build habits —\nyou became the ocean.';
       default:  return 'Keep flowing.';
     }

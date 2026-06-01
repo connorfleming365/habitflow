@@ -94,20 +94,19 @@ class _ManageScreenState extends State<ManageScreen> {
           children: [
             Text('My Habits'),
             Text('Manage your Habits. Edit or add new ones.',
-              style: TextStyle(fontSize: 11, color: kSeaFoam,
+              style: TextStyle(fontSize: 11, color: Colors.white70,
                   fontWeight: FontWeight.w400)),
           ],
         ),
         actions: [
           // Grid / list toggle
           IconButton(
-            icon: Icon(_gridView ? Icons.view_list_rounded : Icons.grid_view_rounded,
-                color: kSeaFoam),
+            icon: Icon(_gridView ? Icons.view_list_rounded : Icons.grid_view_rounded),
             tooltip: _gridView ? 'Switch to list' : 'Switch to grid',
             onPressed: () => _setGridView(!_gridView),
           ),
           IconButton(
-            icon: const Icon(Icons.add, color: kSeaFoam),
+            icon: const Icon(Icons.add),
             onPressed: () async {
               await Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const AddHabitScreen()));
