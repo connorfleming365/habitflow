@@ -613,6 +613,7 @@ class _HabitDropCard extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: done
               ? kSuccess.withOpacity(0.10)
@@ -626,13 +627,10 @@ class _HabitDropCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Accent bar
+            // Accent bar — clipped by parent's Clip.antiAlias so no overflow
             Container(
               height: 3,
-              decoration: BoxDecoration(
-                color: accent.withOpacity(done ? 0.85 : 0.6),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(23)),
-              ),
+              color: accent.withOpacity(done ? 0.85 : 0.6),
             ),
             Expanded(
               child: Padding(

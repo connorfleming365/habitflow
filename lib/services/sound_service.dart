@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Plays water-themed sounds on habit interactions.
-/// All methods are silently no-op on web (just_audio web requires
-/// a CORS-friendly server which won't work in local PWA mode).
+/// All methods are silently no-op on web, and respect the user's toggle.
 class SoundService {
   static bool _enabled = true;
   static AudioPlayer? _player;
@@ -11,9 +11,12 @@ class SoundService {
   static Future<void> init() async {
     if (kIsWeb) return;
     _player = AudioPlayer();
+    // Restore saved preference so the toggle survives app restarts.
+    final prefs = await SharedPreferences.getInstance();
+    _enabled = prefs.getBool('sounds_enabled') ?? true;
   }
 
-  /// Called by settings to enable/disable sounds.
+  /// Called by Settings whenever the toggle changes.
   static void setEnabled(bool value) => _enabled = value;
 
   static Future<void> playDrop() => _play('assets/sounds/water_drop.wav');
@@ -28,7 +31,7 @@ class SoundService {
       await p.seek(Duration.zero);
       await p.play();
     } catch (_) {
-      // Silently ignore playback errors so the app never crashes on sound issues.
+      // Silently ignore — never crash on a sound error.
     }
   }
 }

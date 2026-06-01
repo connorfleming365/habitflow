@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
+import '../services/sound_service.dart';
 import '../theme.dart';
 import 'onboarding_screen.dart';
 
@@ -322,6 +323,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               isDark: isDark,
               onChanged: (v) {
                 _setPref('sounds_enabled', v);
+                SoundService.setEnabled(v);
                 setState(() => _soundsEnabled = v);
               },
             ),
