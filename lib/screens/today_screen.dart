@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:video_player/video_player.dart';
 import '../models/habit.dart';
 import '../services/storage_service.dart';
 import '../services/widget_service.dart';
@@ -29,6 +30,8 @@ class TodayScreenState extends State<TodayScreen>
   late Animation<double> _pctAnim;
   double _lastPct = 0;
 
+  VideoPlayerController? _videoCtrl;
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +46,17 @@ class TodayScreenState extends State<TodayScreen>
     _pctAnim = Tween<double>(begin: 0, end: 0).animate(
         CurvedAnimation(parent: _pctCtrl, curve: Curves.easeOut));
     _load();
+    _initVideo();
+  }
+
+  Future<void> _initVideo() async {
+    final ctrl = VideoPlayerController.asset('assets/bg_ocean.mp4');
+    await ctrl.initialize();
+    if (!mounted) { ctrl.dispose(); return; }
+    ctrl.setLooping(true);
+    ctrl.setVolume(0);
+    await ctrl.play();
+    setState(() => _videoCtrl = ctrl);
   }
 
   @override
@@ -50,6 +64,7 @@ class TodayScreenState extends State<TodayScreen>
     _waveCtrl.dispose();
     _stageCtrl.dispose();
     _pctCtrl.dispose();
+    _videoCtrl?.dispose();
     super.dispose();
   }
 
@@ -151,7 +166,27 @@ class TodayScreenState extends State<TodayScreen>
     final allDone = today.isNotEmpty && remaining.isEmpty;
 
     return Scaffold(
-      body: RefreshIndicator(
+      backgroundColor: kDeepOcean,
+      body: Stack(
+        children: [
+          // ── Looping ocean video background ───────────
+          if (_videoCtrl != null && _videoCtrl!.value.isInitialized)
+            Positioned.fill(
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: _videoCtrl!.value.size.width,
+                  height: _videoCtrl!.value.size.height,
+                  child: VideoPlayer(_videoCtrl!),
+                ),
+              ),
+            ),
+          // Scrim so content stays readable
+          Positioned.fill(
+            child: Container(color: Colors.black.withOpacity(0.38)),
+          ),
+          // ── Main scrollable content ───────────────────
+          RefreshIndicator(
         color: kSeaFoam,
         backgroundColor: kMidnightTide,
         onRefresh: _load,
@@ -185,7 +220,7 @@ class TodayScreenState extends State<TodayScreen>
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: kMidnightTide.withOpacity(0.7),
+                    color: kMidnightTide.withOpacity(0.85),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: kOceanBlue.withOpacity(0.3), width: 0.5),
                   ),
@@ -260,7 +295,9 @@ class TodayScreenState extends State<TodayScreen>
             ],
           ],
         ),
-      ),
+          ), // end RefreshIndicator
+        ], // end Stack children
+      ), // end Stack
     );
   }
 
@@ -306,11 +343,10 @@ class _WaveHeader extends StatelessWidget {
     final dateStr = '${days[now.weekday % 7]}, ${months[now.month - 1]} ${now.day}';
     final fillY = 220 * (1 - pct.clamp(0.0, 1.0));
 
-    return Container(
+    return SizedBox(
       height: 220,
-      color: kDeepOcean,
       child: Stack(children: [
-        // Wave fill
+        // Wave fill (renders over the video background)
         Positioned.fill(
           child: CustomPaint(
             painter: _WavePainter(phase: wavePhase, fill: pct),
@@ -431,9 +467,9 @@ class _WavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final fillY = size.height * (1 - fill.clamp(0.0, 1.0));
-    _drawWave(canvas, size, fillY + 12, phase,       kOceanBlue.withOpacity(0.5));
-    _drawWave(canvas, size, fillY + 4,  phase + 0.3, kReefBlue.withOpacity(0.45));
-    _drawWave(canvas, size, fillY,       phase + 0.6, kReefBlue.withOpacity(0.35));
+    _drawWave(canvas, size, fillY + 12, phase,       kOceanBlue.withOpacity(0.65));
+    _drawWave(canvas, size, fillY + 4,  phase + 0.3, kReefBlue.withOpacity(0.60));
+    _drawWave(canvas, size, fillY,       phase + 0.6, kReefBlue.withOpacity(0.50));
   }
 
   void _drawWave(Canvas canvas, Size size, double top,
@@ -616,8 +652,8 @@ class _HabitDropCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: done
-              ? kSuccess.withOpacity(0.10)
-              : Theme.of(context).cardColor,
+              ? kSuccess.withOpacity(0.18)
+              : Theme.of(context).cardColor.withOpacity(0.88),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: accent.withOpacity(done ? 0.65 : 0.35),
