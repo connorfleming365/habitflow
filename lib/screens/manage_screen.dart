@@ -15,6 +15,7 @@ class ManageScreen extends StatefulWidget {
 
 class _ManageScreenState extends State<ManageScreen> {
   List<Habit> _habits = [];
+  String? _installDate;
   Set<String> _completions = {};
   bool _gridView = true; // default: 3-column grid
 
@@ -39,7 +40,8 @@ class _ManageScreenState extends State<ManageScreen> {
   Future<void> _load() async {
     final habits = await StorageService.loadHabits();
     final completions = await StorageService.loadCompletions();
-    if (mounted) setState(() { _habits = habits; _completions = completions; });
+    final installDate = await StorageService.getInstallDate();
+    if (mounted) setState(() { _habits = habits; _completions = completions; _installDate = installDate; });
   }
 
   int _streakFor(Habit h) {
@@ -232,7 +234,7 @@ class _ManageScreenState extends State<ManageScreen> {
             ]),
             const SizedBox(height: 20),
             // 30-day history strip
-            _HabitHistoryStrip(habit: h, completions: _completions),
+            _HabitHistoryStrip(habit: h, completions: _completions, installDate: _installDate),
             const SizedBox(height: 20),
             _sheetBtn(Icons.edit_outlined, 'Edit habit', kSeaFoam, () async {
               Navigator.pop(context);
@@ -412,7 +414,8 @@ class _ListTile extends StatelessWidget {
 class _HabitHistoryStrip extends StatelessWidget {
   final Habit habit;
   final Set<String> completions;
-  const _HabitHistoryStrip({required this.habit, required this.completions});
+  final String? installDate;
+  const _HabitHistoryStrip({required this.habit, required this.completions, this.installDate});
 
   static String _fmt(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -441,8 +444,10 @@ class _HabitHistoryStrip extends StatelessWidget {
           final done = completions
               .contains(StorageService.completionKey(habit.id, date));
 
+          final isPreInstall = installDate != null &&
+              ds.compareTo(installDate!) < 0;
           Color color;
-          if (!scheduled) {
+          if (!scheduled || isPreInstall) {
             color = kOceanBlue.withOpacity(0.1);
           } else if (done) {
             color = kSuccess;
@@ -464,24 +469,4 @@ class _HabitHistoryStrip extends StatelessWidget {
             ),
           );
         }).toList(),
-      ),
-      const SizedBox(height: 6),
-      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(
-          '${dates.first.day} ${_monthAbbr(dates.first.month)}',
-          style: const TextStyle(color: kSeaFoam, fontSize: 9),
-        ),
-        Text(
-          'Today',
-          style: const TextStyle(color: kSeaFoam, fontSize: 9),
-        ),
-      ]),
-    ]);
-  }
-
-  static const _months = [
-    '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
-  static String _monthAbbr(int m) => _months[m];
-}
+      

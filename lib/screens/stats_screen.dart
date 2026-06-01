@@ -415,7 +415,7 @@ class _StreakRow extends StatelessWidget {
 }
 
 // ── Per-habit scrollable day strip ───────────────────────
-class _HabitDayStrip extends StatelessWidget {
+class _HabitDayStrip extends StatefulWidget {
   final Habit habit;
   final Set<String> completions;
   final String? installDate;
@@ -426,8 +426,32 @@ class _HabitDayStrip extends StatelessWidget {
     this.installDate,
   });
 
+  @override
+  State<_HabitDayStrip> createState() => _HabitDayStripState();
+}
+
+class _HabitDayStripState extends State<_HabitDayStrip> {
+  final _scrollCtrl = ScrollController();
+
   static String _fmt(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  @override
+  void initState() {
+    super.initState();
+    // Scroll to today (rightmost) after layout
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollCtrl.hasClients) {
+        _scrollCtrl.jumpTo(_scrollCtrl.position.maxScrollExtent);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -446,10 +470,10 @@ class _HabitDayStrip extends StatelessWidget {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Text(habit.icon, style: const TextStyle(fontSize: 16)),
+          Text(widget.habit.icon, style: const TextStyle(fontSize: 16)),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(habit.name,
+            child: Text(widget.habit.name,
               style: const TextStyle(color: Colors.white,
                   fontSize: 13, fontWeight: FontWeight.w600)),
           ),
@@ -458,21 +482,22 @@ class _HabitDayStrip extends StatelessWidget {
                 fontStyle: FontStyle.italic)),
         ]),
         const SizedBox(height: 10),
-        // Scrollable day dots — oldest to newest (left to right)
+        // Scrollable day dots — oldest to newest (left=oldest, right=today)
         SizedBox(
           height: 22,
           child: ListView.builder(
+            controller: _scrollCtrl,
             scrollDirection: Axis.horizontal,
             itemCount: dates.length,
             itemBuilder: (_, i) {
               final date = dates[i];
               final ds = _fmt(date);
               final isToday = ds == _fmt(today);
-              final isPreInstall = installDate != null &&
-                  ds.compareTo(installDate!) < 0;
-              final scheduled = habit.isScheduledOn(date);
-              final done = completions.contains(
-                  StorageService.completionKey(habit.id, date));
+              final isPreInstall = widget.installDate != null &&
+                  ds.compareTo(widget.installDate!) < 0;
+              final scheduled = widget.habit.isScheduledOn(date);
+              final done = widget.completions.contains(
+                  StorageService.completionKey(widget.habit.id, date));
 
               Color dotColor;
               if (isPreInstall || !scheduled) {
@@ -502,7 +527,7 @@ class _HabitDayStrip extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        // Month labels
+        // Month labels (static — aligned to dot strip)
         SizedBox(
           height: 10,
           child: ListView.builder(

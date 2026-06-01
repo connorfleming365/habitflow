@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
 import '../theme.dart';
+import 'onboarding_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final String appTheme;
@@ -17,6 +18,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notifsEnabled = false;
   bool _soundsEnabled = true;
+  String _reminderTime = '08:00';
 
   @override
   void initState() {
@@ -30,6 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {
         _notifsEnabled = prefs.getBool('notifs_enabled') ?? false;
         _soundsEnabled = prefs.getBool('sounds_enabled') ?? true;
+        _reminderTime  = prefs.getString('global_reminder_time') ?? '08:00';
       });
     }
   }
@@ -39,25 +42,86 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await prefs.setBool(key, value);
   }
 
+  Future<void> _setStringPref(String key, String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, value);
+  }
+
   Future<void> _requestNotifications() async {
-    try {
-      await NotificationService.requestPermission();
+    final granted = await NotificationService.requestPermission();
+    if (!mounted) return;
+
+    if (granted) {
       final habits = await StorageService.loadHabits();
-      await NotificationService.scheduleAll(habits);
+      await NotificationService.scheduleAll(habits, globalTime: _reminderTime);
       await _setPref('notifs_enabled', true);
       if (mounted) {
         setState(() => _notifsEnabled = true);
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Reminders enabled!')));
       }
-    } catch (_) {
+    } else {
+      // Permission denied — guide the user to enable it manually
       if (mounted) {
         setState(() => _notifsEnabled = false);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text(
-                'Could not enable reminders. Check app permissions.')));
+        _showPermissionDialog();
       }
     }
+  }
+
+  void _showPermissionDialog() {
+    final isDark = widget.appTheme == 'deep_ocean';
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: isDark ? kMidnightTide : Colors.white,
+        title: Text('Enable reminders',
+            style: TextStyle(color: isDark ? Colors.white : kDeepOcean,
+                fontWeight: FontWeight.w700)),
+        content: Text(
+          'To receive habit reminders, please enable notifications for HabitFlow:\n\n'
+          '1. Open your phone\'s Settings\n'
+          '2. Go to Apps → HabitFlow\n'
+          '3. Tap Notifications\n'
+          '4. Turn on "Allow notifications"\n\n'
+          'Then come back and enable reminders here.',
+          style: TextStyle(color: isDark ? kSeaFoam : kOceanBlue, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Got it')),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickReminderTime() async {
+    final parts = _reminderTime.split(':');
+    final initial = TimeOfDay(
+        hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+    final picked = await showTimePicker(context: context, initialTime: initial);
+    if (picked == null || !mounted) return;
+
+    final formatted =
+        '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+    setState(() => _reminderTime = formatted);
+    await _setStringPref('global_reminder_time', formatted);
+
+    // Re-schedule if reminders are on
+    if (_notifsEnabled) {
+      final habits = await StorageService.loadHabits();
+      await NotificationService.scheduleAll(habits, globalTime: formatted);
+    }
+  }
+
+  String _fmtTime(String t) {
+    final p = t.split(':');
+    final h = int.parse(p[0]);
+    final m = int.parse(p[1]);
+    final period = h < 12 ? 'AM' : 'PM';
+    final displayH = h % 12 == 0 ? 12 : h % 12;
+    return '$displayH:${m.toString().padLeft(2, '0')} $period';
   }
 
   Future<void> _exportData() async {
@@ -142,12 +206,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _DividerLine(isDark: isDark),
             _ActionRow(
               icon: '⏰',
+              title: 'Reminder time',
+              subtitle: _fmtTime(_reminderTime),
+              isDark: isDark,
+              onTap: _pickReminderTime,
+            ),
+            _DividerLine(isDark: isDark),
+            _ActionRow(
+              icon: '🔄',
               title: 'Re-sync reminders',
               subtitle: 'Reschedule all habit notifications',
               isDark: isDark,
               onTap: () async {
                 final habits = await StorageService.loadHabits();
-                await NotificationService.scheduleAll(habits);
+                await NotificationService.scheduleAll(habits, globalTime: _reminderTime);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       content: Text('Reminders rescheduled!')));
@@ -238,6 +310,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // About
           _Section(label: 'About', isDark: isDark, children: [
+            _ActionRow(
+              icon: '📖',
+              title: 'View introduction',
+              subtitle: 'Revisit the getting started guide',
+              isDark: isDark,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => OnboardingScreen(
+                      onComplete: () => Navigator.pop(context),
+                    ),
+                  ),
+                );
+              },
+            ),
+            _DividerLine(isDark: isDark),
             _InfoRow(
               icon: '🌊',
               title: 'HabitFlow v1.0',

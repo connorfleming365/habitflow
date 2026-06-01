@@ -16,24 +16,33 @@ class NotificationService {
     _initialized = true;
   }
 
-  static Future<void> requestPermission() async {
-    await _plugin
+  /// Returns true if permission was granted, false if denied.
+  static Future<bool> requestPermission() async {
+    final result = await _plugin
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
         ?.requestNotificationsPermission();
+    return result ?? false;
   }
 
-  static Future<void> scheduleHabitReminder(Habit habit) async {
-    if (habit.reminderTime.isEmpty) return;
-    final parts = habit.reminderTime.split(':');
+  /// Check if notifications are currently enabled.
+  static Future<bool> areEnabled() async {
+    final result = await _plugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.areNotificationsEnabled();
+    return result ?? false;
+  }
+
+  static Future<void> _scheduleAt(Habit habit, String time) async {
+    if (time.isEmpty) return;
+    final parts = time.split(':');
     final hour = int.parse(parts[0]);
     final min  = int.parse(parts[1]);
 
     await cancelHabitReminder(habit.id);
 
-    // Use a stable int ID derived from habit id
     final notifId = habit.id.hashCode.abs() % 100000;
-
     final now = tz.TZDateTime.now(tz.local);
     var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, min);
     if (scheduled.isBefore(now)) {
@@ -58,8 +67,12 @@ class NotificationService {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time, // repeat daily
+      matchDateTimeComponents: DateTimeComponents.time,
     );
+  }
+
+  static Future<void> scheduleHabitReminder(Habit habit) async {
+    await _scheduleAt(habit, habit.reminderTime);
   }
 
   static Future<void> cancelHabitReminder(String habitId) async {
@@ -67,10 +80,12 @@ class NotificationService {
     await _plugin.cancel(notifId);
   }
 
-  static Future<void> scheduleAll(List<Habit> habits) async {
+  /// Schedule all habits. [globalTime] is used for habits with no specific time.
+  static Future<void> scheduleAll(List<Habit> habits, {String globalTime = ''}) async {
     await _plugin.cancelAll();
     for (final h in habits) {
-      await scheduleHabitReminder(h);
+      final time = h.reminderTime.isNotEmpty ? h.reminderTime : globalTime;
+      await _scheduleAt(h, time);
     }
   }
 }

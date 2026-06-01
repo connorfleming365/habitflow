@@ -123,6 +123,15 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _index = 0;
+  final _todayKey = GlobalKey<TodayScreenState>();
+
+  void _onTabSelected(int i) {
+    // Reload Today data when switching back to it from another tab
+    if (i == 0 && _index != 0) {
+      _todayKey.currentState?.reload();
+    }
+    setState(() => _index = i);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +143,7 @@ class _MainShellState extends State<MainShell> {
         children: [
           Offstage(
             offstage: _index != 0,
-            child: const TodayScreen(),
+            child: TodayScreen(key: _todayKey),
           ),
           if (_index == 1) const ManageScreen(),
           if (_index == 2) const StatsScreen(),
@@ -147,7 +156,7 @@ class _MainShellState extends State<MainShell> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
+        onDestinationSelected: _onTabSelected,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),

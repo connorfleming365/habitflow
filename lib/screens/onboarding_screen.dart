@@ -33,11 +33,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       emoji: '🌊',
       title: 'Your water journey',
       body:
-          'Each day you show up, your water rises.\n\n'
-          'Start as a single Drop. '
-          'Build into a Puddle, then a Stream, a Lake — '
-          'and finally, the Ocean.\n\n'
-          'One habit at a time.',
+          'Every drop counts. Each day you check in, your water rises.\n\n'
+          '💧 Drop — Days 1 to 6\n'
+          'Your journey begins. One drip at a time.\n\n'
+          '💦 Puddle — Days 7 to 20\n'
+          'A week in. Small but real.\n\n'
+          '🏞 Stream — Days 21 to 59\n'
+          'A habit is forming. Keep flowing.\n\n'
+          '🏔 Lake — Days 60 to 179\n'
+          'Two months of consistency. Impressive.\n\n'
+          '🌊 Ocean — Day 180+\n'
+          'You've built something extraordinary.',
     ),
     _OnboardPage(
       emoji: '🌅',

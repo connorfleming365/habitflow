@@ -13,10 +13,11 @@ import 'add_habit_screen.dart';
 class TodayScreen extends StatefulWidget {
   const TodayScreen({super.key});
   @override
-  State<TodayScreen> createState() => _TodayScreenState();
+  State<TodayScreen> createState() => TodayScreenState();
 }
 
-class _TodayScreenState extends State<TodayScreen>
+// Public state so MainShell can call reload() via GlobalKey
+class TodayScreenState extends State<TodayScreen>
     with TickerProviderStateMixin {
   List<Habit> _habits = [];
   Set<String> _completions = {};
@@ -60,6 +61,9 @@ class _TodayScreenState extends State<TodayScreen>
     _pctCtrl.dispose();
     super.dispose();
   }
+
+  /// Called by MainShell when switching back to the Today tab.
+  void reload() => _load();
 
   Future<void> _load() async {
     final habits = await StorageService.loadHabits();
@@ -199,7 +203,7 @@ class _TodayScreenState extends State<TodayScreen>
                       crossAxisCount: 2,
                       mainAxisSpacing: 10,
                       crossAxisSpacing: 10,
-                      childAspectRatio: 1.05,
+                      childAspectRatio: 0.82,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (_, i) => _HabitGridCard(
@@ -221,7 +225,7 @@ class _TodayScreenState extends State<TodayScreen>
                       crossAxisCount: 2,
                       mainAxisSpacing: 10,
                       crossAxisSpacing: 10,
-                      childAspectRatio: 1.05,
+                      childAspectRatio: 0.82,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (_, i) => _HabitGridCard(
@@ -452,7 +456,7 @@ class _HabitGridCard extends StatelessWidget {
           color: done
               ? kSuccess.withOpacity(0.10)
               : Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(28),
           border: Border.all(
             color: accentColor.withOpacity(done ? 0.6 : 0.35),
             width: done ? 1.5 : 0.8,
@@ -467,7 +471,7 @@ class _HabitGridCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: accentColor.withOpacity(done ? 0.8 : 0.55),
                 borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(15)),
+                    top: Radius.circular(27)),
               ),
             ),
             Expanded(
