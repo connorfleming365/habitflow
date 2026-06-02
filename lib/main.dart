@@ -8,6 +8,7 @@ import 'screens/manage_screen.dart';
 import 'screens/stats_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/splash_screen.dart';
 import 'services/notification_service.dart';
 import 'services/widget_service.dart';
 import 'services/sound_service.dart';
@@ -62,10 +63,10 @@ class HabitFlowApp extends StatefulWidget {
 }
 
 class _HabitFlowAppState extends State<HabitFlowApp> {
-  /// 'deep_ocean' (default) or 'sea_mist'
   String _appTheme = 'deep_ocean';
-  bool _onboardingDone = true; // start true; set false if pref missing
-  bool _loading = true;
+  bool _onboardingDone = false;
+  bool _prefsLoaded = false;
+  bool _splashDone = false;
 
   @override
   void initState() {
@@ -77,11 +78,16 @@ class _HabitFlowAppState extends State<HabitFlowApp> {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
-        _appTheme = prefs.getString('app_theme') ?? 'deep_ocean';
+        _appTheme      = prefs.getString('app_theme') ?? 'deep_ocean';
         _onboardingDone = prefs.getBool('onboarding_done') ?? false;
-        _loading = false;
+        _prefsLoaded   = true;
       });
     }
+  }
+
+  /// Called by SplashScreen when its exit animation finishes.
+  void _onSplashComplete() {
+    if (mounted) setState(() => _splashDone = true);
   }
 
   Future<void> _setTheme(String theme) async {
@@ -101,16 +107,16 @@ class _HabitFlowAppState extends State<HabitFlowApp> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
+    // Always show splash on cold start; prefs load in parallel behind it.
+    if (!_splashDone) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.deepOcean,
-        home: const Scaffold(
-          body: Center(child: CircularProgressIndicator(color: kSeaFoam)),
-        ),
+        home: SplashScreen(onComplete: _onSplashComplete),
       );
     }
 
+    // Splash done — prefs will be loaded by now (splash is ~2.5 s).
     return MaterialApp(
       title: 'HabitFlow',
       debugShowCheckedModeBanner: false,

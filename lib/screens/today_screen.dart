@@ -1,8 +1,8 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:video_player/video_player.dart';
 import '../models/habit.dart';
 import '../services/storage_service.dart';
 import '../services/widget_service.dart';
@@ -30,8 +30,6 @@ class TodayScreenState extends State<TodayScreen>
   late Animation<double> _pctAnim;
   double _lastPct = 0;
 
-  VideoPlayerController? _videoCtrl;
-
   @override
   void initState() {
     super.initState();
@@ -46,17 +44,6 @@ class TodayScreenState extends State<TodayScreen>
     _pctAnim = Tween<double>(begin: 0, end: 0).animate(
         CurvedAnimation(parent: _pctCtrl, curve: Curves.easeOut));
     _load();
-    _initVideo();
-  }
-
-  Future<void> _initVideo() async {
-    final ctrl = VideoPlayerController.asset('assets/bg_ocean.mp4');
-    await ctrl.initialize();
-    if (!mounted) { ctrl.dispose(); return; }
-    ctrl.setLooping(true);
-    ctrl.setVolume(0);
-    await ctrl.play();
-    setState(() => _videoCtrl = ctrl);
   }
 
   @override
@@ -64,7 +51,6 @@ class TodayScreenState extends State<TodayScreen>
     _waveCtrl.dispose();
     _stageCtrl.dispose();
     _pctCtrl.dispose();
-    _videoCtrl?.dispose();
     super.dispose();
   }
 
@@ -72,19 +58,55 @@ class TodayScreenState extends State<TodayScreen>
 
   Future<void> _load() async {
     final habits = await StorageService.loadHabits();
-    final completions = await StorageService.loadCompletions();
+    var completions = await StorageService.loadCompletions();
+    // Merge any widget-side toggles. Kotlin writes done-state back into
+    // hf_habits_json, which is a plain JSON string we can safely parse here.
+    completions = await _mergeWidgetToggles(habits, completions);
     await WidgetService.update(habits, completions);
     if (mounted) {
       final today = habits.where((h) => h.isScheduledOn(DateTime.now())).toList();
       final pct = today.isEmpty ? 0.0 :
           today.where((h) => completions.contains(StorageService.todayKey(h.id))).length / today.length;
       _animatePct(pct);
-      setState(() { _habits = habits; _completions = completions; _loading = false; });
+      setState(() { _habits = habits; _completions = completions; _loading = false; });;
 
       // Cancel nudge if all done
       if (today.isNotEmpty && today.every((h) => completions.contains(StorageService.todayKey(h.id)))) {
         NotificationService.cancelNudgeToday();
       }
+    }
+  }
+
+  /// Reads the `hf_habits_json` that Kotlin writes when the widget is tapped,
+  /// and applies any done-state differences back into Flutter's completions set.
+  /// This is format-safe because hf_habits_json is a plain JSON string, unlike
+  /// hf_completions which has an internal encoding that Kotlin can't reliably write.
+  Future<Set<String>> _mergeWidgetToggles(
+      List<Habit> habits, Set<String> completions) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('hf_habits_json');
+      if (raw == null || raw == '[]') return completions;
+      final List<dynamic> widgetList = jsonDecode(raw);
+      final today = DateTime.now();
+      final result = Set<String>.from(completions);
+      bool changed = false;
+      for (final item in widgetList) {
+        final String id = item['id'] as String;
+        final bool widgetDone = item['done'] as bool;
+        final key = StorageService.completionKey(id, today);
+        if (widgetDone && !result.contains(key)) {
+          result.add(key);
+          changed = true;
+        } else if (!widgetDone && result.contains(key)) {
+          result.remove(key);
+          changed = true;
+        }
+      }
+      if (changed) await StorageService.saveCompletions(result);
+      return result;
+    } catch (_) {
+      return completions;
     }
   }
 
@@ -166,27 +188,7 @@ class TodayScreenState extends State<TodayScreen>
     final allDone = today.isNotEmpty && remaining.isEmpty;
 
     return Scaffold(
-      backgroundColor: kDeepOcean,
-      body: Stack(
-        children: [
-          // ── Looping ocean video background ───────────
-          if (_videoCtrl != null && _videoCtrl!.value.isInitialized)
-            Positioned.fill(
-              child: FittedBox(
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  width: _videoCtrl!.value.size.width,
-                  height: _videoCtrl!.value.size.height,
-                  child: VideoPlayer(_videoCtrl!),
-                ),
-              ),
-            ),
-          // Scrim so content stays readable
-          Positioned.fill(
-            child: Container(color: Colors.black.withOpacity(0.38)),
-          ),
-          // ── Main scrollable content ───────────────────
-          RefreshIndicator(
+      body: RefreshIndicator(
         color: kSeaFoam,
         backgroundColor: kMidnightTide,
         onRefresh: _load,
@@ -220,7 +222,7 @@ class TodayScreenState extends State<TodayScreen>
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: kMidnightTide.withOpacity(0.85),
+                    color: kMidnightTide.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: kOceanBlue.withOpacity(0.3), width: 0.5),
                   ),
@@ -295,9 +297,7 @@ class TodayScreenState extends State<TodayScreen>
             ],
           ],
         ),
-          ), // end RefreshIndicator
-        ], // end Stack children
-      ), // end Stack
+      ),
     );
   }
 
@@ -343,10 +343,11 @@ class _WaveHeader extends StatelessWidget {
     final dateStr = '${days[now.weekday % 7]}, ${months[now.month - 1]} ${now.day}';
     final fillY = 220 * (1 - pct.clamp(0.0, 1.0));
 
-    return SizedBox(
+    return Container(
       height: 220,
+      color: kDeepOcean,
       child: Stack(children: [
-        // Wave fill (renders over the video background)
+        // Wave fill
         Positioned.fill(
           child: CustomPaint(
             painter: _WavePainter(phase: wavePhase, fill: pct),
@@ -467,9 +468,9 @@ class _WavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final fillY = size.height * (1 - fill.clamp(0.0, 1.0));
-    _drawWave(canvas, size, fillY + 12, phase,       kOceanBlue.withOpacity(0.65));
-    _drawWave(canvas, size, fillY + 4,  phase + 0.3, kReefBlue.withOpacity(0.60));
-    _drawWave(canvas, size, fillY,       phase + 0.6, kReefBlue.withOpacity(0.50));
+    _drawWave(canvas, size, fillY + 12, phase,       kOceanBlue.withOpacity(0.5));
+    _drawWave(canvas, size, fillY + 4,  phase + 0.3, kReefBlue.withOpacity(0.45));
+    _drawWave(canvas, size, fillY,       phase + 0.6, kReefBlue.withOpacity(0.35));
   }
 
   void _drawWave(Canvas canvas, Size size, double top,
@@ -652,8 +653,8 @@ class _HabitDropCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: done
-              ? kSuccess.withOpacity(0.18)
-              : Theme.of(context).cardColor.withOpacity(0.88),
+              ? kSuccess.withOpacity(0.10)
+              : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: accent.withOpacity(done ? 0.65 : 0.35),

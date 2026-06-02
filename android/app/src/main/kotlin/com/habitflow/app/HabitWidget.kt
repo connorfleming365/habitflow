@@ -128,21 +128,9 @@ class HabitWidget : AppWidgetProvider() {
                     }
                 }
 
-                // Write updated JSON back
+                // Write updated JSON back. Flutter reads this on next resume
+                // via _mergeWidgetToggles() — format-safe, no StringSet needed.
                 prefs.edit().putString("flutter.hf_habits_json", habits.toString()).apply()
-
-                // Also write to Flutter's completions StringSet so the app sees the change
-                if (todayDate.isNotEmpty()) {
-                    val completionKey = "${habitId}_${todayDate}"
-                    val existing = prefs.getStringSet("flutter.hf_completions", mutableSetOf())
-                        ?.toMutableSet() ?: mutableSetOf()
-                    if (existing.contains(completionKey)) {
-                        existing.remove(completionKey)
-                    } else {
-                        existing.add(completionKey)
-                    }
-                    prefs.edit().putStringSet("flutter.hf_completions", existing).apply()
-                }
 
             } catch (e: Exception) { /* ignore parse errors */ }
 
