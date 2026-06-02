@@ -133,14 +133,13 @@ class _StatsScreenState extends State<StatsScreen> {
                     await StorageService.saveCompletions(tempComp);
                     if (ctx.mounted) Navigator.pop(ctx);
                     if (mounted) {
-                      // Bump _refreshKey to force complete widget recreation —
-                      // guarantees calendar/graph/history all re-render with
-                      // the new completions immediately.
+                      // Use tempComp directly — do NOT call _load() here.
+                      // Android's SharedPreferences.apply() is async; _load()
+                      // would read stale data and overwrite the visual update.
                       setState(() {
                         _completions = Set<String>.from(tempComp);
                         _refreshKey++;
                       });
-                      await _load();
                     }
                   },
                   child: const Text('Save changes',
