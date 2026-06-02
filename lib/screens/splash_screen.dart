@@ -79,8 +79,22 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kDeepOcean,
-      body: AnimatedBuilder(
+      body: Container(
+        // Ocean gradient: sky blue → ocean surface → deep ocean
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF8ED4EF), // sky
+              Color(0xFF2A8DB5), // ocean surface
+              Color(0xFF0B4F74), // mid-depth
+              Color(0xFF041C2C), // kDeepOcean
+            ],
+            stops: [0.0, 0.28, 0.60, 1.0],
+          ),
+        ),
+        child: AnimatedBuilder(
         animation: Listenable.merge([_dropCtrl, _textCtrl, _exitCtrl]),
         builder: (_, __) => Center(
           child: FadeTransition(
@@ -98,7 +112,7 @@ class _SplashScreenState extends State<SplashScreen>
                       child: SizedBox(
                         width: 110,
                         height: 130,
-                        child: CustomPaint(painter: _LogoPainter()),
+                        child: CustomPaint(painter: HabitFlowLogoPainter()),
                       ),
                     ),
                   ),
@@ -140,16 +154,17 @@ class _SplashScreenState extends State<SplashScreen>
             ),
           ),
         ),
-      ),
+        ), // end AnimatedBuilder
+      ), // end Container
     );
   }
 }
 
-// ── Vector logo: water-drop outline + checkmark ───────────
+// ── Shared vector logo (used by splash + onboarding) ──────
 //
 // Reproduces the HabitFlow brand mark — a teardrop with a
 // check inside, rendered as crisp strokes at any density.
-class _LogoPainter extends CustomPainter {
+class HabitFlowLogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
@@ -200,5 +215,5 @@ class _LogoPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_LogoPainter _) => false;
+  bool shouldRepaint(covariant CustomPainter _) => false;
 }

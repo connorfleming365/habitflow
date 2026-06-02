@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
+import 'splash_screen.dart' show HabitFlowLogoPainter;
 
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -14,41 +15,44 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   static const _pages = [
     _OnboardPage(
-      emoji: '🌊',
-      title: 'Welcome to HabitFlow',
+      title: 'Welcome to habitflow',
       body:
           'The habit tracker that keeps it simple.\n\n'
-          'No complex dashboards. No overwhelm. '
           'Just your habits, tracked daily — drop by drop.',
     ),
     _OnboardPage(
-      emoji: '💧',
       title: 'How it works',
       body:
           'Add the habits you want to build.\n\n'
           'Every day, open the app and tap to check them off. '
-          'That\'s it. Small, consistent action is all it takes.',
+          'That\'s it. Small, consistent action is all it takes.\n\n'
+          'You can also add the Widget to your Home Screen '
+          'to check off habits straight from there!',
     ),
     _OnboardPage(
-      emoji: '🌊',
-      title: 'Your water journey',
+      title: 'Your Flow Journey',
       body:
-          'Every drop counts. Each day you check in, your water rises.\n\n'
+          'Every drop counts. Each day you check in, your flow rises.\n\n'
+          'Long-term success is built on the consistent, sustained action of '
+          'small habits. With habitflow, you build your Flow towards your goals '
+          'by showing up every day.\n\n'
+          '180 days of consistent habits and you\'ll have filled your ocean. '
+          'Reach that milestone and your long-term goals will feel like a walk '
+          'in the park — or a swim in the sea. 🌊\n\n'
           '💧 Drop — Days 1 to 6\n'
-          'Your journey begins. One drip at a time.\n\n'
+          'Your journey begins.\n\n'
           '💦 Puddle — Days 7 to 20\n'
-          'A week in. Small but real.\n\n'
-          '🌿 Pond — Days 21 to 44\n'
-          'Deepening into something steady.\n\n'
+          'Something real is forming.\n\n'
+          '🌱 Spring — Days 21 to 44\n'
+          'Your habits are springing to life.\n\n'
           '🌊 Stream — Days 45 to 89\n'
-          'A habit is forming. Keep flowing.\n\n'
-          '🏞️ Lake — Days 90 to 179\n'
-          'Three months of consistency. Impressive.\n\n'
+          'You\'re a flowing stream of action.\n\n'
+          '🏄 Tide — Days 90 to 179\n'
+          'The ocean is within reach.\n\n'
           '🌅 Ocean — Day 180+\n'
-          'You\'ve built something extraordinary.',
+          'You are the ocean.',
     ),
     _OnboardPage(
-      emoji: '🌅',
       title: 'Small habits.\nBig life.',
       body:
           'Every great river began as a single raindrop.\n\n'
@@ -161,9 +165,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 }
 
 class _OnboardPage {
-  final String emoji, title, body;
-  const _OnboardPage(
-      {required this.emoji, required this.title, required this.body});
+  final String title, body;
+  const _OnboardPage({required this.title, required this.body});
 }
 
 class _PageContent extends StatelessWidget {
@@ -173,26 +176,30 @@ class _PageContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 16, 32, 24),
+      padding: const EdgeInsets.fromLTRB(32, 8, 32, 16),
       child: SingleChildScrollView(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Decorative circle behind emoji
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: kOceanBlue.withOpacity(0.18),
-                border: Border.all(
-                    color: kReefBlue.withOpacity(0.3), width: 1),
-              ),
-              alignment: Alignment.center,
-              child: Text(page.emoji,
-                  style: const TextStyle(fontSize: 54)),
+            // ── Logo mark at the top ────────────────────
+            const SizedBox(
+              width: 64,
+              height: 76,
+              child: CustomPaint(painter: HabitFlowLogoPainter()),
             ),
-            const SizedBox(height: 36),
+            const SizedBox(height: 6),
+            // "habitflow" wordmark
+            const Text(
+              'habitflow',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 28),
+
+            // ── Page title ──────────────────────────────
             Text(
               page.title,
               textAlign: TextAlign.center,
@@ -203,13 +210,15 @@ class _PageContent extends StatelessWidget {
                 height: 1.2,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
+
+            // ── Body text ───────────────────────────────
             Text(
               page.body,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: kSeaFoam,
-                fontSize: 15,
+                fontSize: 14,
                 height: 1.65,
               ),
             ),

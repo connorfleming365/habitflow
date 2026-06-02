@@ -255,10 +255,10 @@ class TodayScreenState extends State<TodayScreen>
                       crossAxisCount: 3,
                       mainAxisSpacing: 10,
                       crossAxisSpacing: 10,
-                      childAspectRatio: 1.0,
+                      childAspectRatio: 0.78,
                     ),
                     delegate: SliverChildBuilderDelegate(
-                      (_, i) => _HabitDropCard(
+                      (_, i) => _HabitCircleTile(
                         habit: remaining[i], done: false,
                         onTap: () => _toggle(remaining[i]),
                       ),
@@ -276,10 +276,10 @@ class TodayScreenState extends State<TodayScreen>
                       crossAxisCount: 3,
                       mainAxisSpacing: 10,
                       crossAxisSpacing: 10,
-                      childAspectRatio: 1.0,
+                      childAspectRatio: 0.78,
                     ),
                     delegate: SliverChildBuilderDelegate(
-                      (_, i) => _HabitDropCard(
+                      (_, i) => _HabitCircleTile(
                         habit: done[i], done: true,
                         onTap: () => _toggle(done[i]),
                       ),
@@ -506,11 +506,11 @@ class _StageAnimPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     switch (stage) {
-      case WaterStage.drop:   _paintDrops(canvas, size); break;
+      case WaterStage.drop:   _paintDrops(canvas, size);  break;
       case WaterStage.puddle: _paintPuddle(canvas, size); break;
-      case WaterStage.pond:   _paintPuddle(canvas, size); break; // deeper ripples
+      case WaterStage.spring: _paintPuddle(canvas, size); break;
       case WaterStage.stream: _paintStream(canvas, size); break;
-      case WaterStage.lake:   _paintLake(canvas, size);   break;
+      case WaterStage.tide:   _paintLake(canvas, size);   break;
       case WaterStage.ocean:  _paintOcean(canvas, size);  break;
     }
   }
@@ -637,96 +637,66 @@ class _StageAnimPainter extends CustomPainter {
 }
 
 // ── Compact 3-column habit drop card ─────────────────────
-class _HabitDropCard extends StatelessWidget {
+// ── Circular habit tile ───────────────────────────────────
+class _HabitCircleTile extends StatelessWidget {
   final Habit habit;
   final bool done;
   final VoidCallback onTap;
-  const _HabitDropCard({required this.habit, required this.done, required this.onTap});
+  const _HabitCircleTile({required this.habit, required this.done, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final accent = done ? kSuccess : hexColor(habit.color);
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          color: done
-              ? kSuccess.withOpacity(0.10)
-              : Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: accent.withOpacity(done ? 0.65 : 0.35),
-            width: done ? 1.5 : 0.8,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Accent bar — clipped by parent's Clip.antiAlias so no overflow
-            Container(
-              height: 3,
-              color: accent.withOpacity(done ? 0.85 : 0.6),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Emoji + check
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(habit.icon, style: const TextStyle(fontSize: 20)),
-                        _MiniCheck(done: done, color: accent),
-                      ],
-                    ),
-                    // Name
-                    Text(
-                      habit.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: done ? kSuccess : Theme.of(context).colorScheme.onSurface,
-                        decoration: done ? TextDecoration.lineThrough : null,
-                        decorationColor: kSuccess.withOpacity(0.6),
-                        height: 1.25,
-                      ),
-                    ),
-                  ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: LayoutBuilder(builder: (ctx, constraints) {
+          final d = constraints.maxWidth * 0.76; // circle diameter
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              // Circle
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOut,
+                width: d, height: d,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: done ? kSuccess : accent.withOpacity(0.12),
+                  border: Border.all(
+                    color: done ? kSuccess : accent.withOpacity(0.55),
+                    width: 2.0,
+                  ),
+                ),
+                child: Center(
+                  child: done
+                    ? Icon(Icons.check_rounded, color: Colors.white, size: d * 0.40)
+                    : Text(habit.icon, style: TextStyle(fontSize: d * 0.38)),
                 ),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(height: 7),
+              // Name below
+              Text(
+                habit.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: done
+                      ? kSuccess
+                      : Theme.of(context).colorScheme.onSurface,
+                  height: 1.25,
+                ),
+              ),
+            ],
+          );
+        }),
       ),
     );
   }
-}
-
-class _MiniCheck extends StatelessWidget {
-  final bool done;
-  final Color color;
-  const _MiniCheck({required this.done, required this.color});
-
-  @override
-  Widget build(BuildContext context) => AnimatedContainer(
-    duration: const Duration(milliseconds: 300),
-    curve: Curves.elasticOut,
-    width: 22, height: 22,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      color: done ? color : Colors.transparent,
-      border: Border.all(color: done ? color : color.withOpacity(0.5), width: 1.5),
-    ),
-    child: done ? const Icon(Icons.check, color: Colors.white, size: 13) : null,
-  );
 }
 
 // ── Milestone celebration dialog ──────────────────────────
