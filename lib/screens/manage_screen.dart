@@ -87,6 +87,7 @@ class _ManageScreenState extends State<ManageScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,7 +282,7 @@ class _ManageScreenState extends State<ManageScreen> {
     );
 }
 
-// ── Grid tile ─────────────────────────────────────────────
+// ── Grid tile — circular, matching Today screen ───────────
 class _GridTile extends StatelessWidget {
   final Habit habit;
   final int streak;
@@ -289,71 +290,94 @@ class _GridTile extends StatelessWidget {
   const _GridTile({required this.habit, required this.streak, required this.onTap});
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      decoration: BoxDecoration(
-        color: kMidnightTide,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: kOceanBlue.withOpacity(0.35), width: 0.5),
+  Widget build(BuildContext context) {
+    final accent = hexColor(habit.color);
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: LayoutBuilder(builder: (ctx, constraints) {
+          final d = constraints.maxWidth * 0.76;
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              // Circle with emoji
+              Container(
+                width: d, height: d,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: accent.withOpacity(0.15),
+                  border: Border.all(color: accent.withOpacity(0.6), width: 2.0),
+                ),
+                child: Center(
+                  child: Text(habit.icon, style: TextStyle(fontSize: d * 0.38)),
+                ),
+              ),
+              const SizedBox(height: 6),
+              // Name
+              Text(
+                habit.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white, fontSize: 10.5,
+                  fontWeight: FontWeight.w600, height: 1.25),
+              ),
+              if (streak > 0) ...[
+                const SizedBox(height: 2),
+                Text('${streak}d 🔥',
+                  style: const TextStyle(
+                      color: kWarning, fontSize: 9, fontWeight: FontWeight.w700)),
+              ],
+            ],
+          );
+        }),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(habit.icon, style: const TextStyle(fontSize: 26)),
-          const SizedBox(height: 6),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Text(
-              habit.name,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white, fontSize: 11,
-                fontWeight: FontWeight.w600, height: 1.3),
-            ),
-          ),
-          const SizedBox(height: 4),
-          if (streak > 0)
-            Text('${streak}d 🔥',
-              style: const TextStyle(
-                  color: kWarning, fontSize: 10, fontWeight: FontWeight.w700))
-          else
-            Text(habit.freqLabel,
-              style: const TextStyle(color: kSeaFoam, fontSize: 9)),
-        ],
-      ),
-    ),
-  );
+    );
+  }
 }
 
-// ── Add tile ──────────────────────────────────────────────
+// ── Add tile — circular ────────────────────────────────────
 class _AddTile extends StatelessWidget {
   final VoidCallback onTap;
   const _AddTile({required this.onTap});
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: kOceanBlue.withOpacity(0.5),
-          width: 1,
-          strokeAlign: BorderSide.strokeAlignInside,
-        ),
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: LayoutBuilder(builder: (ctx, constraints) {
+          final d = constraints.maxWidth * 0.76;
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Container(
+                width: d, height: d,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.transparent,
+                  border: Border.all(
+                    color: kSeaFoam.withOpacity(0.4), width: 2,
+                    strokeAlign: BorderSide.strokeAlignInside,
+                  ),
+                ),
+                child: Center(
+                  child: Icon(Icons.add_rounded,
+                      color: kSeaFoam.withOpacity(0.7), size: d * 0.38),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text('New habit',
+                style: TextStyle(color: kSeaFoam.withOpacity(0.7),
+                    fontSize: 10.5, fontWeight: FontWeight.w600)),
+            ],
+          );
+        }),
       ),
-      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(Icons.add_rounded, color: kOceanBlue.withOpacity(0.7), size: 28),
-        const SizedBox(height: 4),
-        Text('New habit',
-          style: TextStyle(color: kOceanBlue.withOpacity(0.7),
-              fontSize: 10, fontWeight: FontWeight.w600)),
-      ]),
-    ),
-  );
+    );
+  }
 }
 
 // ── List tile ─────────────────────────────────────────────

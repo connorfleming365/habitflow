@@ -188,6 +188,7 @@ class TodayScreenState extends State<TodayScreen>
     final allDone = today.isNotEmpty && remaining.isEmpty;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: RefreshIndicator(
         color: kSeaFoam,
         backgroundColor: kMidnightTide,
@@ -345,7 +346,7 @@ class _WaveHeader extends StatelessWidget {
 
     return Container(
       height: 220,
-      color: kDeepOcean,
+      color: Colors.black.withOpacity(0.25),
       child: Stack(children: [
         // Wave fill
         Positioned.fill(

@@ -46,13 +46,23 @@ jobs:
              /tmp/build_app/android/app/src/main/kotlin/com/habitflow/habitflow/
           cp android/app/src/main/kotlin/com/habitflow/app/MainActivity.kt \
              /tmp/build_app/android/app/src/main/kotlin/com/habitflow/habitflow/
+          cp android/app/src/main/kotlin/com/habitflow/app/HabitWidgetService.kt \
+             /tmp/build_app/android/app/src/main/kotlin/com/habitflow/habitflow/
+          cp android/app/src/main/kotlin/com/habitflow/app/HabitWidgetFactory.kt \
+             /tmp/build_app/android/app/src/main/kotlin/com/habitflow/habitflow/
           cp android/app/src/main/res/layout/habit_widget.xml \
+             /tmp/build_app/android/app/src/main/res/layout/
+          cp android/app/src/main/res/layout/habit_widget_item.xml \
              /tmp/build_app/android/app/src/main/res/layout/
           cp android/app/src/main/res/xml/habit_widget_info.xml \
              /tmp/build_app/android/app/src/main/res/xml/
           cp android/app/src/main/res/drawable/widget_background.xml \
              /tmp/build_app/android/app/src/main/res/drawable/
           cp android/app/src/main/res/drawable/widget_progress_drawable.xml \
+             /tmp/build_app/android/app/src/main/res/drawable/
+          cp android/app/src/main/res/drawable/widget_circle_normal.xml \
+             /tmp/build_app/android/app/src/main/res/drawable/
+          cp android/app/src/main/res/drawable/widget_circle_done.xml \
              /tmp/build_app/android/app/src/main/res/drawable/
           cp android/app/src/main/res/values/strings.xml \
              /tmp/build_app/android/app/src/main/res/values/strings.xml
@@ -67,7 +77,7 @@ jobs:
 
       - name: Add widget receiver to AndroidManifest
         run: |
-          sed -i 's|</application>|    <receiver android:name=".HabitWidget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="com.habitflow.habitflow.TOGGLE_HABIT"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/habit_widget_info"/></receiver>\n    </application>|' \
+          sed -i 's|</application>|    <receiver android:name=".HabitWidget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="com.habitflow.habitflow.TOGGLE_HABIT"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/habit_widget_info"/></receiver><service android:name=".HabitWidgetService" android:exported="true" android:permission="android.permission.BIND_REMOTEVIEWS"/>\n    </application>|' \
             /tmp/build_app/android/app/src/main/AndroidManifest.xml
 
       - name: Add notification & alarm permissions to AndroidManifest

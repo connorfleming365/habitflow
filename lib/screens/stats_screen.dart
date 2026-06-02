@@ -165,6 +165,7 @@ class _StatsScreenState extends State<StatsScreen> {
         : weekStats.done / weekStats.total;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('Progress')),
       body: RefreshIndicator(
         color: kSeaFoam,

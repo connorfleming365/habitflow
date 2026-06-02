@@ -238,6 +238,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isDark = widget.appTheme == 'deep_ocean';
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),

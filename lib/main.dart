@@ -174,11 +174,19 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // TodayScreen lives in Offstage so its animation state is preserved
-      // across tab switches. All other screens rebuild when visited so they
-      // always show fresh data.
+      // Ocean background image sits behind every screen.
+      // A semi-transparent scrim keeps text readable.
       body: Stack(
         children: [
+          // ── Ocean background ──────────────────────────
+          Positioned.fill(
+            child: Image.asset('assets/ocean_bg.jpg', fit: BoxFit.cover),
+          ),
+          Positioned.fill(
+            child: Container(color: Colors.black.withOpacity(0.52)),
+          ),
+
+          // ── App screens ───────────────────────────────
           Offstage(
             offstage: _index != 0,
             child: TodayScreen(key: _todayKey),

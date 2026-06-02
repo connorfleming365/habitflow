@@ -19,7 +19,7 @@ class SoundService {
   /// Called by Settings whenever the toggle changes.
   static void setEnabled(bool value) => _enabled = value;
 
-  static Future<void> playDrop() => _play('assets/sounds/water_drop.wav');
+  static Future<void> playDrop() => _play('assets/sounds/water_drop.mp3');
   static Future<void> playWave() => _play('assets/sounds/wave.wav');
   static Future<void> playFlow() => _play('assets/sounds/flow.wav');
 

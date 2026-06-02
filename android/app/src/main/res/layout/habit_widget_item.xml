@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="4dp">
+
+    <!-- Circle with emoji / checkmark -->
+    <FrameLayout
+        android:id="@+id/item_circle"
+        android:layout_width="54dp"
+        android:layout_height="54dp"
+        android:background="@drawable/widget_circle_normal">
+
+        <TextView
+            android:id="@+id/item_emoji"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textSize="22sp"
+            android:textColor="#DDFFFFFF"/>
+    </FrameLayout>
+
+    <!-- Habit name below the circle -->
+    <TextView
+        android:id="@+id/item_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:gravity="center"
+        android:textColor="#DDFFFFFF"
+        android:textSize="8sp"
+        android:maxLines="2"
+        android:ellipsize="end"/>
+
+</LinearLayout>

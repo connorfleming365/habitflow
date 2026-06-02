@@ -1,15 +1,11 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 import '../theme.dart';
 
-/// Animated splash shown once on every cold start.
-///
-/// Animation sequence
-///  0 ms       : blank kDeepOcean screen
-///  150 ms     : drop+logo falls in from above (bounceOut, 700 ms)
-///  900 ms     : "habitflow" + tagline fade + slide up (500 ms)
-///  1 400 ms   : hold
-///  2 000 ms   : whoosh exit — scales up & fades out (500 ms)
-///  2 500 ms   : onComplete() called → app navigates away
+/// Full-screen video splash shown once on cold start.
+/// Plays intro_video.mp4, then calls onComplete().
+/// Falls back to an animated logo sequence if the video fails to load.
 class SplashScreen extends StatefulWidget {
   final VoidCallback onComplete;
   const SplashScreen({super.key, required this.onComplete});
@@ -19,151 +15,136 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with TickerProviderStateMixin {
-  late final AnimationController _dropCtrl;
-  late final AnimationController _textCtrl;
-  late final AnimationController _exitCtrl;
+    with SingleTickerProviderStateMixin {
+  VideoPlayerController? _video;
+  bool _videoReady = false;
+  bool _done = false;
 
-  late final Animation<double> _dropY;
-  late final Animation<double> _dropOpacity;
-  late final Animation<double> _textOpacity;
-  late final Animation<double> _textY;
-  late final Animation<double> _exitScale;
-  late final Animation<double> _exitOpacity;
+  // Fallback fade-in for the logo if video fails
+  late AnimationController _fadeCtrl;
+  late Animation<double> _fadeAnim;
 
   @override
   void initState() {
     super.initState();
-
-    _dropCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 700));
-    _textCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 500));
-    _exitCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 500));
-
-    _dropY = Tween<double>(begin: -180, end: 0).animate(
-        CurvedAnimation(parent: _dropCtrl, curve: Curves.bounceOut));
-    _dropOpacity = Tween<double>(begin: 0, end: 1).animate(
-        CurvedAnimation(
-            parent: _dropCtrl, curve: const Interval(0, 0.2, curve: Curves.easeIn)));
-    _textOpacity = CurvedAnimation(parent: _textCtrl, curve: Curves.easeOut);
-    _textY = Tween<double>(begin: 20, end: 0).animate(
-        CurvedAnimation(parent: _textCtrl, curve: Curves.easeOut));
-    _exitScale = Tween<double>(begin: 1.0, end: 1.55).animate(
-        CurvedAnimation(parent: _exitCtrl, curve: Curves.easeIn));
-    _exitOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
-        CurvedAnimation(parent: _exitCtrl, curve: Curves.easeIn));
-
-    _run();
+    _fadeCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
+    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeIn);
+    _initVideo();
   }
 
-  Future<void> _run() async {
-    await Future.delayed(const Duration(milliseconds: 150));
-    await _dropCtrl.forward();
-    await Future.delayed(const Duration(milliseconds: 50));
-    await _textCtrl.forward();
-    await Future.delayed(const Duration(milliseconds: 900));
-    await _exitCtrl.forward();
+  Future<void> _initVideo() async {
+    // video_player requires native platform; skip on web and use timed fallback
+    if (kIsWeb) {
+      _fadeCtrl.forward();
+      await Future.delayed(const Duration(milliseconds: 2500));
+      _finish();
+      return;
+    }
+    try {
+      final ctrl = VideoPlayerController.asset('assets/intro_video.mp4');
+      await ctrl.initialize();
+      if (!mounted) { ctrl.dispose(); return; }
+      ctrl.setVolume(0); // muted — user may have sounds off
+      ctrl.setLooping(false);
+      ctrl.addListener(_onVideoUpdate);
+      setState(() { _video = ctrl; _videoReady = true; });
+      await ctrl.play();
+      _fadeCtrl.forward();
+    } catch (_) {
+      // Video failed — run timed fallback
+      _fadeCtrl.forward();
+      await Future.delayed(const Duration(milliseconds: 2500));
+      _finish();
+    }
+  }
+
+  void _onVideoUpdate() {
+    final ctrl = _video;
+    if (ctrl == null || _done) return;
+    final pos = ctrl.value.position;
+    final dur = ctrl.value.duration;
+    // Finish when video reaches the last 200 ms or playback stops
+    if (dur.inMilliseconds > 0 &&
+        pos.inMilliseconds >= dur.inMilliseconds - 200) {
+      _finish();
+    }
+  }
+
+  void _finish() {
+    if (_done) return;
+    _done = true;
     if (mounted) widget.onComplete();
   }
 
   @override
   void dispose() {
-    _dropCtrl.dispose();
-    _textCtrl.dispose();
-    _exitCtrl.dispose();
+    _video?.removeListener(_onVideoUpdate);
+    _video?.dispose();
+    _fadeCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        // Ocean gradient: sky blue → ocean surface → deep ocean
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF8ED4EF), // sky
-              Color(0xFF2A8DB5), // ocean surface
-              Color(0xFF0B4F74), // mid-depth
-              Color(0xFF041C2C), // kDeepOcean
-            ],
-            stops: [0.0, 0.28, 0.60, 1.0],
-          ),
-        ),
-        child: AnimatedBuilder(
-        animation: Listenable.merge([_dropCtrl, _textCtrl, _exitCtrl]),
-        builder: (_, __) => Center(
-          child: FadeTransition(
-            opacity: _exitOpacity,
-            child: ScaleTransition(
-              scale: _exitScale,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // ── Drop + checkmark logo ──────────────
-                  Transform.translate(
-                    offset: Offset(0, _dropY.value),
-                    child: Opacity(
-                      opacity: _dropOpacity.value.clamp(0.0, 1.0),
-                      child: SizedBox(
-                        width: 110,
-                        height: 130,
-                        child: CustomPaint(painter: HabitFlowLogoPainter()),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ── "habitflow" + tagline ──────────────
-                  Transform.translate(
-                    offset: Offset(0, _textY.value),
-                    child: Opacity(
-                      opacity: _textOpacity.value.clamp(0.0, 1.0),
-                      child: Column(children: [
-                        // App name — matches the branding image typography
-                        const Text(
-                          'habitflow',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 44,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -1.0,
-                            height: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Drop by drop, build your ocean.',
-                          style: TextStyle(
-                            color: kSeaFoam,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ]),
-                    ),
-                  ),
-                ],
+      backgroundColor: kDeepOcean,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Video (or black fallback)
+          if (_videoReady && _video != null)
+            FadeTransition(
+              opacity: _fadeAnim,
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: _video!.value.size.width,
+                  height: _video!.value.size.height,
+                  child: VideoPlayer(_video!),
+                ),
               ),
             ),
-          ),
-        ),
-        ), // end AnimatedBuilder
-      ), // end Container
+
+          // Fallback: ocean gradient when video isn't ready
+          if (!_videoReady)
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF8ED4EF),
+                    Color(0xFF2A8DB5),
+                    Color(0xFF0B4F74),
+                    Color(0xFF041C2C),
+                  ],
+                  stops: [0.0, 0.28, 0.60, 1.0],
+                ),
+              ),
+              child: Center(
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  const SizedBox(width: 90, height: 108,
+                      child: CustomPaint(painter: HabitFlowLogoPainter())),
+                  const SizedBox(height: 20),
+                  const Text('habitflow',
+                    style: TextStyle(color: Colors.white, fontSize: 40,
+                        fontWeight: FontWeight.w700, letterSpacing: -1)),
+                  const SizedBox(height: 8),
+                  Text('Drop by drop, build your ocean.',
+                    style: TextStyle(color: kSeaFoam, fontSize: 13)),
+                ]),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
 
-// ── Shared vector logo (used by splash + onboarding) ──────
-//
-// Reproduces the HabitFlow brand mark — a teardrop with a
-// check inside, rendered as crisp strokes at any density.
+// ── HabitFlow brand mark ──────────────────────────────────
+// Water-drop outline with checkmark inside.
+// const constructor so it can be used in const widget trees.
 class HabitFlowLogoPainter extends CustomPainter {
   const HabitFlowLogoPainter();
 
@@ -179,29 +160,17 @@ class HabitFlowLogoPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
-    // ── Water-drop outline ──────────────────────────────
-    // Pointed at the top, bulges to a circle at the bottom.
+    // Water-drop outline (pointed tip at top, rounded base)
     final drop = Path();
-    drop.moveTo(w * 0.50, h * 0.02);          // tip
-    drop.cubicTo(
-      w * 0.84, h * 0.22,                     // right shoulder
-      w * 0.97, h * 0.52,
-      w * 0.97, h * 0.68,                     // right side of base circle
-    );
-    drop.arcToPoint(
-      Offset(w * 0.03, h * 0.68),
-      radius: Radius.circular(w * 0.47),
-      clockwise: false,
-    );
-    drop.cubicTo(
-      w * 0.03, h * 0.52,
-      w * 0.16, h * 0.22,
-      w * 0.50, h * 0.02,                     // back to tip
-    );
+    drop.moveTo(w * 0.50, h * 0.02);
+    drop.cubicTo(w * 0.84, h * 0.22, w * 0.97, h * 0.52, w * 0.97, h * 0.68);
+    drop.arcToPoint(Offset(w * 0.03, h * 0.68),
+        radius: Radius.circular(w * 0.47), clockwise: false);
+    drop.cubicTo(w * 0.03, h * 0.52, w * 0.16, h * 0.22, w * 0.50, h * 0.02);
     drop.close();
     canvas.drawPath(drop, stroke);
 
-    // ── Checkmark inside ───────────────────────────────
+    // Checkmark inside
     final check = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
@@ -210,9 +179,9 @@ class HabitFlowLogoPainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round;
 
     final tick = Path();
-    tick.moveTo(w * 0.22, h * 0.60);          // start (left)
-    tick.lineTo(w * 0.42, h * 0.82);          // valley
-    tick.lineTo(w * 0.80, h * 0.42);          // end (upper right)
+    tick.moveTo(w * 0.22, h * 0.60);
+    tick.lineTo(w * 0.42, h * 0.82);
+    tick.lineTo(w * 0.80, h * 0.42);
     canvas.drawPath(tick, check);
   }
 
