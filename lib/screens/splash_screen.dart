@@ -165,6 +165,8 @@ class _SplashScreenState extends State<SplashScreen>
 // Reproduces the HabitFlow brand mark — a teardrop with a
 // check inside, rendered as crisp strokes at any density.
 class HabitFlowLogoPainter extends CustomPainter {
+  const HabitFlowLogoPainter();
+
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
