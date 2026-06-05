@@ -93,8 +93,11 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         actions: [
           TextButton(
             onPressed: _save,
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).appBarTheme.iconTheme?.color ?? Colors.white,
+            ),
             child: Text(widget.existing == null ? 'Add' : 'Save',
-              style: const TextStyle(color: kPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
           ),
         ],
       ),

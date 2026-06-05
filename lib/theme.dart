@@ -157,13 +157,13 @@ Color hexColor(String hex) {
 }
 
 BoxDecoration cardDecoration(BuildContext context) => BoxDecoration(
-  color: kMidnightTide,
+  color: Theme.of(context).cardColor,
   borderRadius: BorderRadius.circular(16),
-  border: Border.all(color: kOceanBlue.withOpacity(0.35), width: 0.5),
+  border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
 );
 
-BoxDecoration surfaceDecoration() => BoxDecoration(
-  color: const Color(0xFF083348),
+BoxDecoration surfaceDecoration(BuildContext context) => BoxDecoration(
+  color: Theme.of(context).colorScheme.surfaceContainerHighest,
   borderRadius: BorderRadius.circular(16),
-  border: Border.all(color: kOceanBlue.withOpacity(0.25), width: 0.5),
+  border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
 );

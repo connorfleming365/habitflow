@@ -213,7 +213,7 @@ class _ManageScreenState extends State<ManageScreen> {
   void _showHabitOptions(Habit h) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: kMidnightTide,
+      backgroundColor: Theme.of(context).cardColor,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),

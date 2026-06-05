@@ -71,7 +71,7 @@ class _StatsScreenState extends State<StatsScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: kMidnightTide,
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => StatefulBuilder(
@@ -168,8 +168,8 @@ class _StatsScreenState extends State<StatsScreen> {
       backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('Progress')),
       body: RefreshIndicator(
-        color: kSeaFoam,
-        backgroundColor: kMidnightTide,
+        color: Theme.of(context).colorScheme.secondary,
+        backgroundColor: Theme.of(context).cardColor,
         onRefresh: _load,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
@@ -279,7 +279,7 @@ class _StageCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: kMidnightTide,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: kReefBlue.withOpacity(0.5), width: 0.5),
       ),
@@ -431,9 +431,9 @@ class _CalendarSectionState extends State<_CalendarSection> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: kMidnightTide,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kOceanBlue.withOpacity(0.3), width: 0.5),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
       ),
       child: Column(children: [
         // Header row

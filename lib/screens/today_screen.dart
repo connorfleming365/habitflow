@@ -223,15 +223,15 @@ class TodayScreenState extends State<TodayScreen>
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: kMidnightTide.withOpacity(0.7),
+                    color: Theme.of(context).cardColor.withOpacity(0.85),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: kOceanBlue.withOpacity(0.3), width: 0.5),
+                    border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
                   ),
                   child: Row(children: [
                     const Text('💧', style: TextStyle(fontSize: 14)),
                     const SizedBox(width: 10),
                     Expanded(child: Text(dailyQuote(),
-                      style: const TextStyle(color: kSeaFoam, fontSize: 12,
+                      style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 12,
                           fontStyle: FontStyle.italic, height: 1.4))),
                   ]),
                 ),
@@ -247,54 +247,71 @@ class TodayScreenState extends State<TodayScreen>
                 }),
               )
             else ...[
-              if (remaining.isNotEmpty) ...[
-                _sliverLabel("TODAY'S HABITS"),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                  sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
-                      childAspectRatio: 0.78,
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor.withOpacity(0.80),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    delegate: SliverChildBuilderDelegate(
-                      (_, i) => _HabitCircleTile(
-                        habit: remaining[i], done: false,
-                        onTap: () => _toggle(remaining[i]),
-                      ),
-                      childCount: remaining.length,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (remaining.isNotEmpty) ...[
+                          _bannerLabel("TODAY'S HABITS"),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+                            child: GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                mainAxisSpacing: 10,
+                                crossAxisSpacing: 10,
+                                childAspectRatio: 0.78,
+                              ),
+                              itemCount: remaining.length,
+                              itemBuilder: (_, i) => _HabitCircleTile(
+                                habit: remaining[i], done: false,
+                                onTap: () => _toggle(remaining[i]),
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (done.isNotEmpty) ...[
+                          _bannerLabel('COMPLETED ✓'),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+                            child: GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                mainAxisSpacing: 10,
+                                crossAxisSpacing: 10,
+                                childAspectRatio: 0.78,
+                              ),
+                              itemCount: done.length,
+                              itemBuilder: (_, i) => _HabitCircleTile(
+                                habit: done[i], done: true,
+                                onTap: () => _toggle(done[i]),
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (allDone)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                            child: _AllDoneCard(),
+                          ),
+                        const SizedBox(height: 8),
+                      ],
                     ),
                   ),
                 ),
-              ],
-              if (done.isNotEmpty) ...[
-                _sliverLabel('COMPLETED ✓'),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                  sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
-                      childAspectRatio: 0.78,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (_, i) => _HabitCircleTile(
-                        habit: done[i], done: true,
-                        onTap: () => _toggle(done[i]),
-                      ),
-                      childCount: done.length,
-                    ),
-                  ),
-                ),
-              ],
-              if (allDone)
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  sliver: SliverToBoxAdapter(child: _AllDoneCard()),
-                ),
-              const SliverToBoxAdapter(child: SizedBox(height: 40)),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
           ],
         ),
@@ -302,13 +319,11 @@ class TodayScreenState extends State<TodayScreen>
     );
   }
 
-  Widget _sliverLabel(String text) => SliverPadding(
-    padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
-    sliver: SliverToBoxAdapter(
-      child: Text(text, style: const TextStyle(
-          fontSize: 11, fontWeight: FontWeight.w700,
-          letterSpacing: 1.0, color: kSeaFoam)),
-    ),
+  Widget _bannerLabel(String text) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+    child: Text(text, style: TextStyle(
+        fontSize: 11, fontWeight: FontWeight.w700,
+        letterSpacing: 1.0, color: Theme.of(context).colorScheme.secondary)),
   );
 }
 

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
-import 'splash_screen.dart' show HabitFlowLogoPainter;
 
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -181,23 +180,12 @@ class _PageContent extends StatelessWidget {
         child: Column(
           children: [
             // ── Logo mark at the top ────────────────────
-            const SizedBox(
-              width: 64,
-              height: 76,
-              child: CustomPaint(painter: HabitFlowLogoPainter()),
+            Image.asset(
+              'assets/habitflow_logo_white.png',
+              width: 140,
+              height: 140,
             ),
-            const SizedBox(height: 6),
-            // "habitflow" wordmark
-            const Text(
-              'habitflow',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
 
             // ── Page title ──────────────────────────────
             Text(
