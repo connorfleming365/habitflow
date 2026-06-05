@@ -81,7 +81,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kDeepOcean,
+      backgroundColor: kCoralNavy,
       body: SafeArea(
         child: Column(
           children: [
@@ -93,8 +93,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: _page < _pages.length - 1
                     ? TextButton(
                         onPressed: widget.onComplete,
-                        child: const Text('Skip',
-                            style: TextStyle(color: kSeaFoam, fontSize: 13)),
+                        child: Text('Skip',
+                            style: TextStyle(
+                                color: Colors.white.withOpacity(0.65),
+                                fontSize: 13)),
                       )
                     : const SizedBox(height: 36),
               ),
@@ -121,8 +123,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   height: 8,
                   decoration: BoxDecoration(
                     color: _page == i
-                        ? kReefBlue
-                        : kOceanBlue.withOpacity(0.35),
+                        ? kCoralPrimary
+                        : Colors.white.withOpacity(0.25),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 );
@@ -138,7 +140,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: ElevatedButton(
                   onPressed: _next,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: kReefBlue,
+                    backgroundColor: kCoralPrimary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -204,8 +206,8 @@ class _PageContent extends StatelessWidget {
             Text(
               page.body,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: kSeaFoam,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
                 fontSize: 14,
                 height: 1.65,
               ),

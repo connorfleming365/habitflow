@@ -187,8 +187,10 @@ class TodayScreenState extends State<TodayScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Scaffold(
-      body: Center(child: CircularProgressIndicator(color: kSeaFoam)));
+    if (_loading) return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Center(child: CircularProgressIndicator(
+          color: Theme.of(context).colorScheme.primary)));
 
     final today = _todayHabits;
     final done = today.where((h) => _completions.contains(StorageService.todayKey(h.id))).toList();
@@ -200,8 +202,8 @@ class TodayScreenState extends State<TodayScreen>
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: RefreshIndicator(
-        color: kSeaFoam,
-        backgroundColor: kMidnightTide,
+        color: Theme.of(context).colorScheme.primary,
+        backgroundColor: Theme.of(context).cardColor,
         onRefresh: _load,
         child: CustomScrollView(
           slivers: [
@@ -397,7 +399,7 @@ class _WaveHeader extends StatelessWidget {
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                   Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(dateStr, style: const TextStyle(
-                        color: kSeaFoam, fontSize: 12, fontWeight: FontWeight.w600)),
+                        color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 2),
                     Text(_flowGreeting, style: const TextStyle(
                         color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
@@ -407,15 +409,15 @@ class _WaveHeader extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Text('STAGE',
-                        style: TextStyle(color: kSeaFoam, fontSize: 9,
+                        style: TextStyle(color: Colors.white70, fontSize: 9,
                             fontWeight: FontWeight.w700, letterSpacing: 1.2)),
                       const SizedBox(height: 3),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: kOceanBlue.withOpacity(0.4),
+                          color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: kSeaFoam.withOpacity(0.4)),
+                          border: Border.all(color: Colors.white.withOpacity(0.4)),
                         ),
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
                           Text(ProgressionService.stageEmoji(stage),
@@ -445,7 +447,7 @@ class _WaveHeader extends StatelessWidget {
                       Container(
                         width: 170, height: 6,
                         decoration: BoxDecoration(
-                          color: kOceanBlue.withOpacity(0.3),
+                          color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(3),
                         ),
                         child: FractionallySizedBox(
@@ -453,7 +455,7 @@ class _WaveHeader extends StatelessWidget {
                           widthFactor: pct.clamp(0.0, 1.0),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: allDone ? kSuccess : kSeaFoam,
+                              color: allDone ? kSuccess : Colors.white,
                               borderRadius: BorderRadius.circular(3),
                             ),
                           ),
@@ -465,9 +467,9 @@ class _WaveHeader extends StatelessWidget {
                       child: Stack(alignment: Alignment.center, children: [
                         CircularProgressIndicator(
                           value: pct, strokeWidth: 4,
-                          backgroundColor: kOceanBlue.withOpacity(0.3),
+                          backgroundColor: Colors.white.withOpacity(0.2),
                           valueColor: AlwaysStoppedAnimation(
-                              allDone ? kSuccess : kSeaFoam),
+                              allDone ? kSuccess : Colors.white),
                           strokeCap: StrokeCap.round,
                         ),
                         Text('${(pct * 100).round()}%',
@@ -494,9 +496,9 @@ class _WavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final fillY = size.height * (1 - fill.clamp(0.0, 1.0));
-    _drawWave(canvas, size, fillY + 12, phase,       kOceanBlue.withOpacity(0.5));
-    _drawWave(canvas, size, fillY + 4,  phase + 0.3, kReefBlue.withOpacity(0.45));
-    _drawWave(canvas, size, fillY,       phase + 0.6, kReefBlue.withOpacity(0.35));
+    _drawWave(canvas, size, fillY + 12, phase,       kWaveDeep.withOpacity(0.5));
+    _drawWave(canvas, size, fillY + 4,  phase + 0.3, kWaveMid.withOpacity(0.45));
+    _drawWave(canvas, size, fillY,       phase + 0.6, kWaveMid.withOpacity(0.35));
   }
 
   void _drawWave(Canvas canvas, Size size, double top,
@@ -760,11 +762,15 @@ class _MilestoneDialogState extends State<_MilestoneDialog>
         margin: const EdgeInsets.symmetric(horizontal: 32),
         padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
-          color: kMidnightTide,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: kReefBlue.withOpacity(0.5), width: 1.5),
+          border: Border.all(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              width: 1.5),
           boxShadow: [
-            BoxShadow(color: kReefBlue.withOpacity(0.3), blurRadius: 30, spreadRadius: 5),
+            BoxShadow(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
+                blurRadius: 30, spreadRadius: 5),
           ],
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -782,24 +788,27 @@ class _MilestoneDialogState extends State<_MilestoneDialog>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
             decoration: BoxDecoration(
-              color: kReefBlue.withOpacity(0.2),
+              color: Theme.of(context).colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text('Day ${widget.days}',
-              style: const TextStyle(color: kSeaFoam,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
                   fontSize: 13, fontWeight: FontWeight.w700)),
           ),
           const SizedBox(height: 14),
           Text(ProgressionService.milestoneMessage(widget.days),
             textAlign: TextAlign.center,
-            style: const TextStyle(color: kSeaFoam, fontSize: 14, height: 1.6)),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.75),
+                fontSize: 14, height: 1.6)),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: kReefBlue,
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -826,12 +835,15 @@ class _EmptyState extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         const Text('💧', style: TextStyle(fontSize: 52)),
         const SizedBox(height: 16),
-        const Text('Start your flow', style: TextStyle(
-            color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+        Text('Start your flow', style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 20, fontWeight: FontWeight.w800)),
         const SizedBox(height: 8),
-        const Text('Add your first habit and drop by drop\nyou\'ll build your ocean.',
+        Text('Add your first habit and drop by drop\nyou\'ll build your ocean.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: kSeaFoam, fontSize: 14, height: 1.5)),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.secondary,
+            fontSize: 14, height: 1.5)),
         const SizedBox(height: 28),
         ElevatedButton.icon(
           onPressed: onAdd,
@@ -839,7 +851,8 @@ class _EmptyState extends StatelessWidget {
           label: const Text('Add First Habit',
               style: TextStyle(fontWeight: FontWeight.w700)),
           style: ElevatedButton.styleFrom(
-            backgroundColor: kReefBlue, foregroundColor: Colors.white,
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),

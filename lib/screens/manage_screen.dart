@@ -131,8 +131,10 @@ class _ManageScreenState extends State<ManageScreen> {
       const Text('No habits yet',
         style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
       const SizedBox(height: 8),
-      const Text('Tap + to add your first habit',
-        style: TextStyle(color: kSeaFoam, fontSize: 14)),
+      Text('Tap + to add your first habit',
+        style: TextStyle(
+            color: Theme.of(context).colorScheme.secondary,
+            fontSize: 14)),
       const SizedBox(height: 28),
       ElevatedButton.icon(
         onPressed: () async {
@@ -143,7 +145,8 @@ class _ManageScreenState extends State<ManageScreen> {
         icon: const Icon(Icons.add),
         label: const Text('Add Habit', style: TextStyle(fontWeight: FontWeight.w700)),
         style: ElevatedButton.styleFrom(
-          backgroundColor: kReefBlue, foregroundColor: Colors.white,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
@@ -229,7 +232,8 @@ class _ManageScreenState extends State<ManageScreen> {
             // Handle
             Center(
               child: Container(width: 40, height: 4,
-                  decoration: BoxDecoration(color: kOceanBlue,
+                  decoration: BoxDecoration(
+                      color: Theme.of(context).dividerColor,
                       borderRadius: BorderRadius.circular(2))),
             ),
             const SizedBox(height: 16),
@@ -238,14 +242,15 @@ class _ManageScreenState extends State<ManageScreen> {
               Text(h.icon, style: const TextStyle(fontSize: 28)),
               const SizedBox(width: 12),
               Expanded(child: Text(h.name,
-                style: const TextStyle(color: Colors.white,
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 18, fontWeight: FontWeight.w700))),
             ]),
             const SizedBox(height: 20),
             // 30-day history strip
             _HabitHistoryStrip(habit: h, completions: _completions, installDate: _installDate),
             const SizedBox(height: 20),
-            _sheetBtn(Icons.edit_outlined, 'Edit habit', kSeaFoam, () async {
+            _sheetBtn(Icons.edit_outlined, 'Edit habit', Theme.of(context).colorScheme.primary, () async {
               Navigator.pop(context);
               await Navigator.push(context,
                   MaterialPageRoute(builder: (_) => AddHabitScreen(existing: h)));
@@ -320,8 +325,9 @@ class _GridTile extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white, fontSize: 10.5,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 10.5,
                   fontWeight: FontWeight.w600, height: 1.25),
               ),
               if (streak > 0) ...[
@@ -359,18 +365,20 @@ class _AddTile extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: Colors.transparent,
                   border: Border.all(
-                    color: kSeaFoam.withOpacity(0.4), width: 2,
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.4), width: 2,
                     strokeAlign: BorderSide.strokeAlignInside,
                   ),
                 ),
                 child: Center(
                   child: Icon(Icons.add_rounded,
-                      color: kSeaFoam.withOpacity(0.7), size: d * 0.38),
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                      size: d * 0.38),
                 ),
               ),
               const SizedBox(height: 6),
               Text('New habit',
-                style: TextStyle(color: kSeaFoam.withOpacity(0.7),
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
                     fontSize: 10.5, fontWeight: FontWeight.w600)),
             ],
           );
@@ -400,13 +408,14 @@ class _ListTile extends StatelessWidget {
         index: index,
         child: Padding(
           padding: const EdgeInsets.only(right: 10),
-          child: Icon(Icons.drag_handle, color: kOceanBlue.withOpacity(0.5)),
+          child: Icon(Icons.drag_handle,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.35)),
         ),
       ),
       Container(
         width: 42, height: 42,
         decoration: BoxDecoration(
-          color: kOceanBlue.withOpacity(0.15),
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
           borderRadius: BorderRadius.circular(11),
         ),
         alignment: Alignment.center,
@@ -415,16 +424,18 @@ class _ListTile extends StatelessWidget {
       const SizedBox(width: 12),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(habit.name,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700,
-              color: Colors.white)),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700,
+              color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 2),
         Text(
           habit.freqLabel + (streak > 0 ? ' · ${streak}d 🔥' : ''),
-          style: const TextStyle(fontSize: 11, color: kSeaFoam),
+          style: TextStyle(fontSize: 11,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.55)),
         ),
       ])),
       IconButton(
-        icon: const Icon(Icons.edit_outlined, size: 18, color: kSeaFoam),
+        icon: Icon(Icons.edit_outlined, size: 18,
+            color: Theme.of(context).colorScheme.primary),
         onPressed: onEdit,
       ),
       IconButton(
@@ -461,12 +472,12 @@ class _HabitHistoryStrip extends StatelessWidget {
     final todayStr = _fmt(today);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('LAST 30 DAYS',
+      Text('LAST 30 DAYS',
           style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.8,
-              color: kSeaFoam)),
+              color: Theme.of(context).colorScheme.secondary)),
       const SizedBox(height: 8),
       Row(
         children: dates.map((date) {
@@ -480,7 +491,7 @@ class _HabitHistoryStrip extends StatelessWidget {
 
           Color color;
           if (!scheduled || isPreInstall) {
-            color = kOceanBlue.withOpacity(0.1);
+            color = Theme.of(context).colorScheme.surfaceContainerHighest;
           } else if (done) {
             color = kSuccess;
           } else {
@@ -495,7 +506,9 @@ class _HabitHistoryStrip extends StatelessWidget {
                 color: color,
                 borderRadius: BorderRadius.circular(4),
                 border: isToday
-                    ? Border.all(color: kSeaFoam, width: 1.5)
+                    ? Border.all(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 1.5)
                     : null,
               ),
             ),
@@ -506,11 +519,13 @@ class _HabitHistoryStrip extends StatelessWidget {
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Text(
           '${dates.first.day} ${_monthAbbr(dates.first.month)}',
-          style: const TextStyle(color: kSeaFoam, fontSize: 9),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.secondary, fontSize: 9),
         ),
         Text(
           'Today',
-          style: const TextStyle(color: kSeaFoam, fontSize: 9),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.secondary, fontSize: 9),
         ),
       ]),
     ]);

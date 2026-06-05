@@ -56,7 +56,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _requestNotifications() async {
     final granted = await NotificationService.requestPermission();
     if (!mounted) return;
-
     if (granted) {
       final habits = await StorageService.loadHabits();
       await NotificationService.scheduleAll(habits, globalTime: _reminderTime);
@@ -67,7 +66,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SnackBar(content: Text('Reminders enabled!')));
       }
     } else {
-      // Permission denied — guide the user to enable it manually
       if (mounted) {
         setState(() => _notifsEnabled = false);
         _showPermissionDialog();
@@ -76,22 +74,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showPermissionDialog() {
-    final isDark = widget.appTheme == 'deep_ocean';
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: isDark ? kMidnightTide : Colors.white,
-        title: Text('Enable reminders',
-            style: TextStyle(color: isDark ? Colors.white : kDeepOcean,
-                fontWeight: FontWeight.w700)),
-        content: Text(
+        title: const Text('Enable reminders',
+            style: TextStyle(fontWeight: FontWeight.w700)),
+        content: const Text(
           'To receive habit reminders, please enable notifications for habitflow:\n\n'
           '1. Open your phone\'s Settings\n'
           '2. Go to Apps → habitflow\n'
           '3. Tap Notifications\n'
           '4. Turn on "Allow notifications"\n\n'
           'Then come back and enable reminders here.',
-          style: TextStyle(color: isDark ? kSeaFoam : kOceanBlue, height: 1.5),
+          style: TextStyle(height: 1.5),
         ),
         actions: [
           TextButton(
@@ -108,13 +103,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         hour: int.parse(parts[0]), minute: int.parse(parts[1]));
     final picked = await showTimePicker(context: context, initialTime: initial);
     if (picked == null || !mounted) return;
-
     final formatted =
         '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
     setState(() => _reminderTime = formatted);
     await _setStringPref('global_reminder_time', formatted);
-
-    // Re-schedule if reminders are on
     if (_notifsEnabled) {
       final habits = await StorageService.loadHabits();
       await NotificationService.scheduleAll(habits, globalTime: formatted);
@@ -136,12 +128,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         hour: int.parse(parts[0]), minute: int.parse(parts[1]));
     final picked = await showTimePicker(context: context, initialTime: initial);
     if (picked == null || !mounted) return;
-
     final formatted =
         '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
     setState(() => _nudgeTime = formatted);
     await _setStringPref('nudge_time', formatted);
-
     if (_nudgeEnabled) {
       await NotificationService.scheduleNudge(formatted);
     }
@@ -156,11 +146,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         .length;
     final stage = _stageNameFor(activeDays);
     final stageEmoji = _stageEmojiFor(activeDays);
-
-    final text = '$stageEmoji I\'ve been building my flow for $activeDays days on habitflow!\n\n'
+    final text =
+        '$stageEmoji I\'ve been building my flow for $activeDays days on habitflow!\n\n'
         'I\'m at the $stage stage — tracking ${habits.length} habits and flowing stronger every day. 🌊\n\n'
         'Drop by drop, you build your ocean.';
-
     await Share.share(text);
   }
 
@@ -235,8 +224,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = widget.appTheme == 'deep_ocean';
-
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('Settings')),
@@ -245,13 +232,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
 
           // Reminders
-          _Section(label: 'Reminders', isDark: isDark, children: [
+          _Section(label: 'Reminders', children: [
             _ToggleRow(
               icon: '🔔',
               title: 'Daily reminders',
               subtitle: 'Push notifications per habit',
               value: _notifsEnabled,
-              isDark: isDark,
               onChanged: (v) {
                 if (v) {
                   _requestNotifications();
@@ -262,36 +248,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
               },
             ),
-            _DividerLine(isDark: isDark),
+            const _DividerLine(),
             _ActionRow(
               icon: '⏰',
               title: 'Reminder time',
               subtitle: _fmtTime(_reminderTime),
-              isDark: isDark,
               onTap: _pickReminderTime,
             ),
-            _DividerLine(isDark: isDark),
+            const _DividerLine(),
             _ActionRow(
               icon: '🔄',
               title: 'Re-sync reminders',
               subtitle: 'Reschedule all habit notifications',
-              isDark: isDark,
               onTap: () async {
                 final habits = await StorageService.loadHabits();
-                await NotificationService.scheduleAll(habits, globalTime: _reminderTime);
+                await NotificationService.scheduleAll(habits,
+                    globalTime: _reminderTime);
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text('Reminders rescheduled!')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Reminders rescheduled!')));
                 }
               },
             ),
-            _DividerLine(isDark: isDark),
+            const _DividerLine(),
             _ToggleRow(
               icon: '🌙',
               title: 'Evening nudge',
               subtitle: 'Gentle reminder if habits not done',
               value: _nudgeEnabled,
-              isDark: isDark,
               onChanged: (v) async {
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.setBool('nudge_enabled', v);
@@ -303,25 +287,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
               },
             ),
-            _DividerLine(isDark: isDark),
+            const _DividerLine(),
             _ActionRow(
               icon: '🕘',
               title: 'Nudge time',
               subtitle: _fmtTime(_nudgeTime),
-              isDark: isDark,
               onTap: _pickNudgeTime,
             ),
           ]),
           const SizedBox(height: 16),
 
           // Sounds
-          _Section(label: 'Sounds', isDark: isDark, children: [
+          _Section(label: 'Sounds', children: [
             _ToggleRow(
               icon: '💧',
               title: 'Water drop sounds',
               subtitle: 'Plays on each habit check-off',
               value: _soundsEnabled,
-              isDark: isDark,
               onChanged: (v) {
                 _setPref('sounds_enabled', v);
                 SoundService.setEnabled(v);
@@ -332,7 +314,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
 
           // Appearance
-          _Section(label: 'Appearance', isDark: isDark, children: [
+          _Section(label: 'Appearance', children: [
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -340,30 +322,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   Text('Theme',
                       style: TextStyle(
-                          color: isDark ? Colors.white : kDeepOcean,
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 14,
                           fontWeight: FontWeight.w600)),
                   const SizedBox(height: 12),
                   Row(children: [
                     Expanded(
                       child: _ThemeOption(
-                        name: 'Deep Ocean',
-                        subtitle: 'Dark & deep',
-                        emoji: '🌊',
-                        selected: widget.appTheme == 'deep_ocean',
-                        isDark: isDark,
-                        onTap: () => widget.onThemeChange('deep_ocean'),
+                        name: 'Coral Tide',
+                        subtitle: 'Warm & bright',
+                        emoji: '🪸',
+                        selected: widget.appTheme == 'coral_tide',
+                        onTap: () => widget.onThemeChange('coral_tide'),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: _ThemeOption(
-                        name: 'Sea Mist',
-                        subtitle: 'Light & airy',
-                        emoji: '☀️',
-                        selected: widget.appTheme == 'sea_mist',
-                        isDark: isDark,
-                        onTap: () => widget.onThemeChange('sea_mist'),
+                        name: 'Deep Abyss',
+                        subtitle: 'Dark & cosmic',
+                        emoji: '🌌',
+                        selected: widget.appTheme == 'deep_abyss',
+                        onTap: () => widget.onThemeChange('deep_abyss'),
                       ),
                     ),
                   ]),
@@ -374,45 +354,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
 
           // Data
-          _Section(label: 'Data', isDark: isDark, children: [
+          _Section(label: 'Data', children: [
             _ActionRow(
               icon: '💾',
               title: 'Export my data',
               subtitle: 'View habit history as JSON',
-              isDark: isDark,
               onTap: _exportData,
             ),
-            _DividerLine(isDark: isDark),
+            const _DividerLine(),
             _ActionRow(
               icon: '🗑️',
               title: 'Reset all habits',
               subtitle: 'Cannot be undone',
               titleColor: kDanger,
-              isDark: isDark,
               onTap: _clearData,
             ),
           ]),
           const SizedBox(height: 16),
 
           // Share
-          _Section(label: 'Share', isDark: isDark, children: [
+          _Section(label: 'Share', children: [
             _ActionRow(
               icon: '🌊',
               title: 'Share my progress',
               subtitle: 'Tell friends about your flow',
-              isDark: isDark,
               onTap: _shareProgress,
             ),
           ]),
           const SizedBox(height: 16),
 
           // About
-          _Section(label: 'About', isDark: isDark, children: [
+          _Section(label: 'About', children: [
             _ActionRow(
               icon: '📖',
               title: 'View introduction',
               subtitle: 'Revisit the getting started guide',
-              isDark: isDark,
               onTap: () {
                 Navigator.push(
                   context,
@@ -424,12 +400,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
               },
             ),
-            _DividerLine(isDark: isDark),
-            _InfoRow(
+            const _DividerLine(),
+            const _InfoRow(
               icon: '🌊',
               title: 'habitflow v1.0',
               subtitle: 'Drop by drop, you build your ocean.',
-              isDark: isDark,
             ),
           ]),
         ],
@@ -438,33 +413,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-// Theme option card
+// ── Theme option card ─────────────────────────────────────
 class _ThemeOption extends StatelessWidget {
   final String name, subtitle, emoji;
-  final bool selected, isDark;
+  final bool selected;
   final VoidCallback onTap;
   const _ThemeOption({
     required this.name,
     required this.subtitle,
     required this.emoji,
     required this.selected,
-    required this.isDark,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bg = isDark ? kDeepOcean : const Color(0xFFEAF5FB);
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
-          color: selected ? kReefBlue.withOpacity(0.15) : bg,
+          color: selected
+              ? cs.primary.withOpacity(0.12)
+              : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? kReefBlue : kOceanBlue.withOpacity(0.3),
+            color: selected ? cs.primary : Theme.of(context).dividerColor,
             width: selected ? 2 : 1,
           ),
         ),
@@ -473,16 +449,16 @@ class _ThemeOption extends StatelessWidget {
           const SizedBox(height: 6),
           Text(name,
               style: TextStyle(
-                  color: isDark ? Colors.white : kDeepOcean,
+                  color: cs.onSurface,
                   fontSize: 12,
                   fontWeight: FontWeight.w700)),
           Text(subtitle,
               style: TextStyle(
-                  color: isDark ? kSeaFoam : kOceanBlue, fontSize: 10)),
+                  color: cs.secondary.withOpacity(0.8), fontSize: 10)),
           if (selected)
             Padding(
               padding: const EdgeInsets.only(top: 6),
-              child: Icon(Icons.check_circle, color: kReefBlue, size: 16),
+              child: Icon(Icons.check_circle, color: cs.primary, size: 16),
             ),
         ]),
       ),
@@ -490,13 +466,11 @@ class _ThemeOption extends StatelessWidget {
   }
 }
 
-// Section wrapper
+// ── Section wrapper ───────────────────────────────────────
 class _Section extends StatelessWidget {
   final String label;
-  final bool isDark;
   final List<Widget> children;
-  const _Section(
-      {required this.label, required this.isDark, required this.children});
+  const _Section({required this.label, required this.children});
 
   @override
   Widget build(BuildContext context) => Column(
@@ -505,18 +479,18 @@ class _Section extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(label.toUpperCase(),
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.0,
-                    color: kSeaFoam)),
+                    color: Theme.of(context).colorScheme.secondary)),
           ),
           Container(
             decoration: BoxDecoration(
-              color: isDark ? kMidnightTide : Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                  color: kOceanBlue.withOpacity(0.3), width: 0.5),
+                  color: Theme.of(context).dividerColor, width: 0.5),
             ),
             child: Column(children: children),
           ),
@@ -525,37 +499,37 @@ class _Section extends StatelessWidget {
 }
 
 class _DividerLine extends StatelessWidget {
-  final bool isDark;
-  const _DividerLine({required this.isDark});
+  const _DividerLine();
   @override
   Widget build(BuildContext context) => Divider(
         height: 0,
         thickness: 0.5,
         indent: 16,
         endIndent: 16,
-        color: kOceanBlue.withOpacity(isDark ? 0.2 : 0.15),
+        color: Theme.of(context).dividerColor,
       );
 }
 
-// Row types
+// ── Row types ─────────────────────────────────────────────
 class _ToggleRow extends StatelessWidget {
   final String icon, title, subtitle;
-  final bool value, isDark;
+  final bool value;
   final ValueChanged<bool> onChanged;
   const _ToggleRow({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.value,
-    required this.isDark,
     required this.onChanged,
   });
 
   @override
-  Widget build(BuildContext context) => Padding(
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(children: [
-          _IconBox(icon, isDark: isDark),
+          _IconBox(icon),
           const SizedBox(width: 12),
           Expanded(
               child: Column(
@@ -563,42 +537,42 @@ class _ToggleRow extends StatelessWidget {
                   children: [
                 Text(title,
                     style: TextStyle(
-                        color: isDark ? Colors.white : kDeepOcean,
+                        color: cs.onSurface,
                         fontSize: 14,
                         fontWeight: FontWeight.w600)),
                 const SizedBox(height: 1),
                 Text(subtitle,
                     style: TextStyle(
-                        color: isDark ? kSeaFoam : kOceanBlue,
+                        color: cs.onSurface.withOpacity(0.55),
                         fontSize: 12)),
               ])),
           Switch(value: value, onChanged: onChanged),
-        ]),
-      );
+        ]));
+  }
 }
 
 class _ActionRow extends StatelessWidget {
   final String icon, title, subtitle;
   final Color? titleColor;
-  final bool isDark;
   final VoidCallback onTap;
   const _ActionRow({
     required this.icon,
     required this.title,
     required this.subtitle,
     this.titleColor,
-    required this.isDark,
     required this.onTap,
   });
 
   @override
-  Widget build(BuildContext context) => InkWell(
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(children: [
-            _IconBox(icon, isDark: isDark),
+            _IconBox(icon),
             const SizedBox(width: 12),
             Expanded(
                 child: Column(
@@ -606,64 +580,62 @@ class _ActionRow extends StatelessWidget {
                     children: [
                   Text(title,
                       style: TextStyle(
-                          color:
-                              titleColor ?? (isDark ? Colors.white : kDeepOcean),
+                          color: titleColor ?? cs.onSurface,
                           fontSize: 14,
                           fontWeight: FontWeight.w600)),
                   const SizedBox(height: 1),
                   Text(subtitle,
                       style: TextStyle(
-                          color: isDark ? kSeaFoam : kOceanBlue,
+                          color: cs.onSurface.withOpacity(0.55),
                           fontSize: 12)),
                 ])),
             Icon(Icons.chevron_right,
-                color: kOceanBlue.withOpacity(0.6), size: 20),
+                color: cs.onSurface.withOpacity(0.4), size: 20),
           ]),
-        ),
-      );
+        ));
+  }
 }
 
 class _InfoRow extends StatelessWidget {
   final String icon, title, subtitle;
-  final bool isDark;
   const _InfoRow({
     required this.icon,
     required this.title,
     required this.subtitle,
-    required this.isDark,
   });
 
   @override
-  Widget build(BuildContext context) => Padding(
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(children: [
-          _IconBox(icon, isDark: isDark),
+          _IconBox(icon),
           const SizedBox(width: 12),
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(title,
                 style: TextStyle(
-                    color: isDark ? Colors.white : kDeepOcean,
+                    color: cs.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w600)),
             Text(subtitle,
                 style: TextStyle(
-                    color: isDark ? kSeaFoam : kOceanBlue, fontSize: 12)),
+                    color: cs.onSurface.withOpacity(0.55), fontSize: 12)),
           ]),
-        ]),
-      );
+        ]));
+  }
 }
 
 class _IconBox extends StatelessWidget {
   final String icon;
-  final bool isDark;
-  const _IconBox(this.icon, {required this.isDark});
+  const _IconBox(this.icon);
 
   @override
   Widget build(BuildContext context) => Container(
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: kOceanBlue.withOpacity(isDark ? 0.15 : 0.1),
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
           borderRadius: BorderRadius.circular(9),
         ),
         alignment: Alignment.center,

@@ -86,15 +86,20 @@ class _StatsScreenState extends State<StatsScreen> {
                 MediaQuery.of(ctx).viewInsets.bottom + 32),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               Container(width: 36, height: 4,
-                decoration: BoxDecoration(color: kOceanBlue,
+                decoration: BoxDecoration(
+                    color: Theme.of(ctx).dividerColor,
                     borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 16),
               Text(label,
-                  style: const TextStyle(color: Colors.white,
-                      fontSize: 16, fontWeight: FontWeight.w800)),
+                  style: TextStyle(
+                      color: Theme.of(ctx).colorScheme.onSurface,
+                      fontSize: 16, fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3)),
               const SizedBox(height: 2),
-              const Text('Tap habits to toggle completion',
-                  style: TextStyle(color: kSeaFoam, fontSize: 12)),
+              Text('Tap habits to toggle completion',
+                  style: TextStyle(
+                      color: Theme.of(ctx).colorScheme.secondary,
+                      fontSize: 12)),
               const SizedBox(height: 12),
               ...scheduled.map((h) {
                 final key  = StorageService.completionKey(h.id, date);
@@ -104,13 +109,15 @@ class _StatsScreenState extends State<StatsScreen> {
                   leading: Text(h.icon, style: const TextStyle(fontSize: 22)),
                   title: Text(h.name,
                     style: TextStyle(
-                      color: done ? kSuccess : Colors.white,
+                      color: done ? kSuccess : Theme.of(ctx).colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
                       decoration: done ? TextDecoration.lineThrough : null,
                     )),
                   trailing: Icon(
                     done ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
-                    color: done ? kSuccess : kSeaFoam.withOpacity(0.4),
+                    color: done
+                        ? kSuccess
+                        : Theme.of(ctx).colorScheme.onSurface.withOpacity(0.35),
                   ),
                   onTap: () => setModal(() {
                     if (done) tempComp.remove(key);
@@ -123,7 +130,8 @@ class _StatsScreenState extends State<StatsScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: kReefBlue, foregroundColor: Colors.white,
+                    backgroundColor: Theme.of(ctx).colorScheme.primary,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -228,11 +236,12 @@ class _StatsScreenState extends State<StatsScreen> {
 
             // ── Per-habit streaks ─────────────────────
             if (_habits.isNotEmpty) ...[
-              const Padding(
-                padding: EdgeInsets.only(bottom: 12),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
                 child: Text('HABIT STREAKS',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                      letterSpacing: 1.0, color: kSeaFoam)),
+                      letterSpacing: 1.0,
+                      color: Theme.of(context).colorScheme.secondary)),
               ),
               ..._habits.map((h) => _StreakRow(
                 habit: h,
@@ -244,11 +253,12 @@ class _StatsScreenState extends State<StatsScreen> {
 
             // ── Per-habit day strips ──────────────────
             if (_habits.isNotEmpty) ...[
-              const Padding(
-                padding: EdgeInsets.only(bottom: 12),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
                 child: Text('HABIT HISTORY',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                      letterSpacing: 1.0, color: kSeaFoam)),
+                      letterSpacing: 1.0,
+                      color: Theme.of(context).colorScheme.secondary)),
               ),
               ..._habits.map((h) => _HabitDayStrip(
                 habit: h,
@@ -281,7 +291,9 @@ class _StageCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: kReefBlue.withOpacity(0.5), width: 0.5),
+        border: Border.all(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+            width: 0.5),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
@@ -290,34 +302,42 @@ class _StageCard extends StatelessWidget {
           const SizedBox(width: 14),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Your flow',
-              style: const TextStyle(color: kSeaFoam, fontSize: 12,
-                  fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.secondary,
+                  fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
             Text(ProgressionService.stageName(stage),
-              style: const TextStyle(color: Colors.white,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 22, fontWeight: FontWeight.w800)),
           ])),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: kOceanBlue.withOpacity(0.25),
+              color: Theme.of(context).colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text('Day $activeDays',
-              style: const TextStyle(color: kSeaFoam,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
                   fontSize: 12, fontWeight: FontWeight.w700)),
           ),
         ]),
         const SizedBox(height: 12),
         Text(ProgressionService.stageDescription(stage),
-          style: const TextStyle(color: kSeaFoam, fontSize: 13, height: 1.4)),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              fontSize: 13, height: 1.4)),
         if (!isOcean) ...[
           const SizedBox(height: 16),
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text('$toNext consistent days to ${ProgressionService.stageName(WaterStage.values[stage.index + 1])}',
-              style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.65),
+                  fontSize: 12)),
             Text('${(stageProgress * 100).round()}%',
-              style: const TextStyle(color: kSeaFoam, fontSize: 12,
-                  fontWeight: FontWeight.w700)),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontSize: 12, fontWeight: FontWeight.w700)),
           ]),
           const SizedBox(height: 6),
           ClipRRect(
@@ -325,8 +345,9 @@ class _StageCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: stageProgress,
               minHeight: 8,
-              backgroundColor: kOceanBlue.withOpacity(0.2),
-              valueColor: const AlwaysStoppedAnimation(kReefBlue),
+              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation(
+                  Theme.of(context).colorScheme.primary),
             ),
           ),
         ],
@@ -343,19 +364,21 @@ class _StatChip extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
     decoration: BoxDecoration(
-      color: const Color(0xFF083348),
+      color: Theme.of(context).cardColor,
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: kOceanBlue.withOpacity(0.3), width: 0.5),
+      border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
     ),
     child: Column(children: [
       Text(icon, style: const TextStyle(fontSize: 18)),
       const SizedBox(height: 4),
       Text(value,
-        style: const TextStyle(color: Colors.white,
+        style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 18, fontWeight: FontWeight.w800)),
       const SizedBox(height: 2),
       Text(label, textAlign: TextAlign.center,
-        style: const TextStyle(color: kSeaFoam, fontSize: 10)),
+        style: TextStyle(
+            color: Theme.of(context).colorScheme.secondary, fontSize: 10)),
     ]),
   );
 }
@@ -419,10 +442,10 @@ class _CalendarSectionState extends State<_CalendarSection> {
     final isPerfect  = !isFuture && !isPreInstall && scheduled.isNotEmpty && done == scheduled.length;
     final hasPartial = !isFuture && !isPreInstall && done > 0 && done < scheduled.length;
 
-    if (isFuture || isPreInstall) return kOceanBlue.withOpacity(0.1);
+    if (isFuture || isPreInstall) return Colors.grey.withOpacity(0.12);
     if (isPerfect)                return kSuccess;
     if (hasPartial)               return kWarning;
-    if (scheduled.isEmpty)        return kOceanBlue.withOpacity(0.2);
+    if (scheduled.isEmpty)        return Colors.grey.withOpacity(0.18);
     return kDanger.withOpacity(0.6);
   }
 
@@ -442,18 +465,21 @@ class _CalendarSectionState extends State<_CalendarSection> {
               ? const SizedBox(width: 40)
               : IconButton(
                   onPressed: widget.onPrev,
-                  icon: const Icon(Icons.chevron_left, color: kSeaFoam)),
+                  icon: Icon(Icons.chevron_left,
+                      color: Theme.of(context).colorScheme.secondary)),
           Text(
             _graphView
                 ? 'Graph View'
                 : '${_monthNames[widget.month]} ${widget.year}',
-            style: const TextStyle(color: Colors.white,
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 15, fontWeight: FontWeight.w700)),
           Row(mainAxisSize: MainAxisSize.min, children: [
             if (!_graphView)
               IconButton(
                   onPressed: widget.onNext,
-                  icon: const Icon(Icons.chevron_right, color: kSeaFoam)),
+                  icon: Icon(Icons.chevron_right,
+                      color: Theme.of(context).colorScheme.secondary)),
             GestureDetector(
               onTap: () {
                 setState(() => _graphView = !_graphView);
@@ -462,11 +488,12 @@ class _CalendarSectionState extends State<_CalendarSection> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: kOceanBlue.withOpacity(0.25),
+                  color: Theme.of(context).colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(_graphView ? '← Calendar' : '📊 Graph',
-                  style: const TextStyle(color: kSeaFoam,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
                       fontSize: 11, fontWeight: FontWeight.w700)),
               ),
             ),
@@ -478,16 +505,20 @@ class _CalendarSectionState extends State<_CalendarSection> {
         // Legend
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           _dot(kSuccess), const SizedBox(width: 4),
-          const Text('All done', style: TextStyle(color: kSeaFoam, fontSize: 10)),
+          Text('All done', style: TextStyle(
+              color: Theme.of(context).colorScheme.secondary, fontSize: 10)),
           const SizedBox(width: 12),
           _dot(kWarning), const SizedBox(width: 4),
-          const Text('Partial', style: TextStyle(color: kSeaFoam, fontSize: 10)),
+          Text('Partial', style: TextStyle(
+              color: Theme.of(context).colorScheme.secondary, fontSize: 10)),
           const SizedBox(width: 12),
           _dot(kDanger, opacity: 0.6), const SizedBox(width: 4),
-          const Text('Missed', style: TextStyle(color: kSeaFoam, fontSize: 10)),
+          Text('Missed', style: TextStyle(
+              color: Theme.of(context).colorScheme.secondary, fontSize: 10)),
           const SizedBox(width: 8),
-          const Text('← Tap a day to edit',
-            style: TextStyle(color: kSeaFoam, fontSize: 9,
+          Text('← Tap a day to edit',
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.secondary, fontSize: 9,
                 fontStyle: FontStyle.italic)),
         ]),
       ]),
@@ -505,7 +536,8 @@ class _CalendarSectionState extends State<_CalendarSection> {
       // Day-of-week header
       Row(children: _dayLabels.map((d) => Expanded(
         child: Center(child: Text(d,
-          style: const TextStyle(color: kSeaFoam,
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.secondary,
               fontSize: 10, fontWeight: FontWeight.w600))),
       )).toList()),
       const SizedBox(height: 6),
@@ -533,7 +565,9 @@ class _CalendarSectionState extends State<_CalendarSection> {
                 color: color,
                 shape: BoxShape.circle,
                 border: isToday
-                    ? Border.all(color: kSeaFoam, width: 1.5)
+                    ? Border.all(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 1.5)
                     : null,
               ),
               child: Center(
@@ -541,9 +575,11 @@ class _CalendarSectionState extends State<_CalendarSection> {
                   style: TextStyle(
                     fontSize: 9,
                     fontWeight: isToday ? FontWeight.w800 : FontWeight.w400,
-                    color: isFuture ? kOceanBlue.withOpacity(0.3)
-                        : isPerfect || hasPartial ? kDeepOcean
-                        : Colors.white70,
+                    color: isFuture
+                        ? Theme.of(context).colorScheme.onSurface.withOpacity(0.2)
+                        : isPerfect || hasPartial
+                            ? Colors.black87
+                            : Colors.white70,
                   ),
                 ),
               ),
@@ -573,7 +609,8 @@ class _CalendarSectionState extends State<_CalendarSection> {
         padding: EdgeInsets.symmetric(vertical: 16),
         child: Center(
           child: Text('Add habits to see your graph',
-              style: TextStyle(color: kSeaFoam, fontSize: 12))),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.secondary, fontSize: 12))),
       );
     }
 
@@ -601,8 +638,8 @@ class _CalendarSectionState extends State<_CalendarSection> {
                       child: Text(h.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            color: Colors.white,
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontSize: 9,
                             fontWeight: FontWeight.w600)),
                     ),
@@ -629,7 +666,8 @@ class _CalendarSectionState extends State<_CalendarSection> {
                     width: cellSize + cellGap,
                     child: show
                         ? Text(_monthShort[date.month - 1],
-                            style: const TextStyle(color: kReefBlue,
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
                                 fontSize: 7, fontWeight: FontWeight.w700))
                         : null,
                   );
@@ -642,7 +680,9 @@ class _CalendarSectionState extends State<_CalendarSection> {
                     width: cellSize + cellGap,
                     child: show
                         ? Text('${date.day}',
-                            style: const TextStyle(color: kSeaFoam, fontSize: 6))
+                            style: TextStyle(
+                                color: Theme.of(context).colorScheme.secondary,
+                                fontSize: 6))
                         : null,
                   );
                 }).toList()),
@@ -665,7 +705,7 @@ class _CalendarSectionState extends State<_CalendarSection> {
 
                         Color color;
                         if (!scheduled || isPreInstall || isFuture) {
-                          color = kOceanBlue.withOpacity(0.08);
+                          color = Colors.grey.withOpacity(0.12);
                         } else if (done) {
                           color = kSuccess;
                         } else {
@@ -684,7 +724,9 @@ class _CalendarSectionState extends State<_CalendarSection> {
                               color: color,
                               borderRadius: BorderRadius.circular(2),
                               border: isToday
-                                  ? Border.all(color: kSeaFoam, width: 1)
+                                  ? Border.all(
+                                      color: Theme.of(context).colorScheme.primary,
+                                      width: 1)
                                   : null,
                             ),
                           ),
@@ -721,16 +763,17 @@ class _StreakRow extends StatelessWidget {
     margin: const EdgeInsets.only(bottom: 10),
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     decoration: BoxDecoration(
-      color: const Color(0xFF083348),
+      color: Theme.of(context).cardColor,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: kOceanBlue.withOpacity(0.25), width: 0.5),
+      border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
     ),
     child: Row(children: [
       Text(habit.icon, style: const TextStyle(fontSize: 18)),
       const SizedBox(width: 10),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(habit.name,
-          style: const TextStyle(color: Colors.white,
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 13, fontWeight: FontWeight.w600)),
         const SizedBox(height: 5),
         ClipRRect(
@@ -738,15 +781,18 @@ class _StreakRow extends StatelessWidget {
           child: LinearProgressIndicator(
             value: maxStreak == 0 ? 0 : streak / maxStreak,
             minHeight: 6,
-            backgroundColor: kOceanBlue.withOpacity(0.2),
-            valueColor: const AlwaysStoppedAnimation(kReefBlue),
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+            valueColor: AlwaysStoppedAnimation(
+                Theme.of(context).colorScheme.primary),
           ),
         ),
       ])),
       const SizedBox(width: 12),
       Text(streak > 0 ? '${streak}d 🔥' : '—',
         style: TextStyle(
-          color: streak > 0 ? kWarning : kSeaFoam.withOpacity(0.4),
+          color: streak > 0
+              ? kWarning
+              : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
           fontSize: 12, fontWeight: FontWeight.w700)),
     ]),
   );
@@ -802,9 +848,9 @@ class _HabitDayStripState extends State<_HabitDayStrip> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF083348),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kOceanBlue.withOpacity(0.25), width: 0.5),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
@@ -812,12 +858,14 @@ class _HabitDayStripState extends State<_HabitDayStrip> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(widget.habit.name,
-              style: const TextStyle(color: Colors.white,
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 13, fontWeight: FontWeight.w600)),
           ),
-          const Text('← swipe',
-            style: TextStyle(color: kSeaFoam, fontSize: 9,
-                fontStyle: FontStyle.italic)),
+          Text('← swipe',
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.secondary,
+                fontSize: 9, fontStyle: FontStyle.italic)),
         ]),
         const SizedBox(height: 10),
         // Scrollable day strip — oldest to newest (left=oldest, right=today)
@@ -840,7 +888,7 @@ class _HabitDayStripState extends State<_HabitDayStrip> {
 
               Color dotColor;
               if (isPreInstall || !scheduled) {
-                dotColor = kOceanBlue.withOpacity(0.1);
+                dotColor = Colors.grey.withOpacity(0.15);
               } else if (done) {
                 dotColor = kSuccess;
               } else {
@@ -865,10 +913,10 @@ class _HabitDayStripState extends State<_HabitDayStrip> {
                       showMonth ? months[date.month] : dayLetter,
                       style: TextStyle(
                         color: showMonth
-                            ? kReefBlue
+                            ? Theme.of(context).colorScheme.primary
                             : isToday
-                                ? kSeaFoam
-                                : kSeaFoam.withOpacity(0.45),
+                                ? Theme.of(context).colorScheme.secondary
+                                : Theme.of(context).colorScheme.secondary.withOpacity(0.45),
                         fontSize: 7,
                         fontWeight: showMonth || isToday
                             ? FontWeight.w700
@@ -884,7 +932,9 @@ class _HabitDayStripState extends State<_HabitDayStrip> {
                         color: dotColor,
                         shape: BoxShape.circle,
                         border: isToday
-                            ? Border.all(color: kSeaFoam, width: 1.5)
+                            ? Border.all(
+                                color: Theme.of(context).colorScheme.primary,
+                                width: 1.5)
                             : null,
                       ),
                       alignment: Alignment.center,
@@ -896,9 +946,9 @@ class _HabitDayStripState extends State<_HabitDayStrip> {
                               ? FontWeight.w800
                               : FontWeight.w500,
                           color: (isPreInstall || !scheduled)
-                              ? kSeaFoam.withOpacity(0.3)
+                              ? Theme.of(context).colorScheme.onSurface.withOpacity(0.2)
                               : done
-                                  ? kDeepOcean
+                                  ? Colors.black87
                                   : Colors.white70,
                         ),
                       ),

@@ -63,7 +63,7 @@ class HabitFlowApp extends StatefulWidget {
 }
 
 class _HabitFlowAppState extends State<HabitFlowApp> {
-  String _appTheme = 'deep_ocean';
+  String _appTheme = 'coral_tide';
   bool _onboardingDone = false;
   bool _prefsLoaded = false;
   bool _splashDone = false;
@@ -78,7 +78,7 @@ class _HabitFlowAppState extends State<HabitFlowApp> {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
-        _appTheme      = prefs.getString('app_theme') ?? 'deep_ocean';
+        _appTheme      = prefs.getString('app_theme') ?? 'coral_tide';
         _onboardingDone = prefs.getBool('onboarding_done') ?? false;
         _prefsLoaded   = true;
       });
@@ -103,7 +103,7 @@ class _HabitFlowAppState extends State<HabitFlowApp> {
   }
 
   ThemeData get _themeData =>
-      _appTheme == 'sea_mist' ? AppTheme.seaMist : AppTheme.deepOcean;
+      _appTheme == 'deep_abyss' ? AppTheme.deepAbyss : AppTheme.coralTide;
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +111,7 @@ class _HabitFlowAppState extends State<HabitFlowApp> {
     if (!_splashDone) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.deepOcean,
+        theme: AppTheme.coralTide,
         home: SplashScreen(onComplete: _onSplashComplete),
       );
     }
