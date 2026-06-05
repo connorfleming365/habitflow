@@ -70,7 +70,7 @@ class NotificationService {
     await _plugin.zonedSchedule(
       notifId,
       '${habit.icon} Time for: ${habit.name}',
-      'Tap to open HabitFlow and check in.',
+      'Tap to open habitflow and check in.',
       await _nextOccurrence(hour, min),
       NotificationDetails(
         android: AndroidNotificationDetails(

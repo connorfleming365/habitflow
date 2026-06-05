@@ -85,9 +85,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: TextStyle(color: isDark ? Colors.white : kDeepOcean,
                 fontWeight: FontWeight.w700)),
         content: Text(
-          'To receive habit reminders, please enable notifications for HabitFlow:\n\n'
+          'To receive habit reminders, please enable notifications for habitflow:\n\n'
           '1. Open your phone\'s Settings\n'
-          '2. Go to Apps → HabitFlow\n'
+          '2. Go to Apps → habitflow\n'
           '3. Tap Notifications\n'
           '4. Turn on "Allow notifications"\n\n'
           'Then come back and enable reminders here.',
@@ -157,7 +157,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final stage = _stageNameFor(activeDays);
     final stageEmoji = _stageEmojiFor(activeDays);
 
-    final text = '$stageEmoji I\'ve been building my flow for $activeDays days on HabitFlow!\n\n'
+    final text = '$stageEmoji I\'ve been building my flow for $activeDays days on habitflow!\n\n'
         'I\'m at the $stage stage — tracking ${habits.length} habits and flowing stronger every day. 🌊\n\n'
         'Drop by drop, you build your ocean.';
 
@@ -427,7 +427,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _DividerLine(isDark: isDark),
             _InfoRow(
               icon: '🌊',
-              title: 'HabitFlow v1.0',
+              title: 'habitflow v1.0',
               subtitle: 'Drop by drop, you build your ocean.',
               isDark: isDark,
             ),

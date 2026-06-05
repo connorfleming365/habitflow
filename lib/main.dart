@@ -118,7 +118,7 @@ class _HabitFlowAppState extends State<HabitFlowApp> {
 
     // Splash done — prefs will be loaded by now (splash is ~2.5 s).
     return MaterialApp(
-      title: 'HabitFlow',
+      title: 'habitflow',
       debugShowCheckedModeBanner: false,
       theme: _themeData,
       home: _onboardingDone
