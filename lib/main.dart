@@ -178,20 +178,12 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       // A semi-transparent scrim keeps text readable.
       body: Stack(
         children: [
-          // ── Background: ocean image for Deep Ocean, solid colour for Sea Mist ──
-          if (widget.appTheme == 'deep_ocean') ...[
-            Positioned.fill(
-              child: Image.asset('assets/ocean_bg.jpg', fit: BoxFit.cover),
+          // ── Solid theme background (no image) ────────────
+          Positioned.fill(
+            child: Container(
+              color: Theme.of(context).scaffoldBackgroundColor,
             ),
-            Positioned.fill(
-              child: Container(color: Colors.black.withOpacity(0.52)),
-            ),
-          ] else
-            Positioned.fill(
-              child: Container(
-                color: Theme.of(context).scaffoldBackgroundColor,
-              ),
-            ),
+          ),
 
           // ── App screens ───────────────────────────────
           Offstage(

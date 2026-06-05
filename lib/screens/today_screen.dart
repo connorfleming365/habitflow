@@ -313,7 +313,7 @@ class TodayScreenState extends State<TodayScreen>
                         if (allDone)
                           Padding(
                             padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                            child: _AllDoneCard(),
+                            child: SizedBox(width: double.infinity, child: _AllDoneCard()),
                           ),
                         const SizedBox(height: 8),
                       ],
