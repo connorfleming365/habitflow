@@ -85,6 +85,16 @@ class TodayScreenState extends State<TodayScreen>
       List<Habit> habits, Set<String> completions) async {
     try {
       final prefs = await SharedPreferences.getInstance();
+
+      // Guard: hf_today_date tells us when hf_habits_json was last written.
+      // If it's from a previous day, the done-flags are stale — applying them
+      // would incorrectly mark today's habits as completed on the new day.
+      final widgetDate = prefs.getString('hf_today_date') ?? '';
+      final now = DateTime.now();
+      final todayStr =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      if (widgetDate != todayStr) return completions;
+
       final raw = prefs.getString('hf_habits_json');
       if (raw == null || raw == '[]') return completions;
       final List<dynamic> widgetList = jsonDecode(raw);
