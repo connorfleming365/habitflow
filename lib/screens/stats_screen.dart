@@ -605,8 +605,8 @@ class _CalendarSectionState extends State<_CalendarSection> {
     final habits = widget.habits;
 
     if (habits.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
         child: Center(
           child: Text('Add habits to see your graph',
               style: TextStyle(
