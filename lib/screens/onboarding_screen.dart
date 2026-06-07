@@ -35,6 +35,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
     _OnboardPage(
       title: 'How it works',
+      emoji: '💧',
       body:
           'Add the habits you want to build — as many or as few as you like.\n\n'
           'Each day, open the app and tap to check them off. '
@@ -44,6 +45,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
     _OnboardPage(
       title: 'Your Swell Journey',
+      emoji: '🌊',
       body:
           'Ocean swells build momentum just like habits — slowly, powerfully, unstoppably.\n\n'
           'Every drop of effort adds to yours. Each day you show up, '
@@ -53,6 +55,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
     _OnboardPage(
       title: 'Small habits.\nBig life.',
+      emoji: '🌅',
       body:
           'Every ocean swell started as a single drop.\n\n'
           'The secret isn\'t motivation — it\'s the decision to show up, '
@@ -191,11 +194,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 // ── Data model ────────────────────────────────────────────
 class _OnboardPage {
   final String title, body;
+  final String emoji;
   final bool isWelcome;
   final bool isJourney;
   const _OnboardPage({
     required this.title,
     required this.body,
+    this.emoji = '',
     this.isWelcome = false,
     this.isJourney = false,
   });
@@ -242,12 +247,8 @@ class _PageContent extends StatelessWidget {
                 ),
               ),
             ] else ...[
-              // Standard pages: logo at top, then title then body
-              Image.asset(
-                'assets/swell_logo_white.png',
-                width: 240,
-                fit: BoxFit.contain,
-              ),
+              // Standard pages: large emoji at top, then title then body
+              Text(page.emoji, style: const TextStyle(fontSize: 96)),
               const SizedBox(height: 24),
               Text(
                 page.title,
@@ -339,13 +340,13 @@ class _JourneyPageState extends State<_JourneyPage> {
     final idx = widget.stageIndex;
     final count = widget.stages.length;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 16),
       child: Column(
         children: [
-          // Logo — same size and position as other pages
-          Image.asset('assets/swell_logo_white.png', width: 240, fit: BoxFit.contain),
-          const SizedBox(height: 24),
+          // Emoji
+          Text(widget.page.emoji, style: const TextStyle(fontSize: 96)),
+          const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
@@ -373,7 +374,7 @@ class _JourneyPageState extends State<_JourneyPage> {
             ),
           ),
 
-          const Spacer(),
+          const SizedBox(height: 20),
 
           // Carousel: arrows + swipeable PageView
           Row(
