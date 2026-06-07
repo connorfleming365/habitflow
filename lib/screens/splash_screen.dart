@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
 import '../theme.dart';
 
 /// Full-screen video splash shown once on cold start.
-/// Plays intro_video.mp4, then calls onComplete().
-/// Falls back to an animated logo sequence if the video fails to load.
+/// Uses splash_video.mp4 which has ocean-wave audio baked in,
+/// so a single VideoPlayerController handles both video and sound.
 class SplashScreen extends StatefulWidget {
   final VoidCallback onComplete;
   const SplashScreen({super.key, required this.onComplete});
@@ -19,7 +18,6 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   VideoPlayerController? _video;
-  AudioPlayer? _ambience;
   Timer? _fallbackTimer;
   bool _videoReady = false;
   bool _done = false;
@@ -38,7 +36,6 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _initVideo() async {
-    // video_player requires native platform; skip on web and use timed fallback
     if (kIsWeb) {
       _fadeCtrl.forward();
       await Future.delayed(const Duration(milliseconds: 500));
@@ -46,45 +43,21 @@ class _SplashScreenState extends State<SplashScreen>
       return;
     }
     try {
-      final ctrl = VideoPlayerController.asset('assets/intro_video.mp4');
+      final ctrl = VideoPlayerController.asset('assets/splash_video.mp4');
       await ctrl.initialize();
       if (!mounted) { ctrl.dispose(); return; }
-      ctrl.setVolume(0); // muted — user may have sounds off
+      ctrl.setVolume(1.0); // audio is baked into the video
       ctrl.setLooping(false);
       ctrl.addListener(_onVideoUpdate);
       setState(() { _video = ctrl; _videoReady = true; });
       await ctrl.play();
       _fadeCtrl.forward();
-      // Hard fallback: if the video listener never fires _finish (e.g. ExoPlayer
-      // conflict from the audio player), bail out after the full video duration.
+      // Hard fallback: advance even if the video listener stalls
       _fallbackTimer = Timer(const Duration(seconds: 12), _finish);
-      // Start ambient audio after video is confirmed running
-      _playAmbience();
     } catch (_) {
-      // Video failed — run timed fallback
       _fadeCtrl.forward();
       await Future.delayed(const Duration(milliseconds: 500));
       _finish();
-    }
-  }
-
-  Future<void> _playAmbience() async {
-    if (kIsWeb) return;
-    try {
-      // handleInterruptions: false → don't request audio focus, so video_player
-      // (also ExoPlayer) can keep playing at the same time
-      final player = AudioPlayer(handleInterruptions: false);
-      _ambience = player;
-      // Do NOT preload — preloading a second ExoPlayer immediately can stall video_player
-      await player.setAudioSource(
-        AudioSource.asset('assets/sounds/ocean_waves.mp3'),
-      );
-      await player.setVolume(0.7);
-      await player.setLoopMode(LoopMode.one);
-      await player.play();
-      debugPrint('Splash ambience playing');
-    } catch (e, st) {
-      debugPrint('Splash ambience error: $e\n$st');
     }
   }
 
@@ -93,7 +66,6 @@ class _SplashScreenState extends State<SplashScreen>
     if (ctrl == null || _done) return;
     final pos = ctrl.value.position;
     final dur = ctrl.value.duration;
-    // Finish when video reaches the last 200 ms or playback stops
     if (dur.inMilliseconds > 0 &&
         pos.inMilliseconds >= dur.inMilliseconds - 2200) {
       _finish();
@@ -112,8 +84,6 @@ class _SplashScreenState extends State<SplashScreen>
     _fallbackTimer?.cancel();
     _video?.removeListener(_onVideoUpdate);
     _video?.dispose();
-    _ambience?.stop();
-    _ambience?.dispose();
     _fadeCtrl.dispose();
     super.dispose();
   }
@@ -176,8 +146,6 @@ class _SplashScreenState extends State<SplashScreen>
 }
 
 // ── HabitFlow brand mark ──────────────────────────────────
-// Water-drop outline with checkmark inside.
-// const constructor so it can be used in const widget trees.
 class HabitFlowLogoPainter extends CustomPainter {
   const HabitFlowLogoPainter();
 
@@ -193,7 +161,6 @@ class HabitFlowLogoPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
-    // Water-drop outline (pointed tip at top, rounded base)
     final drop = Path();
     drop.moveTo(w * 0.50, h * 0.02);
     drop.cubicTo(w * 0.84, h * 0.22, w * 0.97, h * 0.52, w * 0.97, h * 0.68);
@@ -203,7 +170,6 @@ class HabitFlowLogoPainter extends CustomPainter {
     drop.close();
     canvas.drawPath(drop, stroke);
 
-    // Checkmark inside
     final check = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke

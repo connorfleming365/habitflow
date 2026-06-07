@@ -28,6 +28,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/intro_video.mp4
+    - assets/splash_video.mp4
     - assets/ocean_bg.jpg
     - assets/habitflow_logo_white.png
     - assets/sounds/water_drop.mp3
