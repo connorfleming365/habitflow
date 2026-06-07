@@ -17,6 +17,7 @@ class _ManageScreenState extends State<ManageScreen> {
   List<Habit> _habits = [];
   String? _installDate;
   Set<String> _completions = {};
+  bool _loading = true;
   bool _gridView = true; // default: 3-column grid
 
   @override
@@ -41,7 +42,7 @@ class _ManageScreenState extends State<ManageScreen> {
     final habits = await StorageService.loadHabits();
     final completions = await StorageService.loadCompletions();
     final installDate = await StorageService.getInstallDate();
-    if (mounted) setState(() { _habits = habits; _completions = completions; _installDate = installDate; });
+    if (mounted) setState(() { _habits = habits; _completions = completions; _installDate = installDate; _loading = false; });
   }
 
   int _streakFor(Habit h) {
@@ -116,11 +117,13 @@ class _ManageScreenState extends State<ManageScreen> {
           ),
         ],
       ),
-      body: _habits.isEmpty
-          ? _buildEmpty()
-          : _gridView
-              ? _buildGrid()
-              : _buildList(),
+      body: _loading
+          ? const SizedBox.shrink()
+          : _habits.isEmpty
+              ? _buildEmpty()
+              : _gridView
+                  ? _buildGrid()
+                  : _buildList(),
     );
   }
 

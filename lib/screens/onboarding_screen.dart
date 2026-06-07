@@ -341,12 +341,12 @@ class _JourneyPageState extends State<_JourneyPage> {
     final count = widget.stages.length;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(0, 8, 0, 16),
+      padding: const EdgeInsets.fromLTRB(0, 4, 0, 8),
       child: Column(
         children: [
           // Emoji
-          Text(widget.page.emoji, style: const TextStyle(fontSize: 96)),
-          const SizedBox(height: 16),
+          Text(widget.page.emoji, style: const TextStyle(fontSize: 72)),
+          const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
@@ -354,13 +354,13 @@ class _JourneyPageState extends State<_JourneyPage> {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 28,
+                fontSize: 26,
                 fontWeight: FontWeight.w800,
                 height: 1.2,
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 36),
             child: Text(
@@ -368,13 +368,13 @@ class _JourneyPageState extends State<_JourneyPage> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white.withOpacity(0.75),
-                fontSize: 14,
-                height: 1.6,
+                fontSize: 13,
+                height: 1.5,
               ),
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
 
           // Carousel: arrows + swipeable PageView
           Row(
@@ -399,7 +399,7 @@ class _JourneyPageState extends State<_JourneyPage> {
               // Swipeable stage cards
               Expanded(
                 child: SizedBox(
-                  height: 190,
+                  height: 160,
                   child: PageView.builder(
                     controller: _carouselCtrl,
                     physics: const ClampingScrollPhysics(),
@@ -410,7 +410,7 @@ class _JourneyPageState extends State<_JourneyPage> {
                       return Container(
                         margin: const EdgeInsets.symmetric(horizontal: 4),
                         padding: const EdgeInsets.symmetric(
-                            vertical: 20, horizontal: 16),
+                            vertical: 12, horizontal: 16),
                         decoration: BoxDecoration(
                           color: const Color(0xFF1E3A5F), // solid navy
                           border: Border.all(
