@@ -37,7 +37,7 @@ class _SplashScreenState extends State<SplashScreen>
     // video_player requires native platform; skip on web and use timed fallback
     if (kIsWeb) {
       _fadeCtrl.forward();
-      await Future.delayed(const Duration(milliseconds: 2500));
+      await Future.delayed(const Duration(milliseconds: 500));
       _finish();
       return;
     }
@@ -54,7 +54,7 @@ class _SplashScreenState extends State<SplashScreen>
     } catch (_) {
       // Video failed — run timed fallback
       _fadeCtrl.forward();
-      await Future.delayed(const Duration(milliseconds: 2500));
+      await Future.delayed(const Duration(milliseconds: 500));
       _finish();
     }
   }
@@ -66,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen>
     final dur = ctrl.value.duration;
     // Finish when video reaches the last 200 ms or playback stops
     if (dur.inMilliseconds > 0 &&
-        pos.inMilliseconds >= dur.inMilliseconds - 200) {
+        pos.inMilliseconds >= dur.inMilliseconds - 2200) {
       _finish();
     }
   }
