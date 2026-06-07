@@ -21,7 +21,7 @@ class ProgressionService {
     'Three weeks. Your habits are hardwiring into your daily life.\nThe swell beneath you is real. Keep building.',
     'Six weeks of building your swell. You\'re not trying anymore — you\'re flowing.\nKeep the momentum going.',
     'Three months. You\'re not building habits anymore — you\'re riding the swell.\nThe ocean is right there.',
-    'You rode the swell all the way. 180 days of showing up.\nYou didn\'t just build habits — you became the kind of person who never stops.',
+    'You rode the swell all the way. 180 days of showing up.\nYou didn\'t just build habits — you became the kind of person who never stops. Now let\'s maintain your ocean and continue to maintain great habits!',
   ];
 
   /// Count how many distinct days had at least one completion.

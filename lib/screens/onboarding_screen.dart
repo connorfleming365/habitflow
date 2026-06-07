@@ -68,10 +68,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   // Journey stage data for the carousel
   static const _stages = [
-    ('💧', 'Drop',   'Days 1–6',    'Every swell begins with a single drop. You\'ve placed yours.'),
-    ('💦', 'Puddle', 'Days 7–20',   'A week in — your swell is forming. What starts small becomes unstoppable.'),
+    ('💧', 'Drop',   'Days 1–6',    'Every journey has small beginnings. Your ocean begins with a single drop.'),
+    ('💦', 'Puddle', 'Days 7–20',   'A week in — your habits are forming. What starts small becomes unstoppable.'),
     ('🌱', 'Spring', 'Days 21–44',  'Three weeks. The swell beneath you is real. You\'re doing it.'),
-    ('🌊', 'Stream', 'Days 45–89',  'Six weeks of momentum. You\'re not just flowing — you\'re swelling.'),
+    ('🌊', 'Stream', 'Days 45–89',  'Six weeks of momentum. You\'re flowing!'),
     ('🏄', 'Tide',   'Days 90–179', 'Three months. You\'re not building habits anymore — you\'re riding the swell.'),
     ('🌅', 'Ocean',  'Day 180+',    'You rode the swell all the way. You became the kind of person who never stops.'),
   ];
@@ -401,7 +401,7 @@ class _JourneyPageState extends State<_JourneyPage> {
               // Swipeable stage cards
               Expanded(
                 child: SizedBox(
-                  height: 160,
+                  height: 210,
                   child: PageView.builder(
                     controller: _carouselCtrl,
                     physics: const ClampingScrollPhysics(),
