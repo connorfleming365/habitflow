@@ -227,7 +227,7 @@ class _PageContent extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               Image.asset(
-                'assets/habitflow_logo_white.png',
+                'assets/swell_logo_white.png',
                 width: 200,
                 height: 200,
               ),
@@ -244,7 +244,7 @@ class _PageContent extends StatelessWidget {
             ] else ...[
               // Standard pages: logo at top, then title then body
               Image.asset(
-                'assets/habitflow_logo_white.png',
+                'assets/swell_logo_white.png',
                 width: 170,
                 height: 170,
               ),
@@ -344,7 +344,7 @@ class _JourneyPageState extends State<_JourneyPage> {
       child: Column(
         children: [
           // Logo — same size and position as other pages
-          Image.asset('assets/habitflow_logo_white.png', width: 170, height: 170),
+          Image.asset('assets/swell_logo_white.png', width: 170, height: 170),
           const SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
