@@ -29,15 +29,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title: 'Welcome to',
       body:
           'Build momentum. One habit at a time.\n\n'
-          'Every swell starts small. One tap a day is all it takes — '
-          'drop by drop, your swell grows and so do you.',
+          'The largest of oceans stem from the smallest of Swells. '
+          'One tap a day is all it takes — drop by drop, your Swell grows and so do you.',
       isWelcome: true,
     ),
     _OnboardPage(
       title: 'How it works',
       emoji: '💧',
       body:
-          'Add the habits you want to build — as many or as few as you like.\n\n'
+          'Add the habits you want to build, and how often you want to achieve them '
+          '— as many or as few as you like.\n\n'
           'Each day, open the app and tap to check them off. '
           'Show up consistently and the rest takes care of itself.\n\n'
           'Add the homescreen Widget to check off habits '
@@ -48,19 +49,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       emoji: '🌊',
       body:
           'Ocean swells build momentum just like habits — slowly, powerfully, unstoppably.\n\n'
-          'Every drop of effort adds to yours. Each day you show up, '
-          'the momentum grows stronger.\n\n'
+          'Turning up consistently with small habits delivers big results over time. '
+          'Each day you show up, the momentum grows stronger, and eventually your habits '
+          'will deliver the success you desire.\n\n'
           '180 days of consistent action and you\'ll have filled your ocean.',
       isJourney: true,
     ),
     _OnboardPage(
-      title: 'Small habits.\nBig life.',
+      title: 'Small habits.\nBig Achievements.',
       emoji: '🌅',
       body:
-          'Every ocean swell started as a single drop.\n\n'
           'The secret isn\'t motivation — it\'s the decision to show up, '
-          'one day at a time. '
-          'Make that decision today. Then make it again tomorrow.',
+          'one day at a time. Make that decision today. Then make it again tomorrow. '
+          'Consistently.\n\n'
+          'Eventually, your regular positive habits will deliver powerful results.',
     ),
   ];
 
