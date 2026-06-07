@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
@@ -19,6 +20,7 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   VideoPlayerController? _video;
   AudioPlayer? _ambience;
+  Timer? _fallbackTimer;
   bool _videoReady = false;
   bool _done = false;
 
@@ -53,7 +55,10 @@ class _SplashScreenState extends State<SplashScreen>
       setState(() { _video = ctrl; _videoReady = true; });
       await ctrl.play();
       _fadeCtrl.forward();
-      // Start ambient audio after video is running to avoid audio-session conflicts
+      // Hard fallback: if the video listener never fires _finish (e.g. ExoPlayer
+      // conflict from the audio player), bail out after the full video duration.
+      _fallbackTimer = Timer(const Duration(seconds: 12), _finish);
+      // Start ambient audio after video is confirmed running
       _playAmbience();
     } catch (_) {
       // Video failed — run timed fallback
@@ -68,9 +73,9 @@ class _SplashScreenState extends State<SplashScreen>
     try {
       final player = AudioPlayer();
       _ambience = player;
+      // Do NOT preload — preloading a second ExoPlayer immediately can stall video_player
       await player.setAudioSource(
         AudioSource.asset('assets/sounds/ocean_waves.mp3'),
-        preload: true,
       );
       await player.setVolume(0.7);
       await player.setLoopMode(LoopMode.one);
@@ -96,11 +101,13 @@ class _SplashScreenState extends State<SplashScreen>
   void _finish() {
     if (_done) return;
     _done = true;
+    _fallbackTimer?.cancel();
     if (mounted) widget.onComplete();
   }
 
   @override
   void dispose() {
+    _fallbackTimer?.cancel();
     _video?.removeListener(_onVideoUpdate);
     _video?.dispose();
     _ambience?.stop();
