@@ -377,14 +377,28 @@ class TodayScreenState extends State<TodayScreen>
         if (showToggle)
           GestureDetector(
             onTap: _toggleViewMode,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: Icon(
-                _gridMode ? Icons.grid_view_rounded : Icons.view_agenda_rounded,
-                key: ValueKey(_gridMode),
-                size: 18,
-                color: Theme.of(context).colorScheme.secondary,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('View',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.secondary,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    _gridMode ? Icons.grid_view_rounded : Icons.view_agenda_rounded,
+                    key: ValueKey(_gridMode),
+                    size: 18,
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
+                ),
+              ],
             ),
           ),
       ],

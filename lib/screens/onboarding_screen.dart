@@ -213,49 +213,43 @@ class _PageContent extends StatelessWidget {
       child: SingleChildScrollView(
         child: Column(
           children: [
+            // Logo at top — same size and position on every page
+            Image.asset(
+              'assets/habitflow_logo_white.png',
+              width: page.isWelcome ? 200 : 170,
+              height: page.isWelcome ? 200 : 170,
+            ),
+            const SizedBox(height: 24),
             if (page.isWelcome) ...[
-              // Page 1: "Welcome to" → logo → "habitflow" → body
-              const SizedBox(height: 20),
+              // Page 1: "Welcome to" is the title, larger and lighter weight
               const Text(
                 'Welcome to',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 28,
+                  fontSize: 36,
                   fontWeight: FontWeight.w400,
                   letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 20),
-              Image.asset(
-                'assets/habitflow_logo_white.png',
-                width: 160,
-                height: 160,
-              ),
-              const SizedBox(height: 24),
               Text(
                 page.body,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.8),
-                  fontSize: 14,
+                  fontSize: 16,
                   height: 1.65,
                 ),
               ),
             ] else ...[
-              // Standard: logo → title → body
-              Image.asset(
-                'assets/habitflow_logo_white.png',
-                width: 140,
-                height: 140,
-              ),
-              const SizedBox(height: 20),
+              // Standard pages: title then body, same sizes across all
               Text(
                 page.title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 26,
+                  fontSize: 28,
                   fontWeight: FontWeight.w800,
                   height: 1.2,
                 ),
@@ -266,7 +260,7 @@ class _PageContent extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.8),
-                  fontSize: 14,
+                  fontSize: 16,
                   height: 1.65,
                 ),
               ),
@@ -344,9 +338,9 @@ class _JourneyPageState extends State<_JourneyPage> {
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
       child: Column(
         children: [
-          // Logo + title + intro text
-          Image.asset('assets/habitflow_logo_white.png', width: 100, height: 100),
-          const SizedBox(height: 10),
+          // Logo — same size and position as other pages
+          Image.asset('assets/habitflow_logo_white.png', width: 170, height: 170),
+          const SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
@@ -354,13 +348,13 @@ class _JourneyPageState extends State<_JourneyPage> {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 24,
+                fontSize: 28,
                 fontWeight: FontWeight.w800,
                 height: 1.2,
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 36),
             child: Text(
@@ -368,7 +362,7 @@ class _JourneyPageState extends State<_JourneyPage> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white.withOpacity(0.75),
-                fontSize: 12,
+                fontSize: 14,
                 height: 1.6,
               ),
             ),
