@@ -786,6 +786,20 @@ class _HabitCircleTile extends StatelessWidget {
                   height: 1.25,
                 ),
               ),
+              const SizedBox(height: 3),
+              Text(
+                habit.freqLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                  color: done
+                      ? kSuccess.withOpacity(0.7)
+                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
+                ),
+              ),
             ],
           );
         }),
@@ -841,16 +855,33 @@ class _HabitListTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          // Habit name
+          // Habit name + frequency
           Expanded(
-            child: Text(
-              habit.name,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: done ? kSuccess : Theme.of(context).colorScheme.onSurface,
-                height: 1.3,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  habit.name,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: done ? kSuccess : Theme.of(context).colorScheme.onSurface,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  habit.freqLabel,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: done
+                        ? kSuccess.withOpacity(0.7)
+                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 12),
