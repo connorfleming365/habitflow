@@ -71,7 +71,9 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _playAmbience() async {
     if (kIsWeb) return;
     try {
-      final player = AudioPlayer();
+      // handleInterruptions: false → don't request audio focus, so video_player
+      // (also ExoPlayer) can keep playing at the same time
+      final player = AudioPlayer(handleInterruptions: false);
       _ambience = player;
       // Do NOT preload — preloading a second ExoPlayer immediately can stall video_player
       await player.setAudioSource(

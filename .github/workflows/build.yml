@@ -69,11 +69,13 @@ jobs:
 
       - name: Copy app icons
         run: |
-          cp -r android/app/src/main/res/mipmap-mdpi    /tmp/build_app/android/app/src/main/res/
-          cp -r android/app/src/main/res/mipmap-hdpi    /tmp/build_app/android/app/src/main/res/
-          cp -r android/app/src/main/res/mipmap-xhdpi   /tmp/build_app/android/app/src/main/res/
-          cp -r android/app/src/main/res/mipmap-xxhdpi  /tmp/build_app/android/app/src/main/res/
-          cp -r android/app/src/main/res/mipmap-xxxhdpi /tmp/build_app/android/app/src/main/res/
+          cp -r android/app/src/main/res/mipmap-mdpi       /tmp/build_app/android/app/src/main/res/
+          cp -r android/app/src/main/res/mipmap-hdpi       /tmp/build_app/android/app/src/main/res/
+          cp -r android/app/src/main/res/mipmap-xhdpi      /tmp/build_app/android/app/src/main/res/
+          cp -r android/app/src/main/res/mipmap-xxhdpi     /tmp/build_app/android/app/src/main/res/
+          cp -r android/app/src/main/res/mipmap-xxxhdpi    /tmp/build_app/android/app/src/main/res/
+          cp -r android/app/src/main/res/mipmap-anydpi-v26 /tmp/build_app/android/app/src/main/res/
+          cp android/app/src/main/res/values/colors.xml    /tmp/build_app/android/app/src/main/res/values/
 
       - name: Add widget receiver to AndroidManifest
         run: |
