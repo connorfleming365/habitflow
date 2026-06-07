@@ -80,9 +80,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text('Enable reminders',
             style: TextStyle(fontWeight: FontWeight.w700)),
         content: const Text(
-          'To receive habit reminders, please enable notifications for habitflow:\n\n'
+          'To receive habit reminders, please enable notifications for Swell:\n\n'
           '1. Open your phone\'s Settings\n'
-          '2. Go to Apps → habitflow\n'
+          '2. Go to Apps → Swell\n'
           '3. Tap Notifications\n'
           '4. Turn on "Allow notifications"\n\n'
           'Then come back and enable reminders here.',
@@ -147,9 +147,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final stage = _stageNameFor(activeDays);
     final stageEmoji = _stageEmojiFor(activeDays);
     final text =
-        '$stageEmoji $activeDays days of showing up. I\'m at the $stage stage on habitflow.\n\n'
-        'Tracking ${habits.length} habits and getting stronger every day. 💧\n\n'
-        'Every ocean starts with a single drop. Drop by drop, you build yours.';
+        '$stageEmoji $activeDays days of building my swell. Riding the $stage stage on Swell.\n\n'
+        'Tracking ${habits.length} habits and the momentum is growing. 🌊\n\n'
+        'Every great swell starts with a single drop. Start building yours.';
     await Share.share(text);
   }
 
@@ -403,8 +403,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const _DividerLine(),
             const _InfoRow(
               icon: '🌊',
-              title: 'habitflow v1.0',
-              subtitle: 'Drop by drop, you build your ocean.',
+              title: 'Swell v1.0',
+              subtitle: 'Build your swell. Drop by drop.',
             ),
           ]),
         ],

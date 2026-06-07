@@ -28,8 +28,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _OnboardPage(
       title: 'Welcome to',
       body:
-          'The simplest way to build habits that actually stick.\n\n'
-          'One tap a day. Drop by drop. Watch what you become.',
+          'Build momentum. One habit at a time.\n\n'
+          'Every swell starts small. One tap a day is all it takes — '
+          'drop by drop, your swell grows and so do you.',
       isWelcome: true,
     ),
     _OnboardPage(
@@ -42,10 +43,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           'without even opening the app!',
     ),
     _OnboardPage(
-      title: 'Your Flow Journey',
+      title: 'Your Swell Journey',
       body:
-          'Every drop of effort adds up. Each day you show up, '
-          'your flow grows stronger.\n\n'
+          'Every drop of effort builds your swell. Each day you show up, '
+          'the momentum grows stronger.\n\n'
           '180 days of consistent action and you\'ll have filled your ocean — '
           'and proved to yourself that you can do anything.',
       isJourney: true,
@@ -53,7 +54,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _OnboardPage(
       title: 'Small habits.\nBig life.',
       body:
-          'Every ocean started as a single raindrop.\n\n'
+          'Every ocean swell started as a single drop.\n\n'
           'The secret isn\'t motivation — it\'s the decision to show up, '
           'one day at a time. '
           'Make that decision today. Then make it again tomorrow.',
@@ -62,12 +63,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   // Journey stage data for the carousel
   static const _stages = [
-    ('💧', 'Drop',   'Days 1–6',    'Every journey starts with a single step. You\'ve taken yours.'),
-    ('💦', 'Puddle', 'Days 7–20',   'A week in and something real is forming. Keep showing up.'),
-    ('🌱', 'Spring', 'Days 21–44',  'Three weeks. Science says habits are hardwiring. You\'re doing it.'),
-    ('🌊', 'Stream', 'Days 45–89',  'Six weeks of momentum. You\'re unstoppable when you flow.'),
-    ('🏄', 'Tide',   'Days 90–179', 'Three months. You\'re not building habits anymore — you\'re living them.'),
-    ('🌅', 'Ocean',  'Day 180+',    'You didn\'t just build habits. You became the kind of person who shows up.'),
+    ('💧', 'Drop',   'Days 1–6',    'Every swell begins with a single drop. You\'ve placed yours.'),
+    ('💦', 'Puddle', 'Days 7–20',   'A week in — your swell is forming. What starts small becomes unstoppable.'),
+    ('🌱', 'Spring', 'Days 21–44',  'Three weeks. The swell beneath you is real. You\'re doing it.'),
+    ('🌊', 'Stream', 'Days 45–89',  'Six weeks of momentum. You\'re not just flowing — you\'re swelling.'),
+    ('🏄', 'Tide',   'Days 90–179', 'Three months. You\'re not building habits anymore — you\'re riding the swell.'),
+    ('🌅', 'Ocean',  'Day 180+',    'You rode the swell all the way. You became the kind of person who never stops.'),
   ];
 
   int _stageIndex = 0;

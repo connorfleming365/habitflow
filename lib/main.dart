@@ -24,7 +24,7 @@ void main() async {
   await StorageService.setInstallDateIfNew();
   await _seedIfEmpty();
   await _rescheduleNotifsIfEnabled();
-  runApp(const HabitFlowApp());
+  runApp(const SwellApp());
 }
 
 /// Re-schedule all habit reminders on every cold start (Android kills exact
@@ -56,13 +56,13 @@ Future<void> _seedIfEmpty() async {
 }
 
 // ── App root ──────────────────────────────────────────────
-class HabitFlowApp extends StatefulWidget {
-  const HabitFlowApp({super.key});
+class SwellApp extends StatefulWidget {
+  const SwellApp({super.key});
   @override
-  State<HabitFlowApp> createState() => _HabitFlowAppState();
+  State<SwellApp> createState() => _SwellAppState();
 }
 
-class _HabitFlowAppState extends State<HabitFlowApp> {
+class _SwellAppState extends State<SwellApp> {
   String _appTheme = 'coral_tide';
   bool _onboardingDone = false;
   bool _prefsLoaded = false;
@@ -118,7 +118,7 @@ class _HabitFlowAppState extends State<HabitFlowApp> {
 
     // Splash done — prefs will be loaded by now (splash is ~2.5 s).
     return MaterialApp(
-      title: 'habitflow',
+      title: 'Swell',
       debugShowCheckedModeBanner: false,
       theme: _themeData,
       home: _onboardingDone

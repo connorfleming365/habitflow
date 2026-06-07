@@ -70,7 +70,7 @@ class NotificationService {
     await _plugin.zonedSchedule(
       notifId,
       '${habit.icon} Time for: ${habit.name}',
-      'Tap to open habitflow and check in.',
+      'Tap to open Swell and check in.',
       await _nextOccurrence(hour, min),
       NotificationDetails(
         android: AndroidNotificationDetails(
@@ -130,7 +130,7 @@ class NotificationService {
 
     await _plugin.zonedSchedule(
       _nudgeId,
-      "🌊 Don't break your flow",
+      "🌊 Don't let your swell fade",
       "Your habits are waiting. Keep your streak alive!",
       await _nextOccurrence(hour, min),
       const NotificationDetails(
