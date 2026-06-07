@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
 import '../theme.dart';
 
@@ -17,6 +18,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   VideoPlayerController? _video;
+  AudioPlayer? _ambience;
   bool _videoReady = false;
   bool _done = false;
 
@@ -41,6 +43,8 @@ class _SplashScreenState extends State<SplashScreen>
       _finish();
       return;
     }
+    // Start ambient ocean waves
+    _playAmbience();
     try {
       final ctrl = VideoPlayerController.asset('assets/intro_video.mp4');
       await ctrl.initialize();
@@ -56,6 +60,19 @@ class _SplashScreenState extends State<SplashScreen>
       _fadeCtrl.forward();
       await Future.delayed(const Duration(milliseconds: 500));
       _finish();
+    }
+  }
+
+  Future<void> _playAmbience() async {
+    if (kIsWeb) return;
+    try {
+      final player = AudioPlayer();
+      _ambience = player;
+      await player.setAsset('assets/sounds/ocean_waves.mp3');
+      await player.setVolume(0.4);
+      await player.play();
+    } catch (_) {
+      // Silently ignore — never crash on audio errors
     }
   }
 
@@ -81,6 +98,8 @@ class _SplashScreenState extends State<SplashScreen>
   void dispose() {
     _video?.removeListener(_onVideoUpdate);
     _video?.dispose();
+    _ambience?.stop();
+    _ambience?.dispose();
     _fadeCtrl.dispose();
     super.dispose();
   }

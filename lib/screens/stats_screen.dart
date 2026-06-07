@@ -579,7 +579,7 @@ class _CalendarSectionState extends State<_CalendarSection> {
                         ? Theme.of(context).colorScheme.onSurface.withOpacity(0.2)
                         : isPerfect || hasPartial
                             ? Colors.black87
-                            : Colors.white70,
+                            : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                   ),
                 ),
               ),
@@ -949,7 +949,7 @@ class _HabitDayStripState extends State<_HabitDayStrip> {
                               ? Theme.of(context).colorScheme.onSurface.withOpacity(0.2)
                               : done
                                   ? Colors.black87
-                                  : Colors.white70,
+                                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         ),
                       ),
                     ),

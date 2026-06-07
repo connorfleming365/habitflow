@@ -31,6 +31,8 @@ flutter:
     - assets/ocean_bg.jpg
     - assets/habitflow_logo_white.png
     - assets/sounds/water_drop.mp3
+    - assets/sounds/water_drop_new.mp3
     - assets/sounds/water_drop.wav
     - assets/sounds/wave.wav
     - assets/sounds/flow.wav
+    - assets/sounds/ocean_waves.mp3

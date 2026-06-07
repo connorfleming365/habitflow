@@ -231,16 +231,6 @@ class _PageContent extends StatelessWidget {
                 width: 160,
                 height: 160,
               ),
-              const SizedBox(height: 16),
-              const Text(
-                'habitflow',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 36,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -1,
-                ),
-              ),
               const SizedBox(height: 24),
               Text(
                 page.body,
@@ -287,8 +277,8 @@ class _PageContent extends StatelessWidget {
   }
 }
 
-// ── Journey page with stage carousel ─────────────────────
-class _JourneyPage extends StatelessWidget {
+// ── Journey page with swipeable stage carousel ───────────
+class _JourneyPage extends StatefulWidget {
   final _OnboardPage page;
   final List<(String, String, String, String)> stages;
   final int stageIndex;
@@ -302,8 +292,52 @@ class _JourneyPage extends StatelessWidget {
   });
 
   @override
+  State<_JourneyPage> createState() => _JourneyPageState();
+}
+
+class _JourneyPageState extends State<_JourneyPage> {
+  late PageController _carouselCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _carouselCtrl = PageController(initialPage: widget.stageIndex);
+  }
+
+  @override
+  void didUpdateWidget(_JourneyPage old) {
+    super.didUpdateWidget(old);
+    // Sync controller if parent changed index via arrows
+    if (widget.stageIndex != old.stageIndex &&
+        _carouselCtrl.hasClients &&
+        (_carouselCtrl.page?.round() ?? 0) != widget.stageIndex) {
+      _carouselCtrl.animateToPage(
+        widget.stageIndex,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _carouselCtrl.dispose();
+    super.dispose();
+  }
+
+  void _goTo(int index) {
+    _carouselCtrl.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+    widget.onStageChanged(index);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final (emoji, name, days, desc) = stages[stageIndex];
+    final idx = widget.stageIndex;
+    final count = widget.stages.length;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
@@ -315,7 +349,7 @@ class _JourneyPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              page.title,
+              widget.page.title,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white,
@@ -329,7 +363,7 @@ class _JourneyPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 36),
             child: Text(
-              page.body,
+              widget.page.body,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white.withOpacity(0.75),
@@ -341,111 +375,113 @@ class _JourneyPage extends StatelessWidget {
 
           const Spacer(),
 
-          // Stage carousel
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                // Left arrow
-                GestureDetector(
-                  onTap: stageIndex > 0
-                      ? () => onStageChanged(stageIndex - 1)
-                      : null,
-                  child: AnimatedOpacity(
-                    opacity: stageIndex > 0 ? 1.0 : 0.2,
-                    duration: const Duration(milliseconds: 200),
-                    child: const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: Text('‹',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 30,
-                              fontWeight: FontWeight.w300)),
-                    ),
+          // Carousel: arrows + swipeable PageView
+          Row(
+            children: [
+              // Left arrow
+              GestureDetector(
+                onTap: idx > 0 ? () => _goTo(idx - 1) : null,
+                child: AnimatedOpacity(
+                  opacity: idx > 0 ? 1.0 : 0.2,
+                  duration: const Duration(milliseconds: 200),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Text('‹',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w300)),
                   ),
                 ),
-                // Stage card
-                Expanded(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 250),
-                    child: Container(
-                      key: ValueKey(stageIndex),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 20, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.13),
-                        border: Border.all(
-                            color: Colors.white.withOpacity(0.25), width: 1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Column(mainAxisSize: MainAxisSize.min, children: [
-                        Text(emoji,
-                            style: const TextStyle(fontSize: 36)),
-                        const SizedBox(height: 8),
-                        Text(name,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800)),
-                        const SizedBox(height: 5),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: kCoralPrimary.withOpacity(0.35),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(days,
-                              style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600)),
+              ),
+
+              // Swipeable stage cards
+              Expanded(
+                child: SizedBox(
+                  height: 190,
+                  child: PageView.builder(
+                    controller: _carouselCtrl,
+                    itemCount: count,
+                    onPageChanged: widget.onStageChanged,
+                    itemBuilder: (_, i) {
+                      final (emoji, name, days, desc) = widget.stages[i];
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 20, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E3A5F), // solid navy
+                          border: Border.all(
+                              color: Colors.white.withOpacity(0.2), width: 1),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        const SizedBox(height: 10),
-                        Text(desc,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                color: Colors.white.withOpacity(0.78),
-                                fontSize: 13,
-                                height: 1.5)),
-                      ]),
-                    ),
+                        child: Column(mainAxisSize: MainAxisSize.min, children: [
+                          Text(emoji, style: const TextStyle(fontSize: 36)),
+                          const SizedBox(height: 8),
+                          Text(name,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 5),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: kCoralPrimary.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(days,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600)),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(desc,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  color: Colors.white.withOpacity(0.85),
+                                  fontSize: 13,
+                                  height: 1.5)),
+                        ]),
+                      );
+                    },
                   ),
                 ),
-                // Right arrow
-                GestureDetector(
-                  onTap: stageIndex < stages.length - 1
-                      ? () => onStageChanged(stageIndex + 1)
-                      : null,
-                  child: AnimatedOpacity(
-                    opacity: stageIndex < stages.length - 1 ? 1.0 : 0.2,
-                    duration: const Duration(milliseconds: 200),
-                    child: const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: Text('›',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 30,
-                              fontWeight: FontWeight.w300)),
-                    ),
+              ),
+
+              // Right arrow
+              GestureDetector(
+                onTap: idx < count - 1 ? () => _goTo(idx + 1) : null,
+                child: AnimatedOpacity(
+                  opacity: idx < count - 1 ? 1.0 : 0.2,
+                  duration: const Duration(milliseconds: 200),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Text('›',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w300)),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
 
           // Carousel progress dots
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(stages.length, (i) {
+            children: List.generate(count, (i) {
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: i == stageIndex ? 16 : 6,
+                width: i == idx ? 16 : 6,
                 height: 6,
                 decoration: BoxDecoration(
-                  color: i == stageIndex
+                  color: i == idx
                       ? kCoralPrimary
                       : Colors.white.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(3),
