@@ -116,10 +116,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
 
-              // Pages
+              // Pages — physics: ClampingScrollPhysics so swipes reach the parent
               Expanded(
                 child: PageView.builder(
                   controller: _ctrl,
+                  physics: const ClampingScrollPhysics(),
                   onPageChanged: (p) => setState(() => _page = p),
                   itemCount: _pages.length,
                   itemBuilder: (_, i) => _pages[i].isJourney
@@ -401,6 +402,7 @@ class _JourneyPageState extends State<_JourneyPage> {
                   height: 190,
                   child: PageView.builder(
                     controller: _carouselCtrl,
+                    physics: const ClampingScrollPhysics(),
                     itemCount: count,
                     onPageChanged: widget.onStageChanged,
                     itemBuilder: (_, i) {

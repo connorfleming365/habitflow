@@ -36,3 +36,4 @@ flutter:
     - assets/sounds/wave.wav
     - assets/sounds/flow.wav
     - assets/sounds/ocean_waves.mp3
+    - assets/sounds/level_up.mp3

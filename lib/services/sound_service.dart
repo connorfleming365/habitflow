@@ -20,7 +20,7 @@ class SoundService {
   static void setEnabled(bool value) => _enabled = value;
 
   static Future<void> playDrop() => _play('assets/sounds/water_drop_new.mp3');
-  static Future<void> playWave() => _play('assets/sounds/wave.wav');
+  static Future<void> playWave() => _play('assets/sounds/level_up.mp3');
   static Future<void> playFlow() => _play('assets/sounds/flow.wav');
 
   static Future<void> _play(String asset) async {

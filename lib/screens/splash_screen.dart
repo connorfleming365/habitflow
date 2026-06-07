@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
@@ -68,11 +68,12 @@ class _SplashScreenState extends State<SplashScreen>
     try {
       final player = AudioPlayer();
       _ambience = player;
+      // Set volume before loading so it applies immediately on play
+      await player.setVolume(0.5);
       await player.setAsset('assets/sounds/ocean_waves.mp3');
-      await player.setVolume(0.4);
       await player.play();
-    } catch (_) {
-      // Silently ignore — never crash on audio errors
+    } catch (e) {
+      debugPrint('Splash ambience error: $e');
     }
   }
 
