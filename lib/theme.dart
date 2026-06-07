@@ -80,7 +80,7 @@ class AppTheme {
       ),
     ),
     appBarTheme: const AppBarTheme(
-      backgroundColor: kCoralPrimary,
+      backgroundColor: kCoralNavy,
       elevation: 0,
       scrolledUnderElevation: 0,
       iconTheme: IconThemeData(color: Colors.white),
