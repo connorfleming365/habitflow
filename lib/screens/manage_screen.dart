@@ -330,6 +330,18 @@ class _GridTile extends StatelessWidget {
                   fontSize: 10.5,
                   fontWeight: FontWeight.w600, height: 1.25),
               ),
+              const SizedBox(height: 2),
+              Text(
+                habit.freqLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
+                ),
+              ),
               if (streak > 0) ...[
                 const SizedBox(height: 2),
                 Text('${streak}d 🔥',

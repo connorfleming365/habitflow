@@ -147,9 +147,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final stage = _stageNameFor(activeDays);
     final stageEmoji = _stageEmojiFor(activeDays);
     final text =
-        '$stageEmoji I\'ve been building my flow for $activeDays days on habitflow!\n\n'
-        'I\'m at the $stage stage — tracking ${habits.length} habits and flowing stronger every day. 🌊\n\n'
-        'Drop by drop, you build your ocean.';
+        '$stageEmoji $activeDays days of showing up. I\'m at the $stage stage on habitflow.\n\n'
+        'Tracking ${habits.length} habits and getting stronger every day. 💧\n\n'
+        'Every ocean starts with a single drop. Drop by drop, you build yours.';
     await Share.share(text);
   }
 

@@ -28,47 +28,46 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _OnboardPage(
       title: 'Welcome to',
       body:
-          'The habit tracker that keeps it simple.\n\n'
-          'Just your habits, tracked daily — drop by drop.',
+          'The simplest way to build habits that actually stick.\n\n'
+          'One tap a day. Drop by drop. Watch what you become.',
       isWelcome: true,
     ),
     _OnboardPage(
       title: 'How it works',
       body:
-          'Add the habits you want to build.\n\n'
-          'Every day, open the app and tap to check them off. '
-          'That\'s it. Small, consistent action is all it takes.\n\n'
-          'You can also add the Widget to your Home Screen '
-          'to check off habits straight from there!',
+          'Add the habits you want to build — as many or as few as you like.\n\n'
+          'Each day, open the app and tap to check them off. '
+          'Show up consistently and the rest takes care of itself.\n\n'
+          'Add the homescreen Widget to check off habits '
+          'without even opening the app!',
     ),
     _OnboardPage(
       title: 'Your Flow Journey',
       body:
-          'Every drop counts. Each day you check in, your flow rises.\n\n'
-          'Long-term success is built on the consistent, sustained action of '
-          'small habits. With habitflow, you build your Flow towards your goals '
-          'by showing up every day.\n\n'
-          '180 days of consistent habits and you\'ll have filled your ocean.',
+          'Every drop of effort adds up. Each day you show up, '
+          'your flow grows stronger.\n\n'
+          '180 days of consistent action and you\'ll have filled your ocean — '
+          'and proved to yourself that you can do anything.',
       isJourney: true,
     ),
     _OnboardPage(
       title: 'Small habits.\nBig life.',
       body:
-          'Every great river began as a single raindrop.\n\n'
-          'The secret isn\'t motivation — it\'s showing up. '
-          'Build the habit of building habits, '
-          'and watch what becomes possible.',
+          'Every ocean started as a single raindrop.\n\n'
+          'The secret isn\'t motivation — it\'s the decision to show up, '
+          'one day at a time. '
+          'Make that decision today. Then make it again tomorrow.',
     ),
   ];
 
   // Journey stage data for the carousel
   static const _stages = [
-    ('💧', 'Drop',   'Days 1–6',    'Your journey begins.'),
-    ('💦', 'Puddle', 'Days 7–20',   'Something real is forming.'),
-    ('🌱', 'Spring', 'Days 21–44',  'Your habits are springing to life.'),
-    ('🌊', 'Stream', 'Days 45–89',  'You\'re a flowing stream of action.'),
-    ('🏄', 'Tide',   'Days 90–179', 'The ocean is within reach.'),
-    ('🌅', 'Ocean',  'Day 180+',    'You are the ocean.'),
+    ('💧', 'Drop',   'Days 1–6',    'Every journey starts with a single step. You\'ve taken yours.'),
+    ('💦', 'Puddle', 'Days 7–20',   'A week in and something real is forming. Keep showing up.'),
+    ('🌱', 'Spring', 'Days 21–44',  'Three weeks. Science says habits are hardwiring. You\'re doing it.'),
+    ('🌊', 'Stream', 'Days 45–89',  'Six weeks of momentum. You\'re unstoppable when you flow.'),
+    ('🏄', 'Tide',   'Days 90–179', 'Three months. You\'re not building habits anymore — you\'re living them.'),
+    ('🌅', 'Ocean',  'Day 180+',    'You didn\'t just build habits. You became the kind of person who shows up.'),
   ];
 
   int _stageIndex = 0;
@@ -213,15 +212,8 @@ class _PageContent extends StatelessWidget {
       child: SingleChildScrollView(
         child: Column(
           children: [
-            // Logo at top — same size and position on every page
-            Image.asset(
-              'assets/habitflow_logo_white.png',
-              width: page.isWelcome ? 200 : 170,
-              height: page.isWelcome ? 200 : 170,
-            ),
-            const SizedBox(height: 24),
             if (page.isWelcome) ...[
-              // Page 1: "Welcome to" is the title, larger and lighter weight
+              // Page 1: "Welcome to" sits above the logo
               const Text(
                 'Welcome to',
                 textAlign: TextAlign.center,
@@ -233,6 +225,12 @@ class _PageContent extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
+              Image.asset(
+                'assets/habitflow_logo_white.png',
+                width: 200,
+                height: 200,
+              ),
+              const SizedBox(height: 24),
               Text(
                 page.body,
                 textAlign: TextAlign.center,
@@ -243,7 +241,13 @@ class _PageContent extends StatelessWidget {
                 ),
               ),
             ] else ...[
-              // Standard pages: title then body, same sizes across all
+              // Standard pages: logo at top, then title then body
+              Image.asset(
+                'assets/habitflow_logo_white.png',
+                width: 170,
+                height: 170,
+              ),
+              const SizedBox(height: 24),
               Text(
                 page.title,
                 textAlign: TextAlign.center,

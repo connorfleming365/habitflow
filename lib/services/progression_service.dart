@@ -16,12 +16,12 @@ class ProgressionService {
   static const _stageNames = ['Drop', 'Puddle', 'Spring', 'Stream', 'Tide', 'Ocean'];
   static const _stageEmojis = ['💧', '💦', '🌱', '🌊', '🏄', '🌅'];
   static const _stageDescriptions = [
-    'Every ocean starts with a single drop.\nComplete your daily habits to grow your flow.',
-    'Your drops are forming a puddle. Something real is beginning.',
-    'Three weeks in — your habits are springing to life.\nThis is where change becomes real.',
-    'Six weeks of flow. You\'re a stream of consistent action.\nKeep the momentum going.',
-    'Three months. You\'re riding the tide now.\nThe ocean is within reach — don\'t stop.',
-    'You\'ve reached the ocean. You are the tide.\nKeep up your incredible work.',
+    'Every journey starts with a single step.\nShow up today and let the drops add up.',
+    'A week in and something real is forming.\nYou\'re building more than habits — you\'re building yourself.',
+    'Three weeks. Your habits are hardwiring into your daily life.\nThis is where change becomes permanent.',
+    'Six weeks of flow. You\'re not trying anymore — you\'re doing.\nKeep the momentum going.',
+    'Three months. You\'re not building habits anymore — you\'re living them.\nThe ocean is right there.',
+    'You did it. 180 days of showing up.\nYou didn\'t just build habits — you became the kind of person who never quits.',
   ];
 
   /// Count how many distinct days had at least one completion.
@@ -88,11 +88,11 @@ class ProgressionService {
 
   static String milestoneMessage(int days) {
     switch (days) {
-      case 7:   return 'Seven days of showing up. Your drops\nare becoming a puddle. That\'s real.';
-      case 21:  return 'Three weeks in. Your habits are\nspringing to life. Keep going.';
-      case 45:  return 'Six weeks of consistent action.\nYou\'re a flowing stream now.';
-      case 90:  return 'Three months. You\'re riding the tide.\nThe ocean is within reach.';
-      case 180: return 'Half a year. You didn\'t just build habits —\nyou became the ocean.';
+      case 7:   return 'Seven days of showing up.\nMost people quit before this. You didn\'t.';
+      case 21:  return 'Three weeks in. Your habits are hardwiring\ninto your life. Don\'t stop now.';
+      case 45:  return 'Six weeks of consistent action.\nYou\'re a flowing stream — strong, steady, unstoppable.';
+      case 90:  return 'Three months. You\'ve proved to yourself\nyou can do this. The ocean is right there.';
+      case 180: return 'Half a year of showing up every day.\nYou didn\'t just build habits — you became them.';
       default:  return 'Keep flowing.';
     }
   }
