@@ -16,28 +16,50 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   VideoPlayerController? _video;
   Timer? _fallbackTimer;
   bool _videoReady = false;
   bool _done = false;
+  bool _fadingOut = false;
 
-  // Fallback fade-in for the logo if video fails
-  late AnimationController _fadeCtrl;
-  late Animation<double> _fadeAnim;
+  // Fade-in when video first appears
+  late AnimationController _fadeInCtrl;
+  late Animation<double> _fadeInAnim;
+
+  // Fade-out for the entire screen + audio volume
+  late AnimationController _fadeOutCtrl;
+  late Animation<double> _fadeOutAnim;
 
   @override
   void initState() {
     super.initState();
-    _fadeCtrl = AnimationController(
+
+    _fadeInCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 600));
-    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeIn);
+    _fadeInAnim = CurvedAnimation(parent: _fadeInCtrl, curve: Curves.easeIn);
+
+    _fadeOutCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1400));
+    _fadeOutAnim = Tween<double>(begin: 1.0, end: 0.0)
+        .animate(CurvedAnimation(parent: _fadeOutCtrl, curve: Curves.easeIn));
+
+    // Progressively mute the baked-in audio as the screen fades
+    _fadeOutCtrl.addListener(() {
+      _video?.setVolume(1.0 - _fadeOutCtrl.value);
+    });
+
+    // Once fully faded, hand off to the next screen
+    _fadeOutCtrl.addStatusListener((status) {
+      if (status == AnimationStatus.completed) _finish();
+    });
+
     _initVideo();
   }
 
   Future<void> _initVideo() async {
     if (kIsWeb) {
-      _fadeCtrl.forward();
+      _fadeInCtrl.forward();
       await Future.delayed(const Duration(milliseconds: 500));
       _finish();
       return;
@@ -46,16 +68,16 @@ class _SplashScreenState extends State<SplashScreen>
       final ctrl = VideoPlayerController.asset('assets/splash_video.mp4');
       await ctrl.initialize();
       if (!mounted) { ctrl.dispose(); return; }
-      ctrl.setVolume(1.0); // audio is baked into the video
+      ctrl.setVolume(1.0);
       ctrl.setLooping(false);
       ctrl.addListener(_onVideoUpdate);
       setState(() { _video = ctrl; _videoReady = true; });
       await ctrl.play();
-      _fadeCtrl.forward();
-      // Hard fallback: advance even if the video listener stalls
-      _fallbackTimer = Timer(const Duration(seconds: 12), _finish);
+      _fadeInCtrl.forward();
+      // Hard fallback in case the video listener stalls
+      _fallbackTimer = Timer(const Duration(seconds: 12), _startFadeOut);
     } catch (_) {
-      _fadeCtrl.forward();
+      _fadeInCtrl.forward();
       await Future.delayed(const Duration(milliseconds: 500));
       _finish();
     }
@@ -63,11 +85,23 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _onVideoUpdate() {
     final ctrl = _video;
-    if (ctrl == null || _done) return;
+    if (ctrl == null || _done || _fadingOut) return;
     final pos = ctrl.value.position;
     final dur = ctrl.value.duration;
+    // Start fade-out 2200 ms before the end so it completes ~800 ms early
     if (dur.inMilliseconds > 0 &&
         pos.inMilliseconds >= dur.inMilliseconds - 2200) {
+      _startFadeOut();
+    }
+  }
+
+  void _startFadeOut() {
+    if (_fadingOut || _done) return;
+    _fadingOut = true;
+    _fallbackTimer?.cancel();
+    if (mounted) {
+      _fadeOutCtrl.forward();
+    } else {
       _finish();
     }
   }
@@ -84,7 +118,8 @@ class _SplashScreenState extends State<SplashScreen>
     _fallbackTimer?.cancel();
     _video?.removeListener(_onVideoUpdate);
     _video?.dispose();
-    _fadeCtrl.dispose();
+    _fadeInCtrl.dispose();
+    _fadeOutCtrl.dispose();
     super.dispose();
   }
 
@@ -92,54 +127,57 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kDeepOcean,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Video (or black fallback)
-          if (_videoReady && _video != null)
-            FadeTransition(
-              opacity: _fadeAnim,
-              child: FittedBox(
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  width: _video!.value.size.width,
-                  height: _video!.value.size.height,
-                  child: VideoPlayer(_video!),
+      body: FadeTransition(
+        opacity: _fadeOutAnim,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Video (or black fallback while initialising)
+            if (_videoReady && _video != null)
+              FadeTransition(
+                opacity: _fadeInAnim,
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: _video!.value.size.width,
+                    height: _video!.value.size.height,
+                    child: VideoPlayer(_video!),
+                  ),
                 ),
               ),
-            ),
 
-          // Fallback: ocean gradient when video isn't ready
-          if (!_videoReady)
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFF8ED4EF),
-                    Color(0xFF2A8DB5),
-                    Color(0xFF0B4F74),
-                    Color(0xFF041C2C),
-                  ],
-                  stops: [0.0, 0.28, 0.60, 1.0],
+            // Fallback: ocean gradient when video isn't ready
+            if (!_videoReady)
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFF8ED4EF),
+                      Color(0xFF2A8DB5),
+                      Color(0xFF0B4F74),
+                      Color(0xFF041C2C),
+                    ],
+                    stops: [0.0, 0.28, 0.60, 1.0],
+                  ),
+                ),
+                child: Center(
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    const SizedBox(width: 90, height: 108,
+                        child: CustomPaint(painter: HabitFlowLogoPainter())),
+                    const SizedBox(height: 20),
+                    const Text('Swell',
+                      style: TextStyle(color: Colors.white, fontSize: 40,
+                          fontWeight: FontWeight.w700, letterSpacing: -1)),
+                    const SizedBox(height: 8),
+                    Text('Build your swell. Drop by drop.',
+                      style: TextStyle(color: kSeaFoam, fontSize: 13)),
+                  ]),
                 ),
               ),
-              child: Center(
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  const SizedBox(width: 90, height: 108,
-                      child: CustomPaint(painter: HabitFlowLogoPainter())),
-                  const SizedBox(height: 20),
-                  const Text('habitflow',
-                    style: TextStyle(color: Colors.white, fontSize: 40,
-                        fontWeight: FontWeight.w700, letterSpacing: -1)),
-                  const SizedBox(height: 8),
-                  Text('Drop by drop, build your ocean.',
-                    style: TextStyle(color: kSeaFoam, fontSize: 13)),
-                ]),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
