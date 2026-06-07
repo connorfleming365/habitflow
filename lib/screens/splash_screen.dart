@@ -43,8 +43,6 @@ class _SplashScreenState extends State<SplashScreen>
       _finish();
       return;
     }
-    // Start ambient ocean waves
-    _playAmbience();
     try {
       final ctrl = VideoPlayerController.asset('assets/intro_video.mp4');
       await ctrl.initialize();
@@ -55,6 +53,8 @@ class _SplashScreenState extends State<SplashScreen>
       setState(() { _video = ctrl; _videoReady = true; });
       await ctrl.play();
       _fadeCtrl.forward();
+      // Start ambient audio after video is running to avoid audio-session conflicts
+      _playAmbience();
     } catch (_) {
       // Video failed — run timed fallback
       _fadeCtrl.forward();
@@ -68,12 +68,16 @@ class _SplashScreenState extends State<SplashScreen>
     try {
       final player = AudioPlayer();
       _ambience = player;
-      // Set volume before loading so it applies immediately on play
-      await player.setVolume(0.5);
-      await player.setAsset('assets/sounds/ocean_waves.mp3');
+      await player.setAudioSource(
+        AudioSource.asset('assets/sounds/ocean_waves.mp3'),
+        preload: true,
+      );
+      await player.setVolume(0.7);
+      await player.setLoopMode(LoopMode.one);
       await player.play();
-    } catch (e) {
-      debugPrint('Splash ambience error: $e');
+      debugPrint('Splash ambience playing');
+    } catch (e, st) {
+      debugPrint('Splash ambience error: $e\n$st');
     }
   }
 
