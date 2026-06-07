@@ -45,10 +45,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _OnboardPage(
       title: 'Your Swell Journey',
       body:
-          'Every drop of effort builds your swell. Each day you show up, '
+          'Ocean swells build momentum just like habits — slowly, powerfully, unstoppably.\n\n'
+          'Every drop of effort adds to yours. Each day you show up, '
           'the momentum grows stronger.\n\n'
-          '180 days of consistent action and you\'ll have filled your ocean — '
-          'and proved to yourself that you can do anything.',
+          '180 days of consistent action and you\'ll have filled your ocean.',
       isJourney: true,
     ),
     _OnboardPage(
@@ -228,8 +228,8 @@ class _PageContent extends StatelessWidget {
               const SizedBox(height: 20),
               Image.asset(
                 'assets/swell_logo_white.png',
-                width: 200,
-                height: 200,
+                width: 280,
+                fit: BoxFit.contain,
               ),
               const SizedBox(height: 24),
               Text(
@@ -245,8 +245,8 @@ class _PageContent extends StatelessWidget {
               // Standard pages: logo at top, then title then body
               Image.asset(
                 'assets/swell_logo_white.png',
-                width: 170,
-                height: 170,
+                width: 240,
+                fit: BoxFit.contain,
               ),
               const SizedBox(height: 24),
               Text(
@@ -344,7 +344,7 @@ class _JourneyPageState extends State<_JourneyPage> {
       child: Column(
         children: [
           // Logo — same size and position as other pages
-          Image.asset('assets/swell_logo_white.png', width: 170, height: 170),
+          Image.asset('assets/swell_logo_white.png', width: 240, fit: BoxFit.contain),
           const SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),

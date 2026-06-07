@@ -77,6 +77,11 @@ jobs:
           cp -r android/app/src/main/res/mipmap-anydpi-v26 /tmp/build_app/android/app/src/main/res/
           cp android/app/src/main/res/values/colors.xml    /tmp/build_app/android/app/src/main/res/values/
 
+      - name: Set app label to Swell in AndroidManifest
+        run: |
+          sed -i 's|android:label="habitflow"|android:label="Swell"|g' \
+            /tmp/build_app/android/app/src/main/AndroidManifest.xml
+
       - name: Add widget receiver to AndroidManifest
         run: |
           sed -i 's|</application>|    <receiver android:name=".HabitWidget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="com.habitflow.habitflow.TOGGLE_HABIT"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/habit_widget_info"/></receiver><service android:name=".HabitWidgetService" android:exported="true" android:permission="android.permission.BIND_REMOTEVIEWS"/>\n    </application>|' \
@@ -114,7 +119,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: habitflow-release
+          name: swell-release
           path: /tmp/build_app/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
 
@@ -154,19 +159,19 @@ jobs:
       - name: Patch web/index.html for PWA
         run: |
           # Set app name and theme colour in the generated index.html
-          sed -i 's|<title>habitflow</title>|<title>HabitFlow</title>|' \
+          sed -i 's|<title>habitflow</title>|<title>Swell</title>|' \
             /tmp/web_app/web/index.html
           # Add apple-mobile-web-app meta tags for iOS "Add to Home Screen"
-          sed -i 's|</head>|  <meta name="apple-mobile-web-app-capable" content="yes">\n  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n  <meta name="apple-mobile-web-app-title" content="HabitFlow">\n  <meta name="theme-color" content="#041C2C">\n</head>|' \
+          sed -i 's|</head>|  <meta name="apple-mobile-web-app-capable" content="yes">\n  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n  <meta name="apple-mobile-web-app-title" content="Swell">\n  <meta name="theme-color" content="#041C2C">\n</head>|' \
             /tmp/web_app/web/index.html
 
       - name: Patch web/manifest.json for PWA
         run: |
           cat > /tmp/web_app/web/manifest.json << 'EOF'
           {
-            "name": "HabitFlow",
-            "short_name": "HabitFlow",
-            "description": "Drop by drop, build your ocean.",
+            "name": "Swell",
+            "short_name": "Swell",
+            "description": "Build your swell. Drop by drop.",
             "start_url": ".",
             "display": "standalone",
             "background_color": "#041C2C",
