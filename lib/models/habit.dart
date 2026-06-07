@@ -5,7 +5,7 @@ class Habit {
   final String name;
   final String icon;
   final String color; // hex string e.g. '#7C6AF7'
-  final String freq;  // daily | weekdays | weekends | weekly3 | weekly2 | custom
+  final String freq;  // daily | weekdays | weekends | weekly6 | weekly5 | weekly4 | weekly3 | weekly2 | weekly1 | custom
   final List<int> days; // 0=Sun..6=Sat for custom
   final String reminderTime; // 'HH:mm' or ''
   final int createdAt;
@@ -56,8 +56,12 @@ class Habit {
       case 'daily':    return 'Every day';
       case 'weekdays': return 'Weekdays';
       case 'weekends': return 'Weekends';
+      case 'weekly6':  return '6× per week';
+      case 'weekly5':  return '5× per week';
+      case 'weekly4':  return '4× per week';
       case 'weekly3':  return '3× per week';
       case 'weekly2':  return '2× per week';
+      case 'weekly1':  return '1× per week';
       case 'custom':   return 'Custom days';
       default:         return freq;
     }
@@ -69,8 +73,12 @@ class Habit {
       case 'daily':    return true;
       case 'weekdays': return dow >= 1 && dow <= 5;
       case 'weekends': return dow == 0 || dow == 6;
+      case 'weekly6':  return true;
+      case 'weekly5':  return true;
+      case 'weekly4':  return true;
       case 'weekly3':  return true;
       case 'weekly2':  return true;
+      case 'weekly1':  return true;
       case 'custom':   return days.contains(dow);
       default:         return true;
     }

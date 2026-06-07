@@ -234,11 +234,19 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             crossAxisCount: 3, mainAxisSpacing: 8, crossAxisSpacing: 8,
             childAspectRatio: 2.2,
             children: [
+              // Row 1: specific day patterns
               _FreqChip(id:'daily',    label:'Every Day', icon:'🗓️', selected:_freq, onTap:(v)=>setState(()=>_freq=v)),
               _FreqChip(id:'weekdays', label:'Weekdays',  icon:'💼', selected:_freq, onTap:(v)=>setState(()=>_freq=v)),
               _FreqChip(id:'weekends', label:'Weekends',  icon:'🌅', selected:_freq, onTap:(v)=>setState(()=>_freq=v)),
+              // Row 2: high weekly frequency
+              _FreqChip(id:'weekly6',  label:'6×/week',   icon:'🔥', selected:_freq, onTap:(v)=>setState(()=>_freq=v)),
+              _FreqChip(id:'weekly5',  label:'5×/week',   icon:'⚡', selected:_freq, onTap:(v)=>setState(()=>_freq=v)),
+              _FreqChip(id:'weekly4',  label:'4×/week',   icon:'🔁', selected:_freq, onTap:(v)=>setState(()=>_freq=v)),
+              // Row 3: lower weekly frequency
               _FreqChip(id:'weekly3',  label:'3×/week',   icon:'🔁', selected:_freq, onTap:(v)=>setState(()=>_freq=v)),
               _FreqChip(id:'weekly2',  label:'2×/week',   icon:'🔁', selected:_freq, onTap:(v)=>setState(()=>_freq=v)),
+              _FreqChip(id:'weekly1',  label:'1×/week',   icon:'🌱', selected:_freq, onTap:(v)=>setState(()=>_freq=v)),
+              // Row 4: custom
               _FreqChip(id:'custom',   label:'Custom',    icon:'⚙️', selected:_freq, onTap:(v)=>setState((){_freq=v;})),
             ],
           ),
