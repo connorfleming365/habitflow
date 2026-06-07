@@ -446,7 +446,7 @@ class _CalendarSectionState extends State<_CalendarSection> {
     if (isPerfect)                return kSuccess;
     if (hasPartial)               return kWarning;
     if (scheduled.isEmpty)        return Colors.grey.withOpacity(0.18);
-    return kDanger.withOpacity(0.6);
+    return Colors.grey.withOpacity(0.25);
   }
 
   @override
@@ -512,7 +512,7 @@ class _CalendarSectionState extends State<_CalendarSection> {
           Text('Partial', style: TextStyle(
               color: Theme.of(context).colorScheme.secondary, fontSize: 10)),
           const SizedBox(width: 12),
-          _dot(kDanger, opacity: 0.6), const SizedBox(width: 4),
+          _dot(Colors.grey, opacity: 0.4), const SizedBox(width: 4),
           Text('Missed', style: TextStyle(
               color: Theme.of(context).colorScheme.secondary, fontSize: 10)),
           const SizedBox(width: 8),
@@ -709,7 +709,7 @@ class _CalendarSectionState extends State<_CalendarSection> {
                         } else if (done) {
                           color = kSuccess;
                         } else {
-                          color = kDanger.withOpacity(0.6);
+                          color = Colors.grey.withOpacity(0.25);
                         }
 
                         return GestureDetector(
@@ -892,7 +892,7 @@ class _HabitDayStripState extends State<_HabitDayStrip> {
               } else if (done) {
                 dotColor = kSuccess;
               } else {
-                dotColor = kDanger.withOpacity(0.55);
+                dotColor = Colors.grey.withOpacity(0.25);
               }
 
               const dayLetters = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];

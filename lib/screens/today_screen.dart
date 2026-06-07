@@ -56,6 +56,16 @@ class TodayScreenState extends State<TodayScreen>
 
   void reload() => _load();
 
+  void _showConfetti() {
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => _ConfettiBurst(onDone: () {
+        if (entry.mounted) entry.remove();
+      }),
+    );
+    Overlay.of(context).insert(entry);
+  }
+
   Future<void> _load() async {
     final habits = await StorageService.loadHabits();
     var completions = await StorageService.loadCompletions();
@@ -143,6 +153,7 @@ class TodayScreenState extends State<TodayScreen>
 
     if (wasAdding) {
       allNowDone ? SoundService.playWave() : SoundService.playDrop();
+      if (allNowDone && mounted) _showConfetti();
     }
 
     if (wasAdding) {
@@ -755,73 +766,180 @@ class _MilestoneDialogState extends State<_MilestoneDialog>
   void dispose() { _ctrl.dispose(); super.dispose(); }
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Material(
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Material(
       color: Colors.transparent,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 32),
-        padding: const EdgeInsets.all(28),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-              width: 1.5),
-          boxShadow: [
-            BoxShadow(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
-                blurRadius: 30, spreadRadius: 5),
-          ],
-        ),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          ScaleTransition(
-            scale: _bounce,
-            child: Text(ProgressionService.stageEmoji(widget.stage),
-                style: const TextStyle(fontSize: 64)),
-          ),
-          const SizedBox(height: 16),
-          Text(ProgressionService.milestoneTitle(widget.days),
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white,
-                fontSize: 22, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text('Day ${widget.days}',
-              style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontSize: 13, fontWeight: FontWeight.w700)),
-          ),
-          const SizedBox(height: 14),
-          Text(ProgressionService.milestoneMessage(widget.days),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.75),
-                fontSize: 14, height: 1.6)),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                elevation: 0,
+        width: double.infinity,
+        height: double.infinity,
+        color: primary.withOpacity(0.92),
+        child: SafeArea(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ScaleTransition(
+                scale: _bounce,
+                child: Text(ProgressionService.stageEmoji(widget.stage),
+                    style: const TextStyle(fontSize: 80)),
               ),
-              child: const Text('Keep flowing 🌊',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-            ),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Text(ProgressionService.milestoneTitle(widget.days),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white,
+                      fontSize: 28, fontWeight: FontWeight.w800, height: 1.2)),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text('Day ${widget.days}',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14, fontWeight: FontWeight.w700)),
+              ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 48),
+                child: Text(ProgressionService.milestoneMessage(widget.days),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: Colors.white.withOpacity(0.88),
+                      fontSize: 15, height: 1.65)),
+              ),
+              const SizedBox(height: 48),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: primary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                    ),
+                    child: const Text('Keep flowing 🌊',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ]),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Confetti burst overlay ────────────────────────────────
+class _ConfettiBurst extends StatefulWidget {
+  final VoidCallback onDone;
+  const _ConfettiBurst({required this.onDone});
+  @override
+  State<_ConfettiBurst> createState() => _ConfettiBurstState();
+}
+
+class _ConfettiBurstState extends State<_ConfettiBurst>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late List<_Particle> _particles;
+
+  @override
+  void initState() {
+    super.initState();
+    final rng = Random();
+    _particles = List.generate(70, (_) => _Particle(rng));
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 900))
+      ..forward().whenComplete(widget.onDone);
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+    child: AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) => CustomPaint(
+        size: MediaQuery.of(context).size,
+        painter: _ConfettiPainter(_particles, _ctrl.value),
       ),
     ),
   );
+}
+
+class _Particle {
+  final double x;
+  final double startY;
+  final double angle;
+  final double speed;
+  final double size;
+  final Color color;
+  final bool isSquare;
+
+  static const _colors = [
+    Color(0xFF26C6A0), // kSuccess green
+    Color(0xFFFF6B6B), // coral
+    Color(0xFFFFB830), // amber
+    Colors.white,
+    Color(0xFFC4B5FD), // violet
+    Color(0xFF26D0CE), // cyan
+  ];
+
+  _Particle(Random rng)
+      : x = 0.1 + rng.nextDouble() * 0.8,
+        startY = 0.2 + rng.nextDouble() * 0.3,
+        angle = -pi / 2 + (rng.nextDouble() - 0.5) * pi * 1.4,
+        speed = 0.1 + rng.nextDouble() * 0.35,
+        size = 5 + rng.nextDouble() * 6,
+        color = _colors[rng.nextInt(_colors.length)],
+        isSquare = rng.nextBool();
+}
+
+class _ConfettiPainter extends CustomPainter {
+  final List<_Particle> particles;
+  final double t;
+  _ConfettiPainter(this.particles, this.t);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final eased = Curves.easeOut.transform(t);
+    for (final p in particles) {
+      final opacity = (1 - eased).clamp(0.0, 1.0);
+      final dx = p.x * size.width + cos(p.angle) * p.speed * size.width * eased;
+      final dy = p.startY * size.height
+          + sin(p.angle) * p.speed * size.height * eased
+          + 0.12 * size.height * eased * eased; // gravity
+      final paint = Paint()
+        ..color = p.color.withOpacity(opacity)
+        ..style = PaintingStyle.fill;
+      canvas.save();
+      canvas.translate(dx, dy);
+      canvas.rotate(eased * pi * 5 * (p.isSquare ? 1 : -1));
+      if (p.isSquare) {
+        canvas.drawRect(
+          Rect.fromCenter(center: Offset.zero, width: p.size, height: p.size * 0.6),
+          paint,
+        );
+      } else {
+        canvas.drawCircle(Offset.zero, p.size / 2, paint);
+      }
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ConfettiPainter old) => old.t != t;
 }
 
 // ── Empty state ───────────────────────────────────────────

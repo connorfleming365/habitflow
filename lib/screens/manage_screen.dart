@@ -495,7 +495,7 @@ class _HabitHistoryStrip extends StatelessWidget {
           } else if (done) {
             color = kSuccess;
           } else {
-            color = kDanger.withOpacity(0.5);
+            color = Colors.grey.withOpacity(0.25);
           }
 
           return Expanded(
