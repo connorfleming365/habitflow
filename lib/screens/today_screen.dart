@@ -23,6 +23,7 @@ class TodayScreenState extends State<TodayScreen>
   List<Habit> _habits = [];
   Set<String> _completions = {};
   bool _loading = true;
+  bool _gridMode = false; // false = circles (default), true = full-width tiles
 
   late AnimationController _waveCtrl;
   late AnimationController _stageCtrl;
@@ -43,7 +44,20 @@ class TodayScreenState extends State<TodayScreen>
         vsync: this, duration: const Duration(milliseconds: 800));
     _pctAnim = Tween<double>(begin: 0, end: 0).animate(
         CurvedAnimation(parent: _pctCtrl, curve: Curves.easeOut));
+    _loadViewMode();
     _load();
+  }
+
+  Future<void> _loadViewMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) setState(() => _gridMode = prefs.getBool('today_view_grid') ?? false);
+  }
+
+  Future<void> _toggleViewMode() async {
+    final next = !_gridMode;
+    setState(() => _gridMode = next);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('today_view_grid', next);
   }
 
   @override
@@ -282,46 +296,56 @@ class TodayScreenState extends State<TodayScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (remaining.isNotEmpty) ...[
-                          _bannerLabel("TODAY'S HABITS"),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
-                            child: GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                mainAxisSpacing: 10,
-                                crossAxisSpacing: 10,
-                                childAspectRatio: 0.78,
+                          _bannerLabel("TODAY'S HABITS", showToggle: true),
+                          _gridMode
+                            ? Column(children: remaining.map((h) => _HabitListTile(
+                                habit: h, done: false,
+                                onTap: () => _toggle(h),
+                              )).toList())
+                            : Padding(
+                                padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+                                child: GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 3,
+                                    mainAxisSpacing: 10,
+                                    crossAxisSpacing: 10,
+                                    childAspectRatio: 0.78,
+                                  ),
+                                  itemCount: remaining.length,
+                                  itemBuilder: (_, i) => _HabitCircleTile(
+                                    habit: remaining[i], done: false,
+                                    onTap: () => _toggle(remaining[i]),
+                                  ),
+                                ),
                               ),
-                              itemCount: remaining.length,
-                              itemBuilder: (_, i) => _HabitCircleTile(
-                                habit: remaining[i], done: false,
-                                onTap: () => _toggle(remaining[i]),
-                              ),
-                            ),
-                          ),
                         ],
                         if (done.isNotEmpty) ...[
-                          _bannerLabel('COMPLETED ✓'),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
-                            child: GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                mainAxisSpacing: 10,
-                                crossAxisSpacing: 10,
-                                childAspectRatio: 0.78,
+                          _bannerLabel('COMPLETED ✓', showToggle: remaining.isEmpty),
+                          _gridMode
+                            ? Column(children: done.map((h) => _HabitListTile(
+                                habit: h, done: true,
+                                onTap: () => _toggle(h),
+                              )).toList())
+                            : Padding(
+                                padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+                                child: GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 3,
+                                    mainAxisSpacing: 10,
+                                    crossAxisSpacing: 10,
+                                    childAspectRatio: 0.78,
+                                  ),
+                                  itemCount: done.length,
+                                  itemBuilder: (_, i) => _HabitCircleTile(
+                                    habit: done[i], done: true,
+                                    onTap: () => _toggle(done[i]),
+                                  ),
+                                ),
                               ),
-                              itemCount: done.length,
-                              itemBuilder: (_, i) => _HabitCircleTile(
-                                habit: done[i], done: true,
-                                onTap: () => _toggle(done[i]),
-                              ),
-                            ),
-                          ),
                         ],
                         if (allDone)
                           Padding(
@@ -342,11 +366,29 @@ class TodayScreenState extends State<TodayScreen>
     );
   }
 
-  Widget _bannerLabel(String text) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-    child: Text(text, style: TextStyle(
-        fontSize: 11, fontWeight: FontWeight.w700,
-        letterSpacing: 1.0, color: Theme.of(context).colorScheme.secondary)),
+  Widget _bannerLabel(String text, {bool showToggle = false}) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 16, 12, 8),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(text, style: TextStyle(
+            fontSize: 11, fontWeight: FontWeight.w700,
+            letterSpacing: 1.0, color: Theme.of(context).colorScheme.secondary)),
+        if (showToggle)
+          GestureDetector(
+            onTap: _toggleViewMode,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                _gridMode ? Icons.grid_view_rounded : Icons.view_agenda_rounded,
+                key: ValueKey(_gridMode),
+                size: 18,
+                color: Theme.of(context).colorScheme.secondary,
+              ),
+            ),
+          ),
+      ],
+    ),
   );
 }
 
@@ -733,6 +775,90 @@ class _HabitCircleTile extends StatelessWidget {
             ],
           );
         }),
+      ),
+    );
+  }
+}
+
+// ── Full-width habit list tile ────────────────────────────
+class _HabitListTile extends StatelessWidget {
+  final Habit habit;
+  final bool done;
+  final VoidCallback onTap;
+  const _HabitListTile({required this.habit, required this.done, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = done ? kSuccess : hexColor(habit.color);
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color: done
+              ? kSuccess.withOpacity(0.08)
+              : Theme.of(context).colorScheme.surface.withOpacity(0.55),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: done ? kSuccess.withOpacity(0.4) : accent.withOpacity(0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Row(children: [
+          // Icon in coloured circle
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            width: 44, height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: done ? kSuccess : accent.withOpacity(0.15),
+              border: Border.all(
+                color: done ? kSuccess : accent.withOpacity(0.5),
+                width: 2,
+              ),
+            ),
+            child: Center(
+              child: done
+                ? const Icon(Icons.check_rounded, color: Colors.white, size: 22)
+                : Text(habit.icon, style: const TextStyle(fontSize: 20)),
+            ),
+          ),
+          const SizedBox(width: 14),
+          // Habit name
+          Expanded(
+            child: Text(
+              habit.name,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: done ? kSuccess : Theme.of(context).colorScheme.onSurface,
+                height: 1.3,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Completion indicator
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            width: 26, height: 26,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: done ? kSuccess : Colors.transparent,
+              border: Border.all(
+                color: done
+                    ? kSuccess
+                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
+                width: 2,
+              ),
+            ),
+            child: done
+                ? const Icon(Icons.check_rounded, color: Colors.white, size: 14)
+                : null,
+          ),
+        ]),
       ),
     );
   }
