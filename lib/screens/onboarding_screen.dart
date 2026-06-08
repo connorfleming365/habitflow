@@ -52,6 +52,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           'Turning up consistently with small habits delivers big results over time. '
           'Each day you show up, the momentum grows stronger, and eventually your habits '
           'will deliver the success you desire.\n\n'
+          'With Swell, as you complete your daily habits, you\'ll move through different '
+          'stages of growth on route to 180+ days.\n\n'
           '180 days of consistent action and you\'ll have filled your ocean.',
       isJourney: true,
     ),

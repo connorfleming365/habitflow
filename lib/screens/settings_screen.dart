@@ -300,9 +300,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Sounds
           _Section(label: 'Sounds', children: [
             _ToggleRow(
-              icon: '💧',
-              title: 'Water drop sounds',
-              subtitle: 'Plays on each habit check-off',
+              icon: '🔊',
+              title: 'App Sounds',
+              subtitle: 'Plays on habit check-off and daily completion',
               value: _soundsEnabled,
               onChanged: (v) {
                 _setPref('sounds_enabled', v);

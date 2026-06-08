@@ -63,7 +63,7 @@ class SwellApp extends StatefulWidget {
 }
 
 class _SwellAppState extends State<SwellApp> {
-  String _appTheme = 'coral_tide';
+  String _appTheme = 'deep_abyss';
   bool _onboardingDone = false;
   bool _prefsLoaded = false;
   bool _splashDone = false;
@@ -78,7 +78,7 @@ class _SwellAppState extends State<SwellApp> {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
-        _appTheme      = prefs.getString('app_theme') ?? 'coral_tide';
+        _appTheme      = prefs.getString('app_theme') ?? 'deep_abyss';
         _onboardingDone = prefs.getBool('onboarding_done') ?? false;
         _prefsLoaded   = true;
       });
@@ -111,7 +111,7 @@ class _SwellAppState extends State<SwellApp> {
     if (!_splashDone) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.coralTide,
+        theme: AppTheme.deepAbyss,
         home: SplashScreen(onComplete: _onSplashComplete),
       );
     }
