@@ -8,6 +8,7 @@ class Habit {
   final String freq;  // daily | weekdays | weekends | weekly6 | weekly5 | weekly4 | weekly3 | weekly2 | weekly1 | custom
   final List<int> days; // 0=Sun..6=Sat for custom
   final String reminderTime; // 'HH:mm' or ''
+  final String amPm; // '' | 'am' | 'pm'
   final int createdAt;
 
   const Habit({
@@ -18,6 +19,7 @@ class Habit {
     required this.freq,
     required this.days,
     required this.reminderTime,
+    this.amPm = '',
     required this.createdAt,
   });
 
@@ -28,6 +30,7 @@ class Habit {
     String? freq,
     List<int>? days,
     String? reminderTime,
+    String? amPm,
   }) => Habit(
     id: id,
     name: name ?? this.name,
@@ -36,19 +39,22 @@ class Habit {
     freq: freq ?? this.freq,
     days: days ?? this.days,
     reminderTime: reminderTime ?? this.reminderTime,
+    amPm: amPm ?? this.amPm,
     createdAt: createdAt,
   );
 
   Map<String, dynamic> toJson() => {
     'id': id, 'name': name, 'icon': icon, 'color': color,
     'freq': freq, 'days': days, 'reminderTime': reminderTime,
-    'createdAt': createdAt,
+    'amPm': amPm, 'createdAt': createdAt,
   };
 
   factory Habit.fromJson(Map<String, dynamic> j) => Habit(
     id: j['id'], name: j['name'], icon: j['icon'], color: j['color'],
     freq: j['freq'], days: List<int>.from(j['days'] ?? []),
-    reminderTime: j['reminderTime'] ?? '', createdAt: j['createdAt'] ?? 0,
+    reminderTime: j['reminderTime'] ?? '',
+    amPm: j['amPm'] ?? '',
+    createdAt: j['createdAt'] ?? 0,
   );
 
   String get freqLabel {

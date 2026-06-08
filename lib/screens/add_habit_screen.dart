@@ -19,6 +19,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   String _color = '#7C6AF7';
   String _freq = 'daily';
   List<int> _days = [1,2,3,4,5];
+  String _amPm = '';
   TimeOfDay? _reminderTime;
   bool _showPresets = true;
 
@@ -28,7 +29,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     if (widget.existing != null) {
       final h = widget.existing!;
       _nameCtrl.text = h.name;
-      _icon = h.icon; _color = h.color; _freq = h.freq; _days = h.days;
+      _icon = h.icon; _color = h.color; _freq = h.freq; _days = h.days; _amPm = h.amPm;
       _showPresets = false;
       if (h.reminderTime.isNotEmpty) {
         final p = h.reminderTime.split(':');
@@ -54,13 +55,13 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       if (idx != -1) {
         habits[idx] = widget.existing!.copyWith(
           name: name, icon: _icon, color: _color, freq: _freq,
-          days: _days, reminderTime: reminderStr,
+          days: _days, reminderTime: reminderStr, amPm: _amPm,
         );
       }
     } else {
       habits.add(Habit(
         id: const Uuid().v4(), name: name, icon: _icon, color: _color,
-        freq: _freq, days: _days, reminderTime: reminderStr,
+        freq: _freq, days: _days, reminderTime: reminderStr, amPm: _amPm,
         createdAt: DateTime.now().millisecondsSinceEpoch,
       ));
     }
@@ -285,6 +286,67 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             ),
             const SizedBox(height: 20),
           ],
+
+          // ── Time of day ───────────────────────────────
+          _label('TIME OF DAY'),
+          const SizedBox(height: 8),
+          Row(children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => _amPm = _amPm == 'am' ? '' : 'am'),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: _amPm == 'am' ? kPrimary.withOpacity(0.12) : Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _amPm == 'am' ? kPrimary : Theme.of(context).dividerColor,
+                      width: _amPm == 'am' ? 2 : 1,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text('☀️  Morning',
+                    style: TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600,
+                      color: _amPm == 'am' ? kPrimary : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    )),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => _amPm = _amPm == 'pm' ? '' : 'pm'),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: _amPm == 'pm' ? kPrimary.withOpacity(0.12) : Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _amPm == 'pm' ? kPrimary : Theme.of(context).dividerColor,
+                      width: _amPm == 'pm' ? 2 : 1,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text('🌙  Evening',
+                    style: TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600,
+                      color: _amPm == 'pm' ? kPrimary : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    )),
+                ),
+              ),
+            ),
+          ]),
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 2),
+            child: Text(
+              _amPm.isEmpty ? 'No preference — shows in its own section' : 'Tap again to clear',
+              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
+            ),
+          ),
+          const SizedBox(height: 20),
 
           // ── Reminder ──────────────────────────────────
           _label('DAILY REMINDER (optional)'),

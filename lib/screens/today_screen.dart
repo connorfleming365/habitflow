@@ -295,58 +295,30 @@ class TodayScreenState extends State<TodayScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (remaining.isNotEmpty) ...[
-                          _bannerLabel("TODAY'S HABITS", showToggle: true),
-                          _gridMode
-                            ? Column(children: remaining.map((h) => _HabitListTile(
-                                habit: h, done: false,
-                                onTap: () => _toggle(h),
-                              )).toList())
-                            : Padding(
-                                padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
-                                child: GridView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 3,
-                                    mainAxisSpacing: 10,
-                                    crossAxisSpacing: 10,
-                                    childAspectRatio: 0.78,
-                                  ),
-                                  itemCount: remaining.length,
-                                  itemBuilder: (_, i) => _HabitCircleTile(
-                                    habit: remaining[i], done: false,
-                                    onTap: () => _toggle(remaining[i]),
-                                  ),
-                                ),
-                              ),
-                        ],
-                        if (done.isNotEmpty) ...[
-                          _bannerLabel('COMPLETED ✓', showToggle: remaining.isEmpty),
-                          _gridMode
-                            ? Column(children: done.map((h) => _HabitListTile(
-                                habit: h, done: true,
-                                onTap: () => _toggle(h),
-                              )).toList())
-                            : Padding(
-                                padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
-                                child: GridView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 3,
-                                    mainAxisSpacing: 10,
-                                    crossAxisSpacing: 10,
-                                    childAspectRatio: 0.78,
-                                  ),
-                                  itemCount: done.length,
-                                  itemBuilder: (_, i) => _HabitCircleTile(
-                                    habit: done[i], done: true,
-                                    onTap: () => _toggle(done[i]),
-                                  ),
-                                ),
-                              ),
-                        ],
+                        // Split remaining habits by time-of-day preference
+                        ..._habitSection(
+                          remaining.where((h) => h.amPm == 'am').toList(),
+                          '☀️  MORNING',
+                          showToggle: remaining.any((h) => h.amPm == 'am'),
+                        ),
+                        ..._habitSection(
+                          remaining.where((h) => h.amPm == 'pm').toList(),
+                          '🌙  EVENING',
+                          showToggle: !remaining.any((h) => h.amPm == 'am') &&
+                              remaining.any((h) => h.amPm == 'pm'),
+                        ),
+                        ..._habitSection(
+                          remaining.where((h) => h.amPm.isEmpty).toList(),
+                          "TODAY'S HABITS",
+                          showToggle: remaining.every((h) => h.amPm.isEmpty),
+                        ),
+                        // Completed always at the bottom
+                        ..._habitSection(
+                          done,
+                          'COMPLETED ✓',
+                          done: true,
+                          showToggle: remaining.isEmpty,
+                        ),
                         if (allDone)
                           Padding(
                             padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
@@ -364,6 +336,34 @@ class TodayScreenState extends State<TodayScreen>
         ),
       ),
     );
+  }
+
+  // Renders a labelled section of habits (remaining or done).
+  List<Widget> _habitSection(List<Habit> habits, String label,
+      {bool done = false, bool showToggle = false}) {
+    if (habits.isEmpty) return [];
+    return [
+      _bannerLabel(label, showToggle: showToggle),
+      _gridMode
+          ? Column(children: habits.map((h) => _HabitListTile(
+              habit: h, done: done, onTap: () => _toggle(h))).toList())
+          : Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3, mainAxisSpacing: 10,
+                  crossAxisSpacing: 10, childAspectRatio: 0.78,
+                ),
+                itemCount: habits.length,
+                itemBuilder: (_, i) => _HabitCircleTile(
+                  habit: habits[i], done: done,
+                  onTap: () => _toggle(habits[i]),
+                ),
+              ),
+            ),
+    ];
   }
 
   Widget _bannerLabel(String text, {bool showToggle = false}) => Padding(
