@@ -102,9 +102,11 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           ),
         ],
       ),
-      body: ListView(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        children: [
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // ── Presets ──────────────────────────────────
           if (_showPresets) ...[
             _label('⚡ QUICK PRESETS'),
@@ -291,53 +293,11 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           _label('TIME OF DAY'),
           const SizedBox(height: 8),
           Row(children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () => setState(() => _amPm = _amPm == 'am' ? '' : 'am'),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: _amPm == 'am' ? kPrimary.withOpacity(0.12) : Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _amPm == 'am' ? kPrimary : Theme.of(context).dividerColor,
-                      width: _amPm == 'am' ? 2 : 1,
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text('☀️  Morning',
-                    style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600,
-                      color: _amPm == 'am' ? kPrimary : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                    )),
-                ),
-              ),
-            ),
+            _TimeChip(id: 'am',        label: 'Morning',   emoji: '☀️', selected: _amPm, onTap: (v) => setState(() => _amPm = _amPm == v ? '' : v)),
             const SizedBox(width: 8),
-            Expanded(
-              child: GestureDetector(
-                onTap: () => setState(() => _amPm = _amPm == 'pm' ? '' : 'pm'),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: _amPm == 'pm' ? kPrimary.withOpacity(0.12) : Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _amPm == 'pm' ? kPrimary : Theme.of(context).dividerColor,
-                      width: _amPm == 'pm' ? 2 : 1,
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text('🌙  Evening',
-                    style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600,
-                      color: _amPm == 'pm' ? kPrimary : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                    )),
-                ),
-              ),
-            ),
+            _TimeChip(id: 'afternoon', label: 'Afternoon', emoji: '🌤️', selected: _amPm, onTap: (v) => setState(() => _amPm = _amPm == v ? '' : v)),
+            const SizedBox(width: 8),
+            _TimeChip(id: 'pm',        label: 'Evening',   emoji: '🌙', selected: _amPm, onTap: (v) => setState(() => _amPm = _amPm == v ? '' : v)),
           ]),
           Padding(
             padding: const EdgeInsets.only(top: 6, left: 2),
@@ -402,6 +362,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -409,6 +370,43 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   Widget _label(String text) => Text(text,
     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.8,
       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)));
+}
+
+class _TimeChip extends StatelessWidget {
+  final String id, label, emoji, selected;
+  final void Function(String) onTap;
+  const _TimeChip({required this.id, required this.label, required this.emoji,
+    required this.selected, required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    final sel = id == selected;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => onTap(id),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: sel ? kPrimary.withOpacity(0.12) : Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: sel ? kPrimary : Theme.of(context).dividerColor,
+              width: sel ? 2 : 1,
+            ),
+          ),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(emoji, style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 4),
+            Text(label,
+              style: TextStyle(
+                fontSize: 11, fontWeight: FontWeight.w600,
+                color: sel ? kPrimary : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              )),
+          ]),
+        ),
+      ),
+    );
+  }
 }
 
 class _FreqChip extends StatelessWidget {

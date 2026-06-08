@@ -296,22 +296,23 @@ class TodayScreenState extends State<TodayScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Split remaining habits by time-of-day preference
-                        ..._habitSection(
-                          remaining.where((h) => h.amPm == 'am').toList(),
-                          '☀️  MORNING',
-                          showToggle: remaining.any((h) => h.amPm == 'am'),
-                        ),
-                        ..._habitSection(
-                          remaining.where((h) => h.amPm == 'pm').toList(),
-                          '🌙  EVENING',
-                          showToggle: !remaining.any((h) => h.amPm == 'am') &&
-                              remaining.any((h) => h.amPm == 'pm'),
-                        ),
-                        ..._habitSection(
-                          remaining.where((h) => h.amPm.isEmpty).toList(),
-                          "TODAY'S HABITS",
-                          showToggle: remaining.every((h) => h.amPm.isEmpty),
-                        ),
+                        ...((){
+                          final amR  = remaining.where((h) => h.amPm == 'am').toList();
+                          final afR  = remaining.where((h) => h.amPm == 'afternoon').toList();
+                          final pmR  = remaining.where((h) => h.amPm == 'pm').toList();
+                          final anyR = remaining.where((h) => h.amPm.isEmpty).toList();
+                          // Toggle appears on the first non-empty section only
+                          final toggleAm  = amR.isNotEmpty;
+                          final toggleAf  = afR.isNotEmpty && amR.isEmpty;
+                          final togglePm  = pmR.isNotEmpty && amR.isEmpty && afR.isEmpty;
+                          final toggleAny = anyR.isNotEmpty && amR.isEmpty && afR.isEmpty && pmR.isEmpty;
+                          return [
+                            ..._habitSection(amR,  '☀️  MORNING',   showToggle: toggleAm),
+                            ..._habitSection(afR,  '🌤️  AFTERNOON', showToggle: toggleAf),
+                            ..._habitSection(pmR,  '🌙  EVENING',   showToggle: togglePm),
+                            ..._habitSection(anyR, "TODAY'S HABITS", showToggle: toggleAny),
+                          ];
+                        })(),
                         // Completed always at the bottom
                         ..._habitSection(
                           done,
@@ -373,7 +374,7 @@ class TodayScreenState extends State<TodayScreen>
       children: [
         Text(text, style: TextStyle(
             fontSize: 11, fontWeight: FontWeight.w700,
-            letterSpacing: 1.0, color: Theme.of(context).colorScheme.secondary)),
+            letterSpacing: 1.0, color: Theme.of(context).colorScheme.primary)),
         if (showToggle)
           GestureDetector(
             onTap: _toggleViewMode,

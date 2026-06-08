@@ -483,7 +483,7 @@ class _Section extends StatelessWidget {
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.0,
-                    color: Theme.of(context).colorScheme.secondary)),
+                    color: Theme.of(context).colorScheme.primary)),
           ),
           Container(
             decoration: BoxDecoration(
