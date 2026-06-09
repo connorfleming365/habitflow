@@ -22,6 +22,7 @@ class TodayScreenState extends State<TodayScreen>
     with TickerProviderStateMixin {
   List<Habit> _habits = [];
   Set<String> _completions = {};
+  Map<String, int> _counts = {};
   bool _loading = true;
   bool _gridMode = false; // false = circles (default), true = full-width tiles
 
@@ -87,12 +88,25 @@ class TodayScreenState extends State<TodayScreen>
     // hf_habits_json, which is a plain JSON string we can safely parse here.
     completions = await _mergeWidgetToggles(habits, completions);
     await WidgetService.update(habits, completions);
+
+    final counts = await StorageService.loadCounts();
+    // Sync: if widget completed a multi-count habit (added it to completions)
+    // but counts map doesn't reflect that, set count to targetCount.
+    for (final h in habits) {
+      if (h.targetCount > 1) {
+        final key = StorageService.todayKey(h.id);
+        if (completions.contains(key) && (counts[key] ?? 0) < h.targetCount) {
+          counts[key] = h.targetCount;
+        }
+      }
+    }
+
     if (mounted) {
       final today = habits.where((h) => h.isScheduledOn(DateTime.now())).toList();
       final pct = today.isEmpty ? 0.0 :
           today.where((h) => completions.contains(StorageService.todayKey(h.id))).length / today.length;
       _animatePct(pct);
-      setState(() { _habits = habits; _completions = completions; _loading = false; });;
+      setState(() { _habits = habits; _completions = completions; _counts = counts; _loading = false; });
 
       // Cancel nudge if all done
       if (today.isNotEmpty && today.every((h) => completions.contains(StorageService.todayKey(h.id)))) {
@@ -154,12 +168,39 @@ class TodayScreenState extends State<TodayScreen>
   Future<void> _toggle(Habit habit) async {
     HapticFeedback.lightImpact();
     final key = StorageService.todayKey(habit.id);
-    final newSet = Set<String>.from(_completions);
-    final wasAdding = !newSet.contains(key);
-    if (wasAdding) { newSet.add(key); HapticFeedback.mediumImpact(); }
-    else           { newSet.remove(key); }
+    final newSet    = Set<String>.from(_completions);
+    final newCounts = Map<String, int>.from(_counts);
+    bool wasAdding;
+
+    final tc = habit.targetCount;
+    if (tc <= 1) {
+      // Single-count: simple toggle
+      wasAdding = !newSet.contains(key);
+      if (wasAdding) { newSet.add(key); HapticFeedback.mediumImpact(); }
+      else           { newSet.remove(key); newCounts.remove(key); }
+    } else {
+      // Multi-count
+      final current = newCounts[key] ?? 0;
+      if (current >= tc) {
+        // Already fully done — reset
+        newSet.remove(key);
+        newCounts.remove(key);
+        wasAdding = false;
+      } else {
+        final next = current + 1;
+        newCounts[key] = next;
+        if (next >= tc) {
+          newSet.add(key);
+          HapticFeedback.mediumImpact();
+        } else {
+          HapticFeedback.selectionClick();
+        }
+        wasAdding = true;
+      }
+    }
 
     await StorageService.saveCompletions(newSet);
+    await StorageService.saveCounts(newCounts);
     await WidgetService.update(_habits, newSet);
 
     final today = _habits.where((h) => h.isScheduledOn(DateTime.now())).toList();
@@ -180,7 +221,7 @@ class TodayScreenState extends State<TodayScreen>
     final newPct = today.isEmpty ? 0.0 :
         today.where((h) => newSet.contains(StorageService.todayKey(h.id))).length / today.length;
     _animatePct(newPct);
-    if (mounted) setState(() => _completions = newSet);
+    if (mounted) setState(() { _completions = newSet; _counts = newCounts; });
   }
 
   Future<void> _checkMilestone(int activeDays) async {
@@ -347,7 +388,9 @@ class TodayScreenState extends State<TodayScreen>
       _bannerLabel(label, showToggle: showToggle),
       _gridMode
           ? Column(children: habits.map((h) => _HabitListTile(
-              habit: h, done: done, onTap: () => _toggle(h))).toList())
+              habit: h, done: done,
+              count: _counts[StorageService.todayKey(h.id)] ?? 0,
+              onTap: () => _toggle(h))).toList())
           : Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
               child: GridView.builder(
@@ -360,6 +403,7 @@ class TodayScreenState extends State<TodayScreen>
                 itemCount: habits.length,
                 itemBuilder: (_, i) => _HabitCircleTile(
                   habit: habits[i], done: done,
+                  count: _counts[StorageService.todayKey(habits[i].id)] ?? 0,
                   onTap: () => _toggle(habits[i]),
                 ),
               ),
@@ -737,53 +781,90 @@ class _StageAnimPainter extends CustomPainter {
 class _HabitCircleTile extends StatelessWidget {
   final Habit habit;
   final bool done;
+  final int count;
   final VoidCallback onTap;
-  const _HabitCircleTile({required this.habit, required this.done, required this.onTap});
+  const _HabitCircleTile({
+    required this.habit, required this.done,
+    required this.count, required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final accent = done ? kSuccess : hexColor(habit.color);
+    final tc = habit.targetCount;
+    final inProgress = !done && tc > 1 && count > 0;
     return GestureDetector(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         child: LayoutBuilder(builder: (ctx, constraints) {
-          final d = constraints.maxWidth * 0.76; // circle diameter
+          final d = constraints.maxWidth * 0.76;
           return Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              // Circle
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOut,
-                width: d, height: d,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: done ? kSuccess : accent.withOpacity(0.12),
-                  border: Border.all(
-                    color: done ? kSuccess : accent.withOpacity(0.55),
-                    width: 2.0,
+              // Circle with optional in-progress badge
+              Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOut,
+                    width: d, height: d,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: done
+                          ? kSuccess
+                          : inProgress
+                              ? accent.withOpacity(0.20)
+                              : accent.withOpacity(0.12),
+                      border: Border.all(
+                        color: done
+                            ? kSuccess
+                            : inProgress
+                                ? accent.withOpacity(0.80)
+                                : accent.withOpacity(0.55),
+                        width: inProgress ? 2.5 : 2.0,
+                      ),
+                    ),
+                    child: Center(
+                      child: done
+                        ? Icon(Icons.check_rounded, color: Colors.white, size: d * 0.40)
+                        : Text(habit.icon, style: TextStyle(fontSize: d * 0.38)),
+                    ),
                   ),
-                ),
-                child: Center(
-                  child: done
-                    ? Icon(Icons.check_rounded, color: Colors.white, size: d * 0.40)
-                    : Text(habit.icon, style: TextStyle(fontSize: d * 0.38)),
-                ),
+                  // In-progress count badge (bottom-right)
+                  if (inProgress)
+                    Positioned(
+                      bottom: -3, right: -3,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: accent,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Theme.of(context).cardColor,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Text('$count/$tc',
+                          style: const TextStyle(
+                            color: Colors.white, fontSize: 8,
+                            fontWeight: FontWeight.w800,
+                          )),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 7),
-              // Name below
               Text(
                 habit.name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w600,
-                  color: done
-                      ? kSuccess
-                      : Theme.of(context).colorScheme.onSurface,
+                  fontSize: 10.5, fontWeight: FontWeight.w600,
+                  color: done ? kSuccess : Theme.of(context).colorScheme.onSurface,
                   height: 1.25,
                 ),
               ),
@@ -794,13 +875,26 @@ class _HabitCircleTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 9, fontWeight: FontWeight.w500,
                   color: done
                       ? kSuccess.withOpacity(0.7)
                       : Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
                 ),
               ),
+              // Multi-count indicator (only when not done)
+              if (!done && tc > 1) ...[
+                const SizedBox(height: 3),
+                Text(
+                  count == 0 ? '×$tc taps' : '$count / $tc',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 8.5, fontWeight: FontWeight.w700,
+                    color: inProgress
+                        ? accent
+                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.30),
+                  ),
+                ),
+              ],
             ],
           );
         }),
@@ -813,12 +907,18 @@ class _HabitCircleTile extends StatelessWidget {
 class _HabitListTile extends StatelessWidget {
   final Habit habit;
   final bool done;
+  final int count;
   final VoidCallback onTap;
-  const _HabitListTile({required this.habit, required this.done, required this.onTap});
+  const _HabitListTile({
+    required this.habit, required this.done,
+    required this.count, required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final accent = done ? kSuccess : hexColor(habit.color);
+    final tc = habit.targetCount;
+    final inProgress = !done && tc > 1 && count > 0;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -829,10 +929,16 @@ class _HabitListTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: done
               ? kSuccess.withOpacity(0.08)
-              : Theme.of(context).colorScheme.surface.withOpacity(0.55),
+              : inProgress
+                  ? accent.withOpacity(0.06)
+                  : Theme.of(context).colorScheme.surface.withOpacity(0.55),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: done ? kSuccess.withOpacity(0.4) : accent.withOpacity(0.3),
+            color: done
+                ? kSuccess.withOpacity(0.4)
+                : inProgress
+                    ? accent.withOpacity(0.50)
+                    : accent.withOpacity(0.3),
             width: 1.5,
           ),
         ),
@@ -865,8 +971,7 @@ class _HabitListTile extends StatelessWidget {
                 Text(
                   habit.name,
                   style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 15, fontWeight: FontWeight.w600,
                     color: done ? kSuccess : Theme.of(context).colorScheme.onSurface,
                     height: 1.3,
                   ),
@@ -875,8 +980,7 @@ class _HabitListTile extends StatelessWidget {
                 Text(
                   habit.freqLabel,
                   style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 11, fontWeight: FontWeight.w500,
                     color: done
                         ? kSuccess.withOpacity(0.7)
                         : Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
@@ -886,24 +990,49 @@ class _HabitListTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // Completion indicator
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            width: 26, height: 26,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: done ? kSuccess : Colors.transparent,
-              border: Border.all(
-                color: done
-                    ? kSuccess
-                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
-                width: 2,
+          // Right indicator — count badge for multi-count, standard circle for single
+          if (!done && tc > 1)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: inProgress ? accent.withOpacity(0.15) : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: inProgress
+                      ? accent.withOpacity(0.55)
+                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+                  width: 1.5,
+                ),
               ),
+              child: Text(
+                count == 0 ? '×$tc' : '$count/$tc',
+                style: TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w800,
+                  color: inProgress
+                      ? accent
+                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.35),
+                ),
+              ),
+            )
+          else
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              width: 26, height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: done ? kSuccess : Colors.transparent,
+                border: Border.all(
+                  color: done
+                      ? kSuccess
+                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
+                  width: 2,
+                ),
+              ),
+              child: done
+                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 14)
+                  : null,
             ),
-            child: done
-                ? const Icon(Icons.check_rounded, color: Colors.white, size: 14)
-                : null,
-          ),
         ]),
       ),
     );

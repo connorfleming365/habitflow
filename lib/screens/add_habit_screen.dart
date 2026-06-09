@@ -20,6 +20,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   String _freq = 'daily';
   List<int> _days = [1,2,3,4,5];
   String _amPm = '';
+  int _targetCount = 1;
   TimeOfDay? _reminderTime;
   bool _showPresets = true;
 
@@ -29,7 +30,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     if (widget.existing != null) {
       final h = widget.existing!;
       _nameCtrl.text = h.name;
-      _icon = h.icon; _color = h.color; _freq = h.freq; _days = h.days; _amPm = h.amPm;
+      _icon = h.icon; _color = h.color; _freq = h.freq; _days = h.days;
+      _amPm = h.amPm; _targetCount = h.targetCount;
       _showPresets = false;
       if (h.reminderTime.isNotEmpty) {
         final p = h.reminderTime.split(':');
@@ -56,12 +58,14 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         habits[idx] = widget.existing!.copyWith(
           name: name, icon: _icon, color: _color, freq: _freq,
           days: _days, reminderTime: reminderStr, amPm: _amPm,
+          targetCount: _targetCount,
         );
       }
     } else {
       habits.add(Habit(
         id: const Uuid().v4(), name: name, icon: _icon, color: _color,
         freq: _freq, days: _days, reminderTime: reminderStr, amPm: _amPm,
+        targetCount: _targetCount,
         createdAt: DateTime.now().millisecondsSinceEpoch,
       ));
     }
@@ -289,6 +293,56 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             const SizedBox(height: 20),
           ],
 
+          // ── Daily target (multi-count) ───────────────
+          _label('DAILY TARGET'),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: cardDecoration(context),
+            child: Row(children: [
+              // Minus
+              _StepperButton(
+                icon: Icons.remove_rounded,
+                enabled: _targetCount > 1,
+                onTap: () => setState(() { if (_targetCount > 1) _targetCount--; }),
+              ),
+              // Count display
+              Expanded(
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Text('$_targetCount',
+                    style: TextStyle(
+                      fontSize: 28, fontWeight: FontWeight.w800,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    )),
+                  Text(
+                    _targetCount == 1 ? 'tap to complete' : 'taps to complete',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
+                    )),
+                ]),
+              ),
+              // Plus
+              _StepperButton(
+                icon: Icons.add_rounded,
+                enabled: _targetCount < 10,
+                onTap: () => setState(() { if (_targetCount < 10) _targetCount++; }),
+              ),
+            ]),
+          ),
+          if (_targetCount > 1)
+            Padding(
+              padding: const EdgeInsets.only(top: 6, left: 2),
+              child: Text(
+                'Tap this habit $_targetCount times on the Today screen to mark it complete.',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                ),
+              ),
+            ),
+          const SizedBox(height: 20),
+
           // ── Time of day ───────────────────────────────
           _label('TIME OF DAY'),
           const SizedBox(height: 8),
@@ -404,6 +458,32 @@ class _TimeChip extends StatelessWidget {
               )),
           ]),
         ),
+      ),
+    );
+  }
+}
+
+class _StepperButton extends StatelessWidget {
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+  const _StepperButton({required this.icon, required this.enabled, required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    final col = enabled
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.onSurface.withOpacity(0.2);
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Container(
+        width: 44, height: 44,
+        margin: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: enabled ? kPrimary.withOpacity(0.10) : Colors.transparent,
+          border: Border.all(color: col, width: 1.5),
+        ),
+        child: Icon(icon, color: col, size: 20),
       ),
     );
   }

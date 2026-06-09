@@ -8,7 +8,8 @@ class Habit {
   final String freq;  // daily | weekdays | weekends | weekly6 | weekly5 | weekly4 | weekly3 | weekly2 | weekly1 | custom
   final List<int> days; // 0=Sun..6=Sat for custom
   final String reminderTime; // 'HH:mm' or ''
-  final String amPm; // '' | 'am' | 'pm'
+  final String amPm;       // '' | 'am' | 'afternoon' | 'pm'
+  final int targetCount;  // completions required per day (default 1)
   final int createdAt;
 
   const Habit({
@@ -20,6 +21,7 @@ class Habit {
     required this.days,
     required this.reminderTime,
     this.amPm = '',
+    this.targetCount = 1,
     required this.createdAt,
   });
 
@@ -31,6 +33,7 @@ class Habit {
     List<int>? days,
     String? reminderTime,
     String? amPm,
+    int? targetCount,
   }) => Habit(
     id: id,
     name: name ?? this.name,
@@ -40,13 +43,14 @@ class Habit {
     days: days ?? this.days,
     reminderTime: reminderTime ?? this.reminderTime,
     amPm: amPm ?? this.amPm,
+    targetCount: targetCount ?? this.targetCount,
     createdAt: createdAt,
   );
 
   Map<String, dynamic> toJson() => {
     'id': id, 'name': name, 'icon': icon, 'color': color,
     'freq': freq, 'days': days, 'reminderTime': reminderTime,
-    'amPm': amPm, 'createdAt': createdAt,
+    'amPm': amPm, 'targetCount': targetCount, 'createdAt': createdAt,
   };
 
   factory Habit.fromJson(Map<String, dynamic> j) => Habit(
@@ -54,6 +58,7 @@ class Habit {
     freq: j['freq'], days: List<int>.from(j['days'] ?? []),
     reminderTime: j['reminderTime'] ?? '',
     amPm: j['amPm'] ?? '',
+    targetCount: j['targetCount'] ?? 1,
     createdAt: j['createdAt'] ?? 0,
   );
 

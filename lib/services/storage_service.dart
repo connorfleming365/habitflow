@@ -32,6 +32,34 @@ class StorageService {
     await prefs.setStringList(_completionsKey, completions.toList());
   }
 
+  // ── Multi-count progress ─────────────────────────────────
+  // stored as List<String> of 'habitId_YYYY-MM-DD:count'
+  static const _countsKey = 'hf_counts';
+
+  static Future<Map<String, int>> loadCounts() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    final list = prefs.getStringList(_countsKey) ?? [];
+    final map = <String, int>{};
+    for (final entry in list) {
+      final idx = entry.lastIndexOf(':');
+      if (idx > 0) {
+        final k = entry.substring(0, idx);
+        final v = int.tryParse(entry.substring(idx + 1));
+        if (v != null) map[k] = v;
+      }
+    }
+    return map;
+  }
+
+  static Future<void> saveCounts(Map<String, int> counts) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      _countsKey,
+      counts.entries.map((e) => '${e.key}:${e.value}').toList(),
+    );
+  }
+
   static String completionKey(String habitId, DateTime date) =>
       '${habitId}_${_fmt(date)}';
 
