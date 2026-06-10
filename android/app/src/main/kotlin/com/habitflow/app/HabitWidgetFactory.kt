@@ -12,7 +12,14 @@ class HabitWidgetFactory(
     intent: Intent
 ) : RemoteViewsService.RemoteViewsFactory {
 
-    data class HabitItem(val id: String, val icon: String, val name: String, val done: Boolean)
+    data class HabitItem(
+        val id: String,
+        val icon: String,
+        val name: String,
+        val done: Boolean,
+        val targetCount: Int,
+        val count: Int,
+    )
 
     private var habits: List<HabitItem> = emptyList()
 
@@ -25,10 +32,12 @@ class HabitWidgetFactory(
             for (i in 0 until arr.length()) {
                 val h = arr.getJSONObject(i)
                 list += HabitItem(
-                    id   = h.getString("id"),
-                    icon = h.getString("icon"),
-                    name = h.getString("name"),
-                    done = h.getBoolean("done")
+                    id          = h.getString("id"),
+                    icon        = h.getString("icon"),
+                    name        = h.getString("name"),
+                    done        = h.getBoolean("done"),
+                    targetCount = h.optInt("targetCount", 1),
+                    count       = h.optInt("count", 0),
                 )
             }
         } catch (_: Exception) {}
@@ -48,14 +57,25 @@ class HabitWidgetFactory(
         val habit = habits.getOrNull(pos) ?: return RemoteViews(context.packageName, R.layout.habit_widget_item)
         val rv = RemoteViews(context.packageName, R.layout.habit_widget_item)
 
-        if (habit.done) {
-            rv.setTextViewText(R.id.item_emoji, "✓")
-            rv.setTextColor(R.id.item_emoji, 0xFFFFFFFF.toInt())
-            rv.setInt(R.id.item_circle, "setBackgroundResource", R.drawable.widget_circle_done)
-        } else {
-            rv.setTextViewText(R.id.item_emoji, habit.icon)
-            rv.setTextColor(R.id.item_emoji, 0xDDFFFFFF.toInt())
-            rv.setInt(R.id.item_circle, "setBackgroundResource", R.drawable.widget_circle_normal)
+        when {
+            habit.done -> {
+                // Fully complete
+                rv.setTextViewText(R.id.item_emoji, "✓")
+                rv.setTextColor(R.id.item_emoji, 0xFFFFFFFF.toInt())
+                rv.setInt(R.id.item_circle, "setBackgroundResource", R.drawable.widget_circle_done)
+            }
+            habit.targetCount > 1 && habit.count > 0 -> {
+                // Multi-count in progress — show "n/N"
+                rv.setTextViewText(R.id.item_emoji, "${habit.count}/${habit.targetCount}")
+                rv.setTextColor(R.id.item_emoji, 0xFFFFFFFF.toInt())
+                rv.setInt(R.id.item_circle, "setBackgroundResource", R.drawable.widget_circle_normal)
+            }
+            else -> {
+                // Not started
+                rv.setTextViewText(R.id.item_emoji, habit.icon)
+                rv.setTextColor(R.id.item_emoji, 0xDDFFFFFF.toInt())
+                rv.setInt(R.id.item_circle, "setBackgroundResource", R.drawable.widget_circle_normal)
+            }
         }
 
         rv.setTextViewText(R.id.item_name, habit.name)

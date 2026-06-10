@@ -20,11 +20,17 @@ class WidgetService {
         .length;
     final total = scheduled.length;
 
-    final habitJson = scheduled.map((h) => {
-      'id':   h.id,
-      'icon': h.icon,
-      'name': h.name,
-      'done': completions.contains(StorageService.completionKey(h.id, today)),
+    final countMap = await StorageService.loadCounts();
+    final habitJson = scheduled.map((h) {
+      final key = StorageService.completionKey(h.id, today);
+      return {
+        'id':          h.id,
+        'icon':        h.icon,
+        'name':        h.name,
+        'done':        completions.contains(key),
+        'targetCount': h.targetCount,
+        'count':       countMap[key] ?? 0,
+      };
     }).toList();
 
     final prefs = await SharedPreferences.getInstance();

@@ -138,11 +138,21 @@ class TodayScreenState extends State<TodayScreen>
       final List<dynamic> widgetList = jsonDecode(raw);
       final today = DateTime.now();
       final result = Set<String>.from(completions);
+
+      // Load existing counts so we can merge widget-side increments.
+      final counts = await StorageService.loadCounts();
+
       bool changed = false;
+      bool countsChanged = false;
+
       for (final item in widgetList) {
-        final String id = item['id'] as String;
-        final bool widgetDone = item['done'] as bool;
+        final String id   = item['id'] as String;
+        final bool widgetDone  = item['done'] as bool;
+        final int  tc    = (item['targetCount'] as num?)?.toInt() ?? 1;
+        final int  widgetCount = (item['count'] as num?)?.toInt() ?? 0;
         final key = StorageService.completionKey(id, today);
+
+        // Sync done state
         if (widgetDone && !result.contains(key)) {
           result.add(key);
           changed = true;
@@ -150,8 +160,23 @@ class TodayScreenState extends State<TodayScreen>
           result.remove(key);
           changed = true;
         }
+
+        // Sync count for multi-count habits (Kotlin writes it into hf_habits_json)
+        if (tc > 1) {
+          final currentCount = counts[key] ?? 0;
+          if (widgetCount != currentCount) {
+            if (widgetCount > 0) {
+              counts[key] = widgetCount;
+            } else {
+              counts.remove(key);
+            }
+            countsChanged = true;
+          }
+        }
       }
-      if (changed) await StorageService.saveCompletions(result);
+
+      if (changed)       await StorageService.saveCompletions(result);
+      if (countsChanged) await StorageService.saveCounts(counts);
       return result;
     } catch (_) {
       return completions;

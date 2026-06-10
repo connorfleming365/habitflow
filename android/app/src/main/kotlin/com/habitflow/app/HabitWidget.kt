@@ -83,7 +83,26 @@ class HabitWidget : AppWidgetProvider() {
                 for (i in 0 until habits.length()) {
                     val h = habits.getJSONObject(i)
                     if (h.getString("id") == habitId) {
-                        h.put("done", !h.getBoolean("done"))
+                        val tc      = h.optInt("targetCount", 1)
+                        val isDone  = h.optBoolean("done", false)
+                        val current = h.optInt("count", 0)
+
+                        if (tc <= 1) {
+                            // Single-count: simple toggle
+                            val nowDone = !isDone
+                            h.put("done",  nowDone)
+                            h.put("count", if (nowDone) 1 else 0)
+                        } else {
+                            if (isDone || current >= tc) {
+                                // Already complete — reset
+                                h.put("count", 0)
+                                h.put("done",  false)
+                            } else {
+                                val next = current + 1
+                                h.put("count", next)
+                                h.put("done",  next >= tc)
+                            }
+                        }
                         break
                     }
                 }
