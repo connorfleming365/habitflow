@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:in_app_review/in_app_review.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
 import '../services/sound_service.dart';
@@ -398,6 +400,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                 );
+              },
+            ),
+            const _DividerLine(),
+            _ActionRow(
+              icon: '⭐',
+              title: 'Rate Swell',
+              subtitle: 'Enjoying the app? Leave a review',
+              onTap: () async {
+                final review = InAppReview.instance;
+                if (await review.isAvailable()) {
+                  await review.requestReview();
+                } else {
+                  await review.openStoreListing(appStoreId: '');
+                }
+              },
+            ),
+            const _DividerLine(),
+            _ActionRow(
+              icon: '🔒',
+              title: 'Privacy Policy',
+              subtitle: 'How we handle your data',
+              onTap: () async {
+                final uri = Uri.parse('https://swell-app.com/privacy');
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
               },
             ),
             const _DividerLine(),

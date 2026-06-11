@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:in_app_review/in_app_review.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/habit.dart';
 import '../services/storage_service.dart';
@@ -239,6 +240,7 @@ class TodayScreenState extends State<TodayScreen>
     if (wasAdding) {
       final activeDays = ProgressionService.countActiveDays(newSet);
       await _checkMilestone(activeDays);
+      if (allNowDone) await _maybeRequestReview(activeDays);
     }
 
     if (allNowDone) NotificationService.cancelNudgeToday();
@@ -256,6 +258,19 @@ class TodayScreenState extends State<TodayScreen>
     if (prefs.getBool(key) ?? false) return;
     await prefs.setBool(key, true);
     if (mounted) _showMilestone(activeDays);
+  }
+
+  /// Prompts for a Play Store review once, after the user has 7+ active days
+  /// and has just completed all their habits for the day. Only fires once ever.
+  Future<void> _maybeRequestReview(int activeDays) async {
+    if (activeDays < 7) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('review_requested') ?? false) return;
+    await prefs.setBool('review_requested', true);
+    final review = InAppReview.instance;
+    if (await review.isAvailable()) {
+      await review.requestReview();
+    }
   }
 
   void _showMilestone(int days) {
