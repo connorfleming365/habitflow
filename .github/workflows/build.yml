@@ -212,7 +212,10 @@ jobs:
 
       - name: Build web release
         working-directory: /tmp/web_app
-        run: flutter build web --release --base-href /habitflow/
+        run: flutter build web --release --base-href /
+
+      - name: Copy privacy policy into web build
+        run: cp privacy-policy.html /tmp/web_app/build/web/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

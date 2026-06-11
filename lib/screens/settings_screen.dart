@@ -422,7 +422,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: 'Privacy Policy',
               subtitle: 'How we handle your data',
               onTap: () async {
-                final uri = Uri.parse('https://swell-app.com/privacy');
+                final uri = Uri.parse('https://swell-app.co/privacy-policy.html');
                 if (await canLaunchUrl(uri)) {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
                 }

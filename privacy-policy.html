@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Swell</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0F0A1A;
+      --card:     #1A1030;
+      --surface:  #251840;
+      --border:   rgba(38, 208, 206, 0.15);
+      --cyan:     #26D0CE;
+      --violet:   #C4B5FD;
+      --text:     #F0E6FF;
+      --muted:    #B8A9D9;
+      --faint:    rgba(196, 181, 253, 0.35);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 0;
+    }
+
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-mark {
+      width: 36px; height: 36px;
+      background: var(--cyan);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+
+    .logo-text span {
+      color: var(--cyan);
+    }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    .page-title {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-subtitle {
+      font-size: 15px;
+      color: var(--muted);
+      margin-bottom: 40px;
+    }
+
+    .tldr {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--cyan);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 48px;
+    }
+
+    .tldr-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--cyan);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .tldr p {
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    section {
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2 .icon {
+      width: 32px; height: 32px;
+      background: var(--surface);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    p {
+      font-size: 15px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    p:last-child { margin-bottom: 0; }
+
+    ul {
+      list-style: none;
+      margin: 0 0 12px 0;
+      padding: 0;
+    }
+
+    ul li {
+      font-size: 15px;
+      color: var(--muted);
+      padding: 5px 0 5px 20px;
+      position: relative;
+    }
+
+    ul li::before {
+      content: "";
+      width: 5px; height: 5px;
+      background: var(--cyan);
+      border-radius: 50%;
+      position: absolute;
+      left: 4px;
+      top: 13px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 40px 0;
+    }
+
+    .highlight {
+      color: var(--cyan);
+      font-weight: 600;
+    }
+
+    .contact-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+    }
+
+    .contact-card p {
+      margin-bottom: 6px;
+    }
+
+    .contact-card a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+
+    .contact-card a:hover {
+      text-decoration: underline;
+    }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--faint);
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg:      #FFF8F5;
+        --card:    #FFFFFF;
+        --surface: #FFE4D9;
+        --border:  rgba(255, 107, 107, 0.2);
+        --cyan:    #FF6B6B;
+        --violet:  #2D6A9F;
+        --text:    #1E3A5F;
+        --muted:   #3D5A7A;
+        --faint:   rgba(30, 58, 95, 0.3);
+      }
+
+      .tldr {
+        border-left-color: var(--cyan);
+      }
+
+      ul li::before {
+        background: var(--cyan);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-mark">🌊</div>
+    <div class="logo-text">Swell<span>.</span></div>
+  </header>
+
+  <main>
+    <h1 class="page-title">Privacy Policy</h1>
+    <p class="page-subtitle">Last updated: June 11, 2026</p>
+
+    <div class="tldr">
+      <div class="tldr-label">The short version</div>
+      <p>Swell stores everything on your device. We don't collect your data, don't have servers that store your information, and don't share anything with third parties. Your habits are yours.</p>
+    </div>
+
+    <section>
+      <h2><span class="icon">📱</span> What Swell collects</h2>
+      <p>Swell does not collect any personal information. All data you create in the app — your habits, completion history, streaks, and preferences — is stored exclusively on your device using Android's local storage (SharedPreferences).</p>
+      <p>We do not have access to this data. It never leaves your device.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <section>
+      <h2><span class="icon">🌐</span> Network access</h2>
+      <p>Swell does not make any network requests. The app has no backend servers, no user accounts, no cloud sync, and no analytics. It works entirely offline.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <section>
+      <h2><span class="icon">🔔</span> Notifications</h2>
+      <p>If you choose to enable reminders, Swell schedules local notifications on your device. These notifications are processed entirely by Android — no notification data is sent to us or any third party.</p>
+      <p>You can disable notifications at any time in the app's settings or in your phone's notification settings.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <section>
+      <h2><span class="icon">🏠</span> Home screen widget</h2>
+      <p>The optional home screen widget reads your habit data from your device's local storage to display your progress. This data remains on your device at all times.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <section>
+      <h2><span class="icon">🤝</span> Third parties</h2>
+      <p>We do not share any data with third parties because we don't collect any data to share. Swell does not use:</p>
+      <ul>
+        <li>Analytics tools</li>
+        <li>Advertising networks</li>
+        <li>Crash reporting services</li>
+        <li>Social login or identity providers</li>
+        <li>Any external APIs or services</li>
+      </ul>
+    </section>
+
+    <hr class="divider" />
+
+    <section>
+      <h2><span class="icon">👦</span> Children's privacy</h2>
+      <p>Swell does not knowingly collect any information from anyone, including children under the age of 13. Since we collect no data at all, the app is safe for users of any age.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <section>
+      <h2><span class="icon">🗑️</span> Deleting your data</h2>
+      <p>All your data is stored locally on your device. To delete it, you can use the <span class="highlight">Reset all habits</span> option in Settings, or uninstall the app. Either action permanently removes all Swell data from your device.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <section>
+      <h2><span class="icon">🔄</span> Changes to this policy</h2>
+      <p>If we ever update this policy, we'll update the "Last updated" date at the top of this page. Since Swell collects no data, any future changes would only reflect new features, not new data practices.</p>
+    </section>
+
+    <hr class="divider" />
+
+    <section>
+      <h2><span class="icon">✉️</span> Contact</h2>
+      <div class="contact-card">
+        <p>If you have any questions about this privacy policy, you can reach us at:</p>
+        <p><a href="mailto:connorfleming365@gmail.com">connorfleming365@gmail.com</a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    &copy; 2026 Swell. All rights reserved.
+  </footer>
+
+</body>
+</html>
