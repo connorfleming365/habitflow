@@ -113,6 +113,13 @@ class _SplashScreenState extends State<SplashScreen>
     if (mounted) widget.onComplete();
   }
 
+  /// User tapped Skip - cut immediately, no fade, no lingering audio.
+  void _skipImmediately() {
+    _fadingOut = true;
+    _video?.pause();
+    _finish();
+  }
+
   @override
   void dispose() {
     _fallbackTimer?.cancel();
@@ -186,7 +193,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: FadeTransition(
                     opacity: _fadeInAnim,
                     child: TextButton(
-                      onPressed: _startFadeOut,
+                      onPressed: _skipImmediately,
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.white.withOpacity(0.7),
                         padding: const EdgeInsets.symmetric(

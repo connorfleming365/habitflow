@@ -13,6 +13,7 @@ class StatsScreen extends StatefulWidget {
 class _StatsScreenState extends State<StatsScreen> {
   List<Habit> _habits = [];
   Set<String> _completions = {};
+  Map<String, int> _counts = {};
   String? _installDate;
   int _calYear = DateTime.now().year;
   int _calMonth = DateTime.now().month - 1; // 0-indexed
@@ -26,11 +27,13 @@ class _StatsScreenState extends State<StatsScreen> {
   Future<void> _load() async {
     final habits      = await StorageService.loadHabits();
     final comp        = await StorageService.loadCompletions();
+    final counts      = await StorageService.loadCounts();
     final installDate = await StorageService.getInstallDate();
     if (mounted) {
       setState(() {
         _habits = habits;
         _completions = comp;
+        _counts = counts;
         _installDate = installDate;
       });
     }
@@ -68,6 +71,7 @@ class _StatsScreenState extends State<StatsScreen> {
     }
 
     var tempComp = Set<String>.from(_completions);
+    var tempCounts = Map<String, int>.from(_counts);
 
     await showModalBottomSheet(
       context: context,
@@ -97,7 +101,7 @@ class _StatsScreenState extends State<StatsScreen> {
                       fontSize: 16, fontWeight: FontWeight.w800,
                       letterSpacing: -0.3)),
               const SizedBox(height: 2),
-              Text('Tap habits to toggle completion',
+              Text('Tap habits to toggle completion (or step through counts)',
                   style: TextStyle(
                       color: Theme.of(ctx).colorScheme.secondary,
                       fontSize: 12)),
@@ -105,24 +109,62 @@ class _StatsScreenState extends State<StatsScreen> {
               ...scheduled.map((h) {
                 final key  = StorageService.completionKey(h.id, date);
                 final done = tempComp.contains(key);
+                final tc   = h.targetCount;
+                final count = tempCounts[key] ?? (done ? tc : 0);
+                final inProgress = !done && tc > 1 && count > 0;
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: Text(h.icon, style: const TextStyle(fontSize: 22)),
                   title: Text(h.name,
                     style: TextStyle(
-                      color: done ? kSuccess : Theme.of(ctx).colorScheme.onSurface,
+                      color: done
+                          ? kSuccess
+                          : inProgress
+                              ? kWarning
+                              : Theme.of(ctx).colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
                       decoration: done ? TextDecoration.lineThrough : null,
                     )),
+                  subtitle: tc > 1
+                      ? Text('$count / $tc',
+                          style: TextStyle(
+                              color: inProgress
+                                  ? kWarning
+                                  : Theme.of(ctx).colorScheme.secondary,
+                              fontSize: 11, fontWeight: FontWeight.w600))
+                      : null,
                   trailing: Icon(
-                    done ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+                    done
+                        ? Icons.check_circle_rounded
+                        : inProgress
+                            ? Icons.adjust_rounded
+                            : Icons.radio_button_unchecked,
                     color: done
                         ? kSuccess
-                        : Theme.of(ctx).colorScheme.onSurface.withOpacity(0.35),
+                        : inProgress
+                            ? kWarning
+                            : Theme.of(ctx).colorScheme.onSurface.withOpacity(0.35),
                   ),
                   onTap: () => setModal(() {
-                    if (done) tempComp.remove(key);
-                    else      tempComp.add(key);
+                    // Multi-count habits step through 0..tc so a partial day
+                    // can actually be recorded, instead of one tap forcing
+                    // it straight to "fully done" (which is what made these
+                    // days render green in the graph even when only
+                    // partially completed).
+                    if (tc <= 1) {
+                      if (done) tempComp.remove(key);
+                      else      tempComp.add(key);
+                      return;
+                    }
+                    if (count >= tc) {
+                      tempComp.remove(key);
+                      tempCounts.remove(key);
+                    } else {
+                      final next = count + 1;
+                      tempCounts[key] = next;
+                      if (next >= tc) tempComp.add(key);
+                      else            tempComp.remove(key);
+                    }
                   }),
                 );
               }),
@@ -140,13 +182,16 @@ class _StatsScreenState extends State<StatsScreen> {
                   ),
                   onPressed: () async {
                     await StorageService.saveCompletions(tempComp);
+                    await StorageService.saveCounts(tempCounts);
                     if (ctx.mounted) Navigator.pop(ctx);
                     if (mounted) {
-                      // Use tempComp directly — do NOT call _load() here.
-                      // Android's SharedPreferences.apply() is async; _load()
-                      // would read stale data and overwrite the visual update.
+                      // Use tempComp/tempCounts directly — do NOT call _load()
+                      // here. Android's SharedPreferences.apply() is async;
+                      // _load() would read stale data and overwrite the
+                      // visual update.
                       setState(() {
                         _completions = Set<String>.from(tempComp);
+                        _counts = Map<String, int>.from(tempCounts);
                         _refreshKey++;
                       });
                     }
@@ -220,6 +265,7 @@ class _StatsScreenState extends State<StatsScreen> {
               key: ValueKey(_refreshKey),
               habits: _habits,
               completions: _completions,
+              counts: _counts,
               year: _calYear,
               month: _calMonth,
               installDate: _installDate,
@@ -388,6 +434,7 @@ class _StatChip extends StatelessWidget {
 class _CalendarSection extends StatefulWidget {
   final List<Habit> habits;
   final Set<String> completions;
+  final Map<String, int> counts;
   final int year, month;
   final String? installDate;
   final void Function(DateTime) onDayTap;
@@ -396,6 +443,7 @@ class _CalendarSection extends StatefulWidget {
   const _CalendarSection({
     super.key,
     required this.habits, required this.completions,
+    this.counts = const {},
     required this.year, required this.month,
     this.installDate,
     required this.onDayTap,
@@ -698,14 +746,18 @@ class _CalendarSectionState extends State<_CalendarSection> {
                         final isFuture   = ds.compareTo(todayStr) > 0;
                         final isToday    = ds == todayStr;
                         final scheduled  = habit.isScheduledOn(date);
-                        final done       = widget.completions.contains(
-                            StorageService.completionKey(habit.id, date));
+                        final key        = StorageService.completionKey(habit.id, date);
+                        final done       = widget.completions.contains(key);
+                        final count      = widget.counts[key] ?? 0;
+                        final inProgress = !done && habit.targetCount > 1 && count > 0;
 
                         Color color;
                         if (!scheduled || isFuture) {
                           color = Colors.grey.withOpacity(0.12);
                         } else if (done) {
                           color = kSuccess;
+                        } else if (inProgress) {
+                          color = kWarning;
                         } else {
                           color = Colors.grey.withOpacity(0.25);
                         }

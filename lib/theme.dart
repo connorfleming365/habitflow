@@ -73,7 +73,7 @@ class AppTheme {
       backgroundColor: kCoralCard,
       indicatorColor: kCoralPrimary.withOpacity(0.15),
       labelTextStyle: const WidgetStatePropertyAll(
-        TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kCoralNavy),
+        TextStyle(fontFamily: 'Outfit', fontSize: 11, fontWeight: FontWeight.w700, color: kCoralNavy),
       ),
       iconTheme: WidgetStatePropertyAll(
         IconThemeData(color: kCoralNavy.withOpacity(0.65)),
@@ -85,7 +85,7 @@ class AppTheme {
       scrolledUnderElevation: 0,
       iconTheme: IconThemeData(color: Colors.white),
       titleTextStyle: TextStyle(
-        color: Colors.white, fontSize: 22,
+        fontFamily: 'Outfit', color: Colors.white, fontSize: 22,
         fontWeight: FontWeight.w800, letterSpacing: -0.5,
       ),
     ),
@@ -98,13 +98,13 @@ class AppTheme {
     dialogTheme: DialogTheme(
       backgroundColor: kCoralCard,
       titleTextStyle: const TextStyle(
-          color: kCoralNavy, fontSize: 18, fontWeight: FontWeight.w700),
-      contentTextStyle: const TextStyle(color: kCoralMid, fontSize: 14),
+          fontFamily: 'Outfit', color: kCoralNavy, fontSize: 18, fontWeight: FontWeight.w700),
+      contentTextStyle: const TextStyle(fontFamily: 'Outfit', color: kCoralMid, fontSize: 14),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     ),
     snackBarTheme: const SnackBarThemeData(
       backgroundColor: kCoralNavy,
-      contentTextStyle: TextStyle(color: Colors.white),
+      contentTextStyle: TextStyle(fontFamily: 'Outfit', color: Colors.white),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(foregroundColor: kCoralPrimary),
@@ -135,7 +135,7 @@ class AppTheme {
       backgroundColor: kAbyssCard,
       indicatorColor: kAbyssCyan.withOpacity(0.25),
       labelTextStyle: const WidgetStatePropertyAll(
-        TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: kAbyssViolet),
+        TextStyle(fontFamily: 'Outfit', fontSize: 11, fontWeight: FontWeight.w700, color: kAbyssViolet),
       ),
       iconTheme: WidgetStatePropertyAll(
         IconThemeData(color: kAbyssViolet.withOpacity(0.8)),
@@ -147,7 +147,7 @@ class AppTheme {
       scrolledUnderElevation: 0,
       iconTheme: IconThemeData(color: kAbyssCyan),
       titleTextStyle: TextStyle(
-        color: kAbyssText, fontSize: 22,
+        fontFamily: 'Outfit', color: kAbyssText, fontSize: 22,
         fontWeight: FontWeight.w800, letterSpacing: -0.5,
       ),
     ),
@@ -160,13 +160,13 @@ class AppTheme {
     dialogTheme: DialogTheme(
       backgroundColor: kAbyssCard,
       titleTextStyle: const TextStyle(
-          color: kAbyssText, fontSize: 18, fontWeight: FontWeight.w700),
-      contentTextStyle: const TextStyle(color: kAbyssViolet, fontSize: 14),
+          fontFamily: 'Outfit', color: kAbyssText, fontSize: 18, fontWeight: FontWeight.w700),
+      contentTextStyle: const TextStyle(fontFamily: 'Outfit', color: kAbyssViolet, fontSize: 14),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     ),
     snackBarTheme: const SnackBarThemeData(
       backgroundColor: kAbyssCard,
-      contentTextStyle: TextStyle(color: kAbyssText),
+      contentTextStyle: TextStyle(fontFamily: 'Outfit', color: kAbyssText),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(foregroundColor: kAbyssCyan),
