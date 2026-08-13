@@ -110,6 +110,21 @@ jobs:
           }
           EOF
 
+      - name: Bump Kotlin Gradle Plugin and compileSdk
+        run: |
+          # The Kotlin Gradle Plugin (the compiler) must match the stdlib
+          # version forced above, or compileReleaseKotlin fails with
+          # "Module was compiled with an incompatible version of Kotlin"
+          # (seen with flutter_timezone once it pulled in newer Kotlin code).
+          sed -i "s/ext.kotlin_version = '.*'/ext.kotlin_version = '1.9.24'/" \
+            /tmp/build_app/android/build.gradle
+
+          # in_app_review requires compileSdkVersion 35+.
+          sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 35/' \
+            /tmp/build_app/android/app/build.gradle
+          sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 35/' \
+            /tmp/build_app/android/app/build.gradle
+
       - name: Get dependencies
         working-directory: /tmp/build_app
         run: flutter pub get
