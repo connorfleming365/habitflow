@@ -11,13 +11,29 @@ const kWaveMid   = Color(0xFF1A9FD9);
 const kWaveLight = Color(0xFF5DD4F8);
 
 // ── Coral Tide palette ────────────────────────────────────
-const kCoralPrimary = Color(0xFFFF6B6B); // coral/salmon
+const kCoralPrimary = Color(0xFFFF6B6B); // coral/salmon — accents, fills, borders (not text)
 const kCoralNavy    = Color(0xFF1E3A5F); // deep navy — text
-const kCoralMid     = Color(0xFF2D6A9F); // medium navy — subtext
+const kCoralMid     = Color(0xFF35618A); // darkened navy-blue — subtext, legible on white
 const kCoralBg      = Color(0xFFFFF8F5); // warm off-white
 const kCoralCard    = Color(0xFFFFFFFF); // white card
 const kCoralSurface = Color(0xFFFFE4D9); // warm peach surface
 const kCoralDivider = Color(0xFFFFD6CC); // light coral divider
+
+// Legible variants of the shared semantic accents, for use as TEXT on
+// Coral Tide's white/off-white backgrounds — kWarning/kDanger/kCoralPrimary
+// were tuned for the dark Deep Abyss background and are too washed out to
+// read comfortably as body text on white.
+const kCoralWarningText = Color(0xFFAD6B00); // deep amber
+const kCoralDangerText  = Color(0xFFC23B32); // deep red
+const kCoralPrimaryText = Color(0xFFD9483E); // deep coral, for button labels
+
+/// Picks the Coral Tide-legible variant of [warning color] when the active
+/// theme is light, otherwise the standard (already-legible-on-dark) colour.
+Color warningTextColor(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.light ? kCoralWarningText : kWarning;
+
+Color dangerTextColor(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.light ? kCoralDangerText : kDanger;
 
 // ── Deep Abyss palette ────────────────────────────────────
 const kAbyssBg      = Color(0xFF1A1025); // darkest purple-black
@@ -107,7 +123,7 @@ class AppTheme {
       contentTextStyle: TextStyle(fontFamily: 'Outfit', color: Colors.white),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(foregroundColor: kCoralPrimary),
+      style: TextButton.styleFrom(foregroundColor: kCoralPrimaryText),
     ),
   );
 

@@ -141,16 +141,19 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   int _index = 0;
   final _todayKey = GlobalKey<TodayScreenState>();
+  late final PageController _pageCtrl;
 
   @override
   void initState() {
     super.initState();
+    _pageCtrl = PageController(initialPage: 0);
     WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _pageCtrl.dispose();
     super.dispose();
   }
 
@@ -163,8 +166,15 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     }
   }
 
+  // Bottom nav tap — animate the PageView; _onPageChanged handles the rest.
   void _onTabSelected(int i) {
-    // Reload Today data when switching back to it from another tab
+    _pageCtrl.animateToPage(i,
+        duration: const Duration(milliseconds: 280), curve: Curves.easeOutCubic);
+  }
+
+  // Fires for both taps (via animateToPage) and swipes, so Today reloads
+  // and the nav indicator stays in sync no matter how the user got here.
+  void _onPageChanged(int i) {
     if (i == 0 && _index != 0) {
       _todayKey.currentState?.reload();
     }
@@ -185,18 +195,22 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
             ),
           ),
 
-          // ── App screens ───────────────────────────────
-          Offstage(
-            offstage: _index != 0,
-            child: TodayScreen(key: _todayKey),
+          // ── App screens — swipeable, and kept alive across swipes ──
+          PageView(
+            controller: _pageCtrl,
+            onPageChanged: _onPageChanged,
+            children: [
+              _KeepAlivePage(child: TodayScreen(key: _todayKey)),
+              const _KeepAlivePage(child: ManageScreen()),
+              const _KeepAlivePage(child: StatsScreen()),
+              _KeepAlivePage(
+                child: SettingsScreen(
+                  appTheme: widget.appTheme,
+                  onThemeChange: widget.onThemeChange,
+                ),
+              ),
+            ],
           ),
-          if (_index == 1) const ManageScreen(),
-          if (_index == 2) const StatsScreen(),
-          if (_index == 3)
-            SettingsScreen(
-              appTheme: widget.appTheme,
-              onThemeChange: widget.onThemeChange,
-            ),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -226,5 +240,26 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
         ],
       ),
     );
+  }
+}
+
+/// Keeps a tab's widget subtree (and its state — scroll position, loaded
+/// data, etc.) alive when PageView scrolls it off-screen, instead of
+/// disposing and rebuilding it fresh on every swipe back.
+class _KeepAlivePage extends StatefulWidget {
+  final Widget child;
+  const _KeepAlivePage({required this.child});
+  @override
+  State<_KeepAlivePage> createState() => _KeepAlivePageState();
+}
+
+class _KeepAlivePageState extends State<_KeepAlivePage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }

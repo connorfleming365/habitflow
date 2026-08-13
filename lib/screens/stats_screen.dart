@@ -120,7 +120,7 @@ class _StatsScreenState extends State<StatsScreen> {
                       color: done
                           ? kSuccess
                           : inProgress
-                              ? kWarning
+                              ? warningTextColor(ctx)
                               : Theme.of(ctx).colorScheme.onSurface,
                       fontWeight: FontWeight.w600,
                       decoration: done ? TextDecoration.lineThrough : null,
@@ -129,7 +129,7 @@ class _StatsScreenState extends State<StatsScreen> {
                       ? Text('$count / $tc',
                           style: TextStyle(
                               color: inProgress
-                                  ? kWarning
+                                  ? warningTextColor(ctx)
                                   : Theme.of(ctx).colorScheme.secondary,
                               fontSize: 11, fontWeight: FontWeight.w600))
                       : null,
@@ -142,7 +142,7 @@ class _StatsScreenState extends State<StatsScreen> {
                     color: done
                         ? kSuccess
                         : inProgress
-                            ? kWarning
+                            ? warningTextColor(ctx)
                             : Theme.of(ctx).colorScheme.onSurface.withOpacity(0.35),
                   ),
                   onTap: () => setModal(() {
@@ -841,7 +841,7 @@ class _StreakRow extends StatelessWidget {
       Text(streak > 0 ? '${streak}d 🔥' : '—',
         style: TextStyle(
           color: streak > 0
-              ? kWarning
+              ? warningTextColor(context)
               : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
           fontSize: 12, fontWeight: FontWeight.w700)),
     ]),

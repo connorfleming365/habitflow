@@ -211,8 +211,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: const Text('Cancel')),
                 TextButton(
                     onPressed: () => Navigator.pop(context, true),
-                    child: const Text('Reset',
-                        style: TextStyle(color: kDanger))),
+                    child: Text('Reset',
+                        style: TextStyle(color: dangerTextColor(context)))),
               ],
             ));
     if (confirm != true) return;
@@ -236,8 +236,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: const Text('Cancel')),
                 TextButton(
                     onPressed: () => Navigator.pop(context, true),
-                    child: const Text('Yes, delete everything',
-                        style: TextStyle(color: kDanger, fontWeight: FontWeight.w700))),
+                    child: Text('Yes, delete everything',
+                        style: TextStyle(color: dangerTextColor(context), fontWeight: FontWeight.w700))),
               ],
             ));
     if (finalConfirm != true) return;
@@ -394,7 +394,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: '🗑️',
               title: 'Reset all habits',
               subtitle: 'Cannot be undone',
-              titleColor: kDanger,
+              titleColor: dangerTextColor(context),
               onTap: _clearData,
             ),
           ]),

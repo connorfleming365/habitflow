@@ -68,8 +68,8 @@ class _ManageScreenState extends State<ManageScreen> {
           TextButton(onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel')),
           TextButton(onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete',
-                  style: TextStyle(color: kDanger))),
+              child: Text('Delete',
+                  style: TextStyle(color: dangerTextColor(context)))),
         ],
       ),
     );
@@ -260,7 +260,7 @@ class _ManageScreenState extends State<ManageScreen> {
               _load();
             }),
             const SizedBox(height: 10),
-            _sheetBtn(Icons.delete_outline, 'Delete habit', kDanger, () {
+            _sheetBtn(Icons.delete_outline, 'Delete habit', dangerTextColor(context), () {
               Navigator.pop(context);
               _delete(h);
             }),
@@ -348,8 +348,8 @@ class _GridTile extends StatelessWidget {
               if (streak > 0) ...[
                 const SizedBox(height: 2),
                 Text('${streak}d 🔥',
-                  style: const TextStyle(
-                      color: kWarning, fontSize: 9, fontWeight: FontWeight.w700)),
+                  style: TextStyle(
+                      color: warningTextColor(context), fontSize: 9, fontWeight: FontWeight.w700)),
               ],
             ],
           );
@@ -454,7 +454,7 @@ class _ListTile extends StatelessWidget {
         onPressed: onEdit,
       ),
       IconButton(
-        icon: const Icon(Icons.delete_outline, size: 18, color: kDanger),
+        icon: Icon(Icons.delete_outline, size: 18, color: dangerTextColor(context)),
         onPressed: onDelete,
       ),
     ]),
