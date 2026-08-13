@@ -138,15 +138,25 @@ jobs:
           sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 35/' \
             /tmp/build_app/android/app/build.gradle
 
+          # Several plugins want a newer NDK than Flutter's default.
+          sed -i 's/ndkVersion = flutter.ndkVersion/ndkVersion = "26.1.10909125"/' \
+            /tmp/build_app/android/app/build.gradle
+
+          # flutter_local_notifications requires core library desugaring.
+          sed -i 's/targetCompatibility = JavaVersion.VERSION_1_8/targetCompatibility = JavaVersion.VERSION_1_8\n        coreLibraryDesugaringEnabled = true/' \
+            /tmp/build_app/android/app/build.gradle
+
           # in_app_review's InAppReviewPlugin.kt imports androidx.core.net.toUri
           # (a core-ktx extension) but its own build.gradle doesn't declare
           # core-ktx as a dependency - it assumes the app provides it. This
           # scaffold's app/build.gradle has no dependencies{} block at all,
-          # so add one.
+          # so add one, along with the desugaring library the compileOptions
+          # change above requires.
           cat >> /tmp/build_app/android/app/build.gradle << 'EOF'
 
           dependencies {
               implementation "androidx.core:core-ktx:1.13.1"
+              coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"
           }
           EOF
 
