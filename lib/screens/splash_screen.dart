@@ -176,6 +176,28 @@ class _SplashScreenState extends State<SplashScreen>
                   ]),
                 ),
               ),
+
+            // Discreet skip button, once the video is actually showing
+            if (_videoReady)
+              Positioned(
+                right: 12,
+                bottom: 28,
+                child: SafeArea(
+                  child: FadeTransition(
+                    opacity: _fadeInAnim,
+                    child: TextButton(
+                      onPressed: _startFadeOut,
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white.withOpacity(0.7),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                      ),
+                      child: const Text('Skip',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

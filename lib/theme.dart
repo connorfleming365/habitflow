@@ -68,7 +68,7 @@ class AppTheme {
     ),
     scaffoldBackgroundColor: kCoralBg,
     cardColor: kCoralCard,
-    fontFamily: 'Roboto',
+    fontFamily: 'Outfit',
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: kCoralCard,
       indicatorColor: kCoralPrimary.withOpacity(0.15),
@@ -130,7 +130,7 @@ class AppTheme {
     ),
     scaffoldBackgroundColor: kAbyssBg,
     cardColor: kAbyssCard,
-    fontFamily: 'Roboto',
+    fontFamily: 'Outfit',
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: kAbyssCard,
       indicatorColor: kAbyssCyan.withOpacity(0.25),

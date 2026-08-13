@@ -46,13 +46,14 @@ class _StatsScreenState extends State<StatsScreen> {
     final dateStr  = _fmt(date);
     if (dateStr.compareTo(todayStr) > 0) return; // no future editing
 
-    // Limit retro editing to the last 7 days to keep flow stage meaningful
-    final cutoff = DateTime.now().subtract(const Duration(days: 7));
+    // Allow backfilling a full year of history, including days before the
+    // app was installed - people want to log habits they were already doing.
+    final cutoff = DateTime.now().subtract(const Duration(days: 365));
     final cutoffStr = _fmt(DateTime(cutoff.year, cutoff.month, cutoff.day));
     if (dateStr.compareTo(cutoffStr) < 0) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Editing is limited to the last 7 days')));
+            content: Text('Editing is limited to the last year')));
       }
       return;
     }
@@ -434,15 +435,14 @@ class _CalendarSectionState extends State<_CalendarSection> {
 
   Color _dayColor(DateTime date, String todayStr, String? installDate) {
     final ds = _dateKey(date);
-    final isFuture    = ds.compareTo(todayStr) > 0;
-    final isPreInstall = installDate != null && ds.compareTo(installDate) < 0;
+    final isFuture = ds.compareTo(todayStr) > 0;
     final scheduled = widget.habits.where((h) => h.isScheduledOn(date)).toList();
     final done = scheduled.where((h) =>
         widget.completions.contains(StorageService.completionKey(h.id, date))).length;
-    final isPerfect  = !isFuture && !isPreInstall && scheduled.isNotEmpty && done == scheduled.length;
-    final hasPartial = !isFuture && !isPreInstall && done > 0 && done < scheduled.length;
+    final isPerfect  = !isFuture && scheduled.isNotEmpty && done == scheduled.length;
+    final hasPartial = !isFuture && done > 0 && done < scheduled.length;
 
-    if (isFuture || isPreInstall) return Colors.grey.withOpacity(0.12);
+    if (isFuture)                 return Colors.grey.withOpacity(0.12);
     if (isPerfect)                return kSuccess;
     if (hasPartial)               return kWarning;
     if (scheduled.isEmpty)        return Colors.grey.withOpacity(0.18);
@@ -697,14 +697,12 @@ class _CalendarSectionState extends State<_CalendarSection> {
                         final ds         = _dateKey(date);
                         final isFuture   = ds.compareTo(todayStr) > 0;
                         final isToday    = ds == todayStr;
-                        final isPreInstall = widget.installDate != null &&
-                            ds.compareTo(widget.installDate!) < 0;
                         final scheduled  = habit.isScheduledOn(date);
                         final done       = widget.completions.contains(
                             StorageService.completionKey(habit.id, date));
 
                         Color color;
-                        if (!scheduled || isPreInstall || isFuture) {
+                        if (!scheduled || isFuture) {
                           color = Colors.grey.withOpacity(0.12);
                         } else if (done) {
                           color = kSuccess;
@@ -713,7 +711,7 @@ class _CalendarSectionState extends State<_CalendarSection> {
                         }
 
                         return GestureDetector(
-                          onTap: (isFuture || isPreInstall)
+                          onTap: isFuture
                               ? null
                               : () => widget.onDayTap(date),
                           child: Container(
@@ -880,14 +878,12 @@ class _HabitDayStripState extends State<_HabitDayStrip> {
               final date = dates[i];
               final ds = _fmt(date);
               final isToday = ds == _fmt(today);
-              final isPreInstall = widget.installDate != null &&
-                  ds.compareTo(widget.installDate!) < 0;
               final scheduled = widget.habit.isScheduledOn(date);
               final done = widget.completions.contains(
                   StorageService.completionKey(widget.habit.id, date));
 
               Color dotColor;
-              if (isPreInstall || !scheduled) {
+              if (!scheduled) {
                 dotColor = Colors.grey.withOpacity(0.15);
               } else if (done) {
                 dotColor = kSuccess;

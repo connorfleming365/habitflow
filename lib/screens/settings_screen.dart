@@ -216,6 +216,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ));
     if (confirm != true) return;
+
+    // Double check - this is permanent, make sure they meant it.
+    final habits = await StorageService.loadHabits();
+    final completions = await StorageService.loadCompletions();
+    if (!mounted) return;
+    final finalConfirm = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+              title: const Text('Are you absolutely sure?'),
+              content: Text(
+                  'You\'re about to permanently delete ${habits.length} '
+                  'habit${habits.length == 1 ? '' : 's'} and '
+                  '${completions.length} logged completion${completions.length == 1 ? '' : 's'}. '
+                  'There is no undo.'),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('Cancel')),
+                TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('Yes, delete everything',
+                        style: TextStyle(color: kDanger, fontWeight: FontWeight.w700))),
+              ],
+            ));
+    if (finalConfirm != true) return;
+
     await StorageService.saveHabits([]);
     await StorageService.saveCompletions({});
     if (mounted) {

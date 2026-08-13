@@ -34,3 +34,15 @@ flutter:
     - assets/sounds/water_drop_new.mp3
     - assets/sounds/flow.wav
     - assets/sounds/level_up.mp3
+  fonts:
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit-Variable.ttf
+        - asset: assets/fonts/Outfit-Variable.ttf
+          weight: 500
+        - asset: assets/fonts/Outfit-Variable.ttf
+          weight: 600
+        - asset: assets/fonts/Outfit-Variable.ttf
+          weight: 700
+        - asset: assets/fonts/Outfit-Variable.ttf
+          weight: 800
