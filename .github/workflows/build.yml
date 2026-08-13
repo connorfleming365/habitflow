@@ -121,6 +121,16 @@ jobs:
           sed -i -E 's/(id "org\.jetbrains\.kotlin\.android" version ")[^"]*(")/\11.9.24\2/' \
             /tmp/build_app/android/settings.gradle
 
+          # compileSdk 35 requires AGP 8.3+ (older AGP ships an aapt2 that
+          # can't parse Android 15's resource table format - confirmed by
+          # the "aapt2 ... Failed to load resources table ... android-35"
+          # failure hit with Flutter 3.22.0's default AGP 7.3.0). Bump AGP,
+          # and Gradle itself since AGP 8.6 requires Gradle 8.7+.
+          sed -i -E 's/(id "com\.android\.application" version ")[^"]*(")/\18.6.1\2/' \
+            /tmp/build_app/android/settings.gradle
+          sed -i -E 's/gradle-[0-9.]+-all\.zip/gradle-8.7-all.zip/' \
+            /tmp/build_app/android/gradle/wrapper/gradle-wrapper.properties
+
           # in_app_review requires compileSdk 35+. This scaffold's app/build.gradle
           # uses `compileSdk = flutter.compileSdkVersion` (assignment syntax).
           sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 35/' \
@@ -139,6 +149,9 @@ jobs:
               implementation "androidx.core:core-ktx:1.13.1"
           }
           EOF
+
+          echo "── gradle-wrapper.properties after patch ──"
+          cat /tmp/build_app/android/gradle/wrapper/gradle-wrapper.properties
 
           echo "── settings.gradle after patch ──"
           cat /tmp/build_app/android/settings.gradle
