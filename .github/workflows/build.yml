@@ -142,6 +142,14 @@ jobs:
           sed -i 's/ndkVersion = flutter.ndkVersion/ndkVersion = "26.1.10909125"/' \
             /tmp/build_app/android/app/build.gradle
 
+          # With the Kotlin Gradle Plugin bumped to 1.9.24, Kotlin's default
+          # jvmTarget follows the JDK running Gradle (17 here) while Java
+          # compileOptions is still pinned to 1.8, tripping AGP's
+          # "Inconsistent JVM-target compatibility" check. Align Kotlin down
+          # to match the existing Java target instead of raising Java's.
+          sed -i 's/ndkVersion = "26.1.10909125"/ndkVersion = "26.1.10909125"\n\n    kotlinOptions {\n        jvmTarget = "1.8"\n    }/' \
+            /tmp/build_app/android/app/build.gradle
+
           # flutter_local_notifications requires core library desugaring.
           sed -i 's/targetCompatibility = JavaVersion.VERSION_1_8/targetCompatibility = JavaVersion.VERSION_1_8\n        coreLibraryDesugaringEnabled = true/' \
             /tmp/build_app/android/app/build.gradle
