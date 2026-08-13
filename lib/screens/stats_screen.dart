@@ -941,7 +941,7 @@ class _HabitDayStripState extends State<_HabitDayStrip> {
                           fontWeight: isToday
                               ? FontWeight.w800
                               : FontWeight.w500,
-                          color: (isPreInstall || !scheduled)
+                          color: !scheduled
                               ? Theme.of(context).colorScheme.onSurface.withOpacity(0.2)
                               : done
                                   ? Colors.black87
