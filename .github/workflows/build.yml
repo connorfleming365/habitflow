@@ -128,6 +128,18 @@ jobs:
           sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 35/' \
             /tmp/build_app/android/app/build.gradle
 
+          # in_app_review's InAppReviewPlugin.kt imports androidx.core.net.toUri
+          # (a core-ktx extension) but its own build.gradle doesn't declare
+          # core-ktx as a dependency - it assumes the app provides it. This
+          # scaffold's app/build.gradle has no dependencies{} block at all,
+          # so add one.
+          cat >> /tmp/build_app/android/app/build.gradle << 'EOF'
+
+          dependencies {
+              implementation "androidx.core:core-ktx:1.13.1"
+          }
+          EOF
+
           echo "── settings.gradle after patch ──"
           cat /tmp/build_app/android/settings.gradle
           echo "── app/build.gradle after patch ──"
