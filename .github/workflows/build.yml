@@ -149,6 +149,28 @@ jobs:
         working-directory: /tmp/build_app
         run: flutter pub get
 
+      - name: Add core-ktx to in_app_review's own module
+        run: |
+          # The failing task is :in_app_review:compileReleaseKotlin - that's
+          # in_app_review's OWN Gradle module (Flutter plugins with native
+          # code build as separate subprojects). A dependency declared in
+          # the app module's build.gradle only applies to :app's classpath,
+          # not to a module the app depends on - so the previous commit's
+          # fix had no effect on this module. Patch it directly where it
+          # actually lives, in the pub cache.
+          IAR_GRADLE=$(ls /root/.pub-cache/hosted/pub.dev/in_app_review-*/android/build.gradle \
+                       /home/runner/.pub-cache/hosted/pub.dev/in_app_review-*/android/build.gradle \
+                       2>/dev/null | head -1)
+          echo "patching: $IAR_GRADLE"
+          cat >> "$IAR_GRADLE" << 'EOF'
+
+          dependencies {
+              implementation "androidx.core:core-ktx:1.13.1"
+          }
+          EOF
+          echo "── in_app_review build.gradle after patch ──"
+          cat "$IAR_GRADLE"
+
       - name: Build release APK
         working-directory: /tmp/build_app
         run: flutter build apk --release --no-shrink
