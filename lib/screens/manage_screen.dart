@@ -342,7 +342,7 @@ class _GridTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w500,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
+                  color: mutedText(context, 0.45),
                 ),
               ),
               if (streak > 0) ...[
@@ -424,7 +424,7 @@ class _ListTile extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.only(right: 10),
           child: Icon(Icons.drag_handle,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.35)),
+              color: mutedText(context, 0.35)),
         ),
       ),
       Container(
@@ -445,7 +445,7 @@ class _ListTile extends StatelessWidget {
         Text(
           habit.freqLabel + (streak > 0 ? ' · ${streak}d 🔥' : ''),
           style: TextStyle(fontSize: 11,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.55)),
+              color: mutedText(context, 0.55)),
         ),
       ])),
       IconButton(

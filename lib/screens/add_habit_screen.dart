@@ -148,7 +148,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text('OR BUILD YOUR OWN',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4))),
+                    color: mutedText(context, 0.4))),
               ),
               const Expanded(child: Divider()),
             ]),
@@ -284,7 +284,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                       alignment: Alignment.center,
                       child: Text(names[i],
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
-                          color: sel ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+                          color: sel ? Colors.white : mutedText(context, 0.6))),
                     ),
                   ),
                 );
@@ -318,7 +318,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     _targetCount == 1 ? 'tap to complete' : 'taps to complete',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
+                      color: mutedText(context, 0.45),
                     )),
                 ]),
               ),
@@ -337,7 +337,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 'Tap this habit $_targetCount times on the Today screen to mark it complete.',
                 style: TextStyle(
                   fontSize: 11,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                  color: mutedText(context, 0.4),
                 ),
               ),
             ),
@@ -357,7 +357,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             padding: const EdgeInsets.only(top: 6, left: 2),
             child: Text(
               _amPm.isEmpty ? 'No preference — shows in its own section' : 'Tap again to clear',
-              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
+              style: TextStyle(fontSize: 11, color: mutedText(context, 0.4)),
             ),
           ),
           const SizedBox(height: 20),
@@ -385,7 +385,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   style: TextStyle(
                     fontSize: 15, fontWeight: FontWeight.w600,
                     color: _reminderTime == null
-                        ? Theme.of(context).colorScheme.onSurface.withOpacity(0.4)
+                        ? mutedText(context, 0.4)
                         : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
@@ -394,7 +394,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   GestureDetector(
                     onTap: () => setState(() => _reminderTime = null),
                     child: Icon(Icons.close, size: 18,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
+                      color: mutedText(context, 0.4)),
                   ),
               ]),
             ),
@@ -423,7 +423,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
 
   Widget _label(String text) => Text(text,
     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.8,
-      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)));
+      color: mutedText(context, 0.5)));
 }
 
 class _TimeChip extends StatelessWidget {
@@ -454,7 +454,7 @@ class _TimeChip extends StatelessWidget {
             Text(label,
               style: TextStyle(
                 fontSize: 11, fontWeight: FontWeight.w600,
-                color: sel ? kPrimary : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                color: sel ? kPrimary : mutedText(context, 0.6),
               )),
           ]),
         ),
@@ -472,7 +472,7 @@ class _StepperButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final col = enabled
         ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.onSurface.withOpacity(0.2);
+        : mutedText(context, 0.2);
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
@@ -509,7 +509,7 @@ class _FreqChip extends StatelessWidget {
         alignment: Alignment.center,
         child: Text('$icon $label',
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600,
-            color: sel ? kPrimary : Theme.of(context).colorScheme.onSurface.withOpacity(0.6))),
+            color: sel ? kPrimary : mutedText(context, 0.6))),
       ),
     );
   }

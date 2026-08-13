@@ -143,7 +143,7 @@ class _StatsScreenState extends State<StatsScreen> {
                         ? kSuccess
                         : inProgress
                             ? warningTextColor(ctx)
-                            : Theme.of(ctx).colorScheme.onSurface.withOpacity(0.35),
+                            : mutedText(ctx, 0.35),
                   ),
                   onTap: () => setModal(() {
                     // Multi-count habits step through 0..tc so a partial day
@@ -372,14 +372,14 @@ class _StageCard extends StatelessWidget {
         const SizedBox(height: 12),
         Text(ProgressionService.stageDescription(stage),
           style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              color: mutedText(context, 0.7),
               fontSize: 13, height: 1.4)),
         if (!isOcean) ...[
           const SizedBox(height: 16),
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text('$toNext consistent days to ${ProgressionService.stageName(WaterStage.values[stage.index + 1])}',
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.65),
+                  color: mutedText(context, 0.65),
                   fontSize: 12)),
             Text('${(stageProgress * 100).round()}%',
               style: TextStyle(
@@ -624,10 +624,10 @@ class _CalendarSectionState extends State<_CalendarSection> {
                     fontSize: 9,
                     fontWeight: isToday ? FontWeight.w800 : FontWeight.w400,
                     color: isFuture
-                        ? Theme.of(context).colorScheme.onSurface.withOpacity(0.2)
+                        ? mutedText(context, 0.2)
                         : isPerfect || hasPartial
                             ? Colors.black87
-                            : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                            : mutedText(context, 0.6),
                   ),
                 ),
               ),
@@ -842,7 +842,7 @@ class _StreakRow extends StatelessWidget {
         style: TextStyle(
           color: streak > 0
               ? warningTextColor(context)
-              : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+              : mutedText(context, 0.3),
           fontSize: 12, fontWeight: FontWeight.w700)),
     ]),
   );
@@ -964,7 +964,7 @@ class _HabitDayStripState extends State<_HabitDayStrip> {
                             ? Theme.of(context).colorScheme.primary
                             : isToday
                                 ? Theme.of(context).colorScheme.secondary
-                                : Theme.of(context).colorScheme.secondary.withOpacity(0.45),
+                                : mutedText(context, 0.45),
                         fontSize: 7,
                         fontWeight: showMonth || isToday
                             ? FontWeight.w700
@@ -994,10 +994,10 @@ class _HabitDayStripState extends State<_HabitDayStrip> {
                               ? FontWeight.w800
                               : FontWeight.w500,
                           color: !scheduled
-                              ? Theme.of(context).colorScheme.onSurface.withOpacity(0.2)
+                              ? mutedText(context, 0.2)
                               : done
                                   ? Colors.black87
-                                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                  : mutedText(context, 0.6),
                         ),
                       ),
                     ),

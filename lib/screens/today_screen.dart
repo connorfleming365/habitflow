@@ -918,7 +918,7 @@ class _HabitCircleTile extends StatelessWidget {
                   fontSize: 9, fontWeight: FontWeight.w500,
                   color: done
                       ? kSuccess.withOpacity(0.7)
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
+                      : mutedText(context, 0.45),
                 ),
               ),
               // Multi-count indicator (only when not done)
@@ -931,7 +931,7 @@ class _HabitCircleTile extends StatelessWidget {
                     fontSize: 8.5, fontWeight: FontWeight.w700,
                     color: inProgress
                         ? accent
-                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.30),
+                        : mutedText(context, 0.30),
                   ),
                 ),
               ],
@@ -1023,7 +1023,7 @@ class _HabitListTile extends StatelessWidget {
                     fontSize: 11, fontWeight: FontWeight.w500,
                     color: done
                         ? kSuccess.withOpacity(0.7)
-                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
+                        : mutedText(context, 0.45),
                   ),
                 ),
               ],
@@ -1041,7 +1041,7 @@ class _HabitListTile extends StatelessWidget {
                 border: Border.all(
                   color: inProgress
                       ? accent.withOpacity(0.55)
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+                      : mutedText(context, 0.2),
                   width: 1.5,
                 ),
               ),
@@ -1051,7 +1051,7 @@ class _HabitListTile extends StatelessWidget {
                   fontSize: 12, fontWeight: FontWeight.w800,
                   color: inProgress
                       ? accent
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.35),
+                      : mutedText(context, 0.35),
                 ),
               ),
             )
@@ -1065,7 +1065,7 @@ class _HabitListTile extends StatelessWidget {
                 border: Border.all(
                   color: done
                       ? kSuccess
-                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
+                      : mutedText(context, 0.25),
                   width: 2,
                 ),
               ),
