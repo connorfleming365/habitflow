@@ -13,7 +13,7 @@ const kWaveLight = Color(0xFF5DD4F8);
 // ── Coral Tide palette ────────────────────────────────────
 const kCoralPrimary = Color(0xFFFF6B6B); // coral/salmon — accents, fills, borders (not text)
 const kCoralNavy    = Color(0xFF1E3A5F); // deep navy — text
-const kCoralMid     = Color(0xFF1D4E73); // deep navy-blue — subtext, legible on white
+const kCoralMid     = kCoralNavy; // same navy as headers - no lighter "subtext" shade
 const kCoralBg      = Color(0xFFFFF8F5); // warm off-white
 const kCoralCard    = Color(0xFFFFFFFF); // white card
 const kCoralSurface = Color(0xFFFFE4D9); // warm peach surface
@@ -41,13 +41,12 @@ Color dangerTextColor(BuildContext context) =>
 /// dark background (alpha-blending toward near-black keeps a muted-but-dark
 /// result), but on Coral Tide's white background the exact same call blends
 /// toward WHITE, so anything under ~0.5 opacity washes out to near-invisible.
-/// On light themes this instead interpolates toward solid navy with a much
-/// higher floor, so muted text stays legible; on dark themes it's unchanged.
+/// On light themes this returns the same solid navy as the headers -
+/// no lighter hierarchy, just legible; on dark themes it's unchanged.
 Color mutedText(BuildContext context, [double opacity = 0.5]) {
   final theme = Theme.of(context);
   if (theme.brightness == Brightness.light) {
-    final t = (opacity + 0.35).clamp(0.55, 1.0);
-    return Color.lerp(kCoralBg, kCoralNavy, t)!;
+    return kCoralNavy;
   }
   return theme.colorScheme.onSurface.withOpacity(opacity);
 }
