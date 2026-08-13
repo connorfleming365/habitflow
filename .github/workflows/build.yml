@@ -112,18 +112,26 @@ jobs:
 
       - name: Bump Kotlin Gradle Plugin and compileSdk
         run: |
-          # The Kotlin Gradle Plugin (the compiler) must match the stdlib
-          # version forced above, or compileReleaseKotlin fails with
-          # "Module was compiled with an incompatible version of Kotlin"
-          # (seen with flutter_timezone once it pulled in newer Kotlin code).
-          sed -i "s/ext.kotlin_version = '.*'/ext.kotlin_version = '1.9.24'/" \
-            /tmp/build_app/android/build.gradle
+          # Flutter 3.22.0's scaffold declares the Kotlin Gradle Plugin (the
+          # compiler) in android/settings.gradle's plugins{} block, not via
+          # an ext.kotlin_version line - it must match the stdlib version
+          # forced above, or compileReleaseKotlin fails with "Module was
+          # compiled with an incompatible version of Kotlin" (hit once
+          # flutter_timezone/in_app_review pulled in newer Kotlin code).
+          sed -i -E 's/(id "org\.jetbrains\.kotlin\.android" version ")[^"]*(")/\11.9.24\2/' \
+            /tmp/build_app/android/settings.gradle
 
-          # in_app_review requires compileSdkVersion 35+.
-          sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 35/' \
+          # in_app_review requires compileSdk 35+. This scaffold's app/build.gradle
+          # uses `compileSdk = flutter.compileSdkVersion` (assignment syntax).
+          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 35/' \
             /tmp/build_app/android/app/build.gradle
-          sed -i 's/targetSdkVersion flutter.targetSdkVersion/targetSdkVersion 35/' \
+          sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 35/' \
             /tmp/build_app/android/app/build.gradle
+
+          echo "── settings.gradle after patch ──"
+          cat /tmp/build_app/android/settings.gradle
+          echo "── app/build.gradle after patch ──"
+          cat /tmp/build_app/android/app/build.gradle
 
       - name: Get dependencies
         working-directory: /tmp/build_app
